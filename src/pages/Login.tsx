@@ -66,9 +66,9 @@ export const Login = () => {
                 placeholder="your@email.com"
                 required
               />
-              <p className="mt-2 text-xs text-gray-500">
+              {/* <p className="mt-2 text-xs text-gray-500">
                 💡 Tip: Use email with "admin" for admin access
-              </p>
+              </p> */}
             </div>
 
             <div>
