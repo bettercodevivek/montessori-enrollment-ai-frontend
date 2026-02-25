@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { LogIn } from 'lucide-react';
+import { LogIn, School } from 'lucide-react';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -35,7 +35,7 @@ export const Login = () => {
           <div className="flex items-center justify-center mb-8">
             <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-600/40 border-2 border-blue-500/30">
               <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                <LogIn className="w-7 h-7 text-white" />
+                <School className="w-7 h-7 text-white" />
               </div>
             </div>
           </div>
