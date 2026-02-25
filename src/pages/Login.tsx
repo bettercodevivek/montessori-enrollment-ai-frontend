@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { LogIn, School } from 'lucide-react';
+import { School } from 'lucide-react';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
