@@ -94,11 +94,11 @@ export const Login = () => {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-gray-100">
+          {/* <div className="mt-8 pt-6 border-t border-gray-100">
             <p className="text-xs text-gray-500 text-center">
               Demo mode: Any email/password works
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
