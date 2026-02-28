@@ -1,8 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, AuthState } from '../types';
+import type { User } from '../types';
+import api from '../api/axios';
 
-interface AuthStore extends AuthState {
+interface AuthStore {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
   setUser: (user: User | null) => void;
 }
 
@@ -10,21 +16,25 @@ export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
-      login: async (email: string, _password: string) => {
-        // Mock login logic
-        const role = email.includes('admin') ? 'admin' : 'school';
-        const user: User = {
-          id: '1',
-          email,
-          name: email.split('@')[0],
-          role,
-          schoolId: role === 'school' ? 'school-1' : undefined,
-        };
-        set({ user, isAuthenticated: true });
+      login: async (email: string, password: string) => {
+        const response = await api.post('/auth/login', { email, password });
+        const { token, user } = response.data;
+        set({
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            schoolId: user.schoolId,
+          },
+          token,
+          isAuthenticated: true,
+        });
       },
       logout: () => {
-        set({ user: null, isAuthenticated: false });
+        set({ user: null, token: null, isAuthenticated: false });
       },
       setUser: (user) => {
         set({ user, isAuthenticated: !!user });
@@ -35,4 +45,3 @@ export const useAuthStore = create<AuthStore>()(
     }
   )
 );
-

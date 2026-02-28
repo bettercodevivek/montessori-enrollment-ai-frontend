@@ -1,119 +1,336 @@
-import { useState } from 'react';
-import { Globe } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Save, Loader2, Phone, MessageSquare, Clock, Globe, Shield, CheckCircle, AlertCircle } from 'lucide-react';
+import api from '../../api/axios';
+
+interface SettingsData {
+  aiNumber: string;
+  routingNumber: string;
+  escalationNumber: string;
+  language: string;
+  script: string;
+  businessHoursStart: string;
+  businessHoursEnd: string;
+  twilioSid: string;
+  twilioAuthToken: string;
+  twilioPhoneNumber: string;
+  smsAutoFollowup: boolean;
+  emailAutoFollowup: boolean;
+  smsTemplate: string;
+  emailTemplate: string;
+}
+
+type Tab = 'agent' | 'twilio' | 'automation';
 
 export const SchoolSettings = () => {
-  const [aiNumber, setAiNumber] = useState('+1 (555) 123-4567');
-  const [routingNumber, setRoutingNumber] = useState('+1 (555) 123-4568');
-  const [language, setLanguage] = useState<'EN' | 'ES'>('EN');
-  const [script, setScript] = useState('Welcome to our school. How can I help you today?');
+  const { t } = useTranslation();
+  const [settings, setSettings] = useState<SettingsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('agent');
+
+  useEffect(() => {
+    api.get('/school/settings')
+      .then(res => setSettings(res.data))
+      .catch(err => console.error('Failed to load settings:', err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setStatus(null);
+    try {
+      await api.put('/school/settings', settings);
+      setStatus({ type: 'success', message: t('settings_saved') });
+    } catch (err) {
+      setStatus({ type: 'error', message: t('settings_save_failed') });
+    } finally {
+      setSaving(false);
+      setTimeout(() => setStatus(null), 4000);
+    }
+  };
+
+  const update = (field: keyof SettingsData, value: any) =>
+    setSettings(prev => prev ? { ...prev, [field]: value } : prev);
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+    </div>
+  );
+
+  if (!settings) return (
+    <div className="text-center py-12 text-slate-500">{t('failed_to_load_settings')}</div>
+  );
+
+  const tabs: { id: Tab; label: string }[] = [
+    { id: 'agent', label: t('tab_agent') },
+    { id: 'twilio', label: t('tab_twilio') },
+    { id: 'automation', label: t('tab_automation') },
+  ];
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-          Settings
-        </h1>
-        <p className="text-gray-600">Manage your school configuration</p>
+    <div className="max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">{t('settings_title')}</h1>
+          <p className="text-sm text-slate-500 mt-0.5">{t('settings_desc')}</p>
+        </div>
+        <button onClick={handleSave} disabled={saving} className="ui-button-primary flex items-center gap-2">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {saving ? t('saving') : t('save_settings')}
+        </button>
       </div>
-      
-      <div className="space-y-6">
-        {/* AI Phone Number */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">AI Phone Number</h2>
-          <input
-            type="text"
-            value={aiNumber}
-            onChange={(e) => setAiNumber(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-sm"
-            placeholder="Enter AI phone number"
-          />
-        </div>
 
-        {/* Front Desk Routing Number */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Front Desk Routing Number</h2>
-          <input
-            type="text"
-            value={routingNumber}
-            onChange={(e) => setRoutingNumber(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-sm"
-            placeholder="Enter routing number"
-          />
+      {status && (
+        <div className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium mb-6 border ${status.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
+          {status.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          {status.message}
         </div>
+      )}
 
-        {/* Business Hours */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Business Hours</h2>
-          <div className="space-y-3">
-            <div className="flex items-center gap-4">
-              <label className="w-32 text-sm font-medium text-gray-700">Monday - Friday</label>
-              <input
-                type="time"
-                defaultValue="09:00"
-                className="px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-sm"
-              />
-              <span className="text-gray-500 font-medium">to</span>
-              <input
-                type="time"
-                defaultValue="17:00"
-                className="px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-sm"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Language Toggle */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Globe className="w-5 h-5 text-primary-600" />
-              <h2 className="text-lg font-bold text-gray-900">Language</h2>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setLanguage('EN')}
-                className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  language === 'EN'
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/40 hover:bg-blue-700'
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200'
-                }`}
-              >
-                English
-              </button>
-              <button
-                onClick={() => setLanguage('ES')}
-                className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  language === 'ES'
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/40 hover:bg-blue-700'
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200'
-                }`}
-              >
-                Español
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Script Editor */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Script Editor</h2>
-          <textarea
-            value={script}
-            onChange={(e) => setScript(e.target.value)}
-            rows={6}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-sm resize-none"
-            placeholder="Enter your AI script..."
-          />
-        </div>
-
-        {/* Save Button */}
-        <div className="flex justify-end">
-          <button className="px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/40 hover:shadow-xl">
-            Save Changes
+      {/* Tab nav */}
+      <div className="flex border-b border-slate-200 mb-6">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          >
+            {tab.label}
           </button>
-        </div>
+        ))}
       </div>
+
+      <form onSubmit={handleSave} className="space-y-6">
+
+        {/* ── AI Agent & Routing tab ── */}
+        {activeTab === 'agent' && (
+          <>
+            <div className="bg-white border border-slate-200 rounded-xl p-6">
+              <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <Phone className="w-4 h-4 text-slate-400" />
+                Phone Routing
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('ai_phone_number')}</label>
+                  <input
+                    type="text"
+                    value={settings.aiNumber}
+                    onChange={e => update('aiNumber', e.target.value)}
+                    className="ui-input w-full"
+                    placeholder="+1 (555) 123-4567"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">The dedicated AI-managed number callers dial.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Front Desk / Routing Number</label>
+                  <input
+                    type="text"
+                    value={settings.routingNumber}
+                    onChange={e => update('routingNumber', e.target.value)}
+                    className="ui-input w-full"
+                    placeholder="+1 (555) 123-4568"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Non-inquiry calls forward here.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('escalation_number')}</label>
+                  <input
+                    type="text"
+                    value={settings.escalationNumber}
+                    onChange={e => update('escalationNumber', e.target.value)}
+                    className="ui-input w-full"
+                    placeholder="+1 (555) 123-4569"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Fallback if AI cannot handle the call.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-xl p-6">
+              <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-slate-400" />
+                Business Hours & Language
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('opens_at')}</label>
+                  <input
+                    type="time"
+                    value={settings.businessHoursStart}
+                    onChange={e => update('businessHoursStart', e.target.value)}
+                    className="ui-input w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('closes_at')}</label>
+                  <input
+                    type="time"
+                    value={settings.businessHoursEnd}
+                    onChange={e => update('businessHoursEnd', e.target.value)}
+                    className="ui-input w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <Globe className="w-3 h-3 inline mr-1" />
+                    {t('language')}
+                  </label>
+                  <select
+                    value={settings.language}
+                    onChange={e => update('language', e.target.value)}
+                    className="ui-input w-full bg-white"
+                  >
+                    <option value="en">{t('english')}</option>
+                    <option value="es">{t('spanish')}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-xl p-6">
+              <h2 className="text-base font-semibold text-slate-900 mb-1">{t('ai_agent_script')}</h2>
+              <p className="text-sm text-slate-500 mb-4">
+                Write the exact script your AI agent follows during enrollment inquiry calls. Use {'{parent_name}'}, {'{school_name}'} as variables.
+              </p>
+              <textarea
+                rows={10}
+                value={settings.script}
+                onChange={e => update('script', e.target.value)}
+                className="ui-input w-full text-sm font-mono leading-relaxed"
+                placeholder={t('script_placeholder')}
+              />
+            </div>
+          </>
+        )}
+
+        {/* ── Twilio / SMS tab ── */}
+        {activeTab === 'twilio' && (
+          <>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+              <strong>How to set up Twilio:</strong>
+              <ol className="mt-2 ml-4 space-y-1 text-xs list-decimal">
+                <li>Create a free account at <a href="https://www.twilio.com" target="_blank" rel="noreferrer" className="underline">twilio.com</a></li>
+                <li>From the Twilio Console dashboard, copy your <strong>Account SID</strong> and <strong>Auth Token</strong></li>
+                <li>Buy or provision a Twilio phone number (this is the number SMS will be sent <em>from</em>)</li>
+                <li>Paste all three values below and save</li>
+              </ol>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-xl p-6">
+              <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <Shield className="w-4 h-4 text-slate-400" />
+                Twilio API Credentials
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('account_sid')}</label>
+                  <input
+                    type="text"
+                    value={settings.twilioSid}
+                    onChange={e => update('twilioSid', e.target.value)}
+                    className="ui-input w-full font-mono text-sm"
+                    placeholder="ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('auth_token')}</label>
+                  <input
+                    type="password"
+                    value={settings.twilioAuthToken}
+                    onChange={e => update('twilioAuthToken', e.target.value)}
+                    className="ui-input w-full font-mono text-sm"
+                    placeholder="••••••••••••••••••••••••••••••••"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('twilio_phone_number')} <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={settings.twilioPhoneNumber}
+                    onChange={e => update('twilioPhoneNumber', e.target.value)}
+                    className="ui-input w-full"
+                    placeholder="+15551234567"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">{t('twilio_phone_help')}</p>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ── Automated Follow-ups tab ── */}
+        {activeTab === 'automation' && (
+          <>
+            <div className="bg-white border border-slate-200 rounded-xl p-6">
+              <h2 className="text-base font-semibold text-slate-900 mb-1 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-slate-400" />
+                Automated Follow-ups
+              </h2>
+              <p className="text-sm text-slate-500 mb-6">
+                When an enrollment inquiry call ends, the AI can automatically send an SMS and/or email to the parent with the inquiry form link.
+              </p>
+
+              <div className="space-y-4 mb-6">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.smsAutoFollowup}
+                    onChange={e => update('smsAutoFollowup', e.target.checked)}
+                    className="w-4 h-4 rounded text-blue-600"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-slate-700">Send SMS follow-up after call</span>
+                    <p className="text-xs text-slate-400">Requires Twilio credentials to be configured on the Twilio tab.</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.emailAutoFollowup}
+                    onChange={e => update('emailAutoFollowup', e.target.checked)}
+                    className="w-4 h-4 rounded text-blue-600"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-slate-700">Send Email follow-up after call</span>
+                    <p className="text-xs text-slate-400">Requires SMTP credentials configured in the server .env file.</p>
+                  </div>
+                </label>
+              </div>
+
+              <div className="border-t border-slate-100 pt-6">
+                <p className="text-xs text-slate-400 mb-4 font-medium uppercase tracking-wide">Message Templates — use {'{parent_name}'}, {'{school_name}'}, {'{form_link}'}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">{t('sms_template')}</label>
+                    <textarea
+                      rows={7}
+                      value={settings.smsTemplate}
+                      onChange={e => update('smsTemplate', e.target.value)}
+                      className="ui-input w-full text-sm"
+                      placeholder="Hi {parent_name}, thanks for your interest in {school_name}! Please complete our enrollment inquiry form: {form_link}"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">{t('email_template')}</label>
+                    <textarea
+                      rows={7}
+                      value={settings.emailTemplate}
+                      onChange={e => update('emailTemplate', e.target.value)}
+                      className="ui-input w-full text-sm"
+                      placeholder="Dear {parent_name},&#10;&#10;Thank you for contacting {school_name}. Please complete the form: {form_link}&#10;&#10;Warm regards,&#10;{school_name} Team"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </form>
     </div>
   );
 };
-

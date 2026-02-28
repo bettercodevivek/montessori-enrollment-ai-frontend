@@ -11,7 +11,7 @@ export const AdminLayout = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-surface-light via-surface-DEFAULT to-surface-dark">
+    <div className="flex h-screen bg-slate-50">
       <Sidebar role="admin" />
       <div className="flex-1 ml-64">
         <TopNavbar />

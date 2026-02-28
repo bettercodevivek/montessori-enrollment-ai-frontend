@@ -1,107 +1,121 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { School } from 'lucide-react';
+import { Globe, ArrowRight, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAuthStore();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     if (!email || !password) {
-      setError('Please enter both email and password');
+      setError(t('please_enter_credentials'));
+      setLoading(false);
       return;
     }
 
     try {
       await login(email, password);
-      const role = email.includes('admin') ? 'admin' : 'school';
-      navigate(role === 'admin' ? '/admin/dashboard' : '/school/dashboard');
+      const user = useAuthStore.getState().user;
+      navigate(user?.role === 'admin' ? '/admin/dashboard' : '/school/dashboard');
     } catch (err) {
-      setError('Login failed. Please try again.');
+      setError(t('invalid_credentials'));
+    } finally {
+      setLoading(false);
     }
   };
 
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'es' : 'en';
+    i18n.changeLanguage(newLang);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-surface-light via-surface-DEFAULT to-surface-dark flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full">
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-blue-200/50 p-10">
-          <div className="flex items-center justify-center mb-8">
-            <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-600/40 border-2 border-blue-500/30">
-              <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                <School className="w-7 h-7 text-white" />
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 font-sans">
+      <div className="w-full max-w-md animate-soft">
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-xl p-10 overflow-hidden">
+          <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-black text-lg">AI</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-slate-900 leading-tight">
+                  {t('enrollment_ai')}
+                </h1>
+                <p className="text-xs text-slate-500 mt-0.5">{t('montessori_enrollment_ai')}</p>
               </div>
             </div>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 text-center mb-2 tracking-tight">
-            Welcome to Enrollment AI
-          </h1>
-          <p className="text-gray-600 text-center mb-8 text-sm">
-            Sign in to access your dashboard
-          </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              {i18n.language === 'en' ? t('spanish') : t('english')}
+            </button>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-slate-900 mb-1">{t('welcome')}</h2>
+            <p className="text-sm text-slate-500">{t('sign_in_portal')}</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50/80 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm backdrop-blur-sm">
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address
-              </label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">{t('email')}</label>
               <input
-                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-sm text-gray-900 placeholder:text-gray-400"
-                placeholder="your@email.com"
+                className="ui-input h-11"
+                placeholder="you@school.com"
                 required
               />
-              {/* <p className="mt-2 text-xs text-gray-500">
-                💡 Tip: Use email with "admin" for admin access
-              </p> */}
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                Password
-              </label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">{t('password')}</label>
               <input
-                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-sm text-gray-900 placeholder:text-gray-400"
-                placeholder="Enter your password"
+                className="ui-input h-11"
+                placeholder="••••••••"
                 required
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/40 hover:shadow-xl hover:shadow-blue-700/50 transform hover:-translate-y-0.5"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 ui-button-primary h-11 rounded-lg"
             >
-              Sign In
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+              <span className="font-medium text-sm">
+                {loading ? t('signing_in') : t('signin_btn')}
+              </span>
+              {!loading ? <ArrowRight className="w-4 h-4" /> : null}
             </button>
           </form>
-
-          {/* <div className="mt-8 pt-6 border-t border-gray-100">
-            <p className="text-xs text-gray-500 text-center">
-              Demo mode: Any email/password works
-            </p>
-          </div> */}
         </div>
       </div>
     </div>
   );
 };
-

@@ -1,89 +1,134 @@
-import { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
-import { mockReferrals } from '../../api/mockData';
-import { formatDate } from '../../utils';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Copy, CheckCircle2, Loader2, Users } from 'lucide-react';
+import api from '../../api/axios';
+
+interface ReferralData {
+  referralCode: string | null;
+  referralLink: string | null;
+  referrals: Array<{
+    id: string;
+    referrerSchool: string;
+    newSchool: string;
+    date: string;
+    status: string;
+  }>;
+}
 
 export const SchoolReferrals = () => {
+  const { t } = useTranslation();
+  const [data, setData] = useState<ReferralData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
-  const referralLink = 'https://enrollmentai.com/refer/sunshine-montessori';
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(referralLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  useEffect(() => {
+    api.get('/school/referrals')
+      .then(res => setData(res.data))
+      .catch(err => console.error('Failed to load referrals:', err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const generateLink = async () => {
+    setGenerating(true);
+    try {
+      const res = await api.post('/school/referrals/generate');
+      setData(prev => prev ? { ...prev, referralCode: res.data.referralCode, referralLink: res.data.referralLink } : prev);
+    } catch (err) {
+      console.error('Failed to generate link:', err);
+    } finally {
+      setGenerating(false);
+    }
   };
 
+  const copyLink = () => {
+    if (data?.referralLink) {
+      navigator.clipboard.writeText(data.referralLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+    </div>
+  );
+
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-          Referrals
-        </h1>
-        <p className="text-gray-600">Share your referral link and track referred schools</p>
-      </div>
-      
-      {/* Generate Referral Link */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6 mb-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Your Referral Link</h2>
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            value={referralLink}
-            readOnly
-            className="flex-1 px-4 py-3 border border-gray-200 rounded-xl bg-gray-50/80 backdrop-blur-sm text-gray-700"
-          />
-          <button
-            onClick={copyToClipboard}
-            className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/40"
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4" />
-                <span>Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4" />
-                <span>Copy</span>
-              </>
-            )}
-          </button>
+    <div className="max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">{t('referrals_title')}</h1>
+          <p className="text-sm text-slate-500 mt-0.5">{t('referrals_desc')}</p>
         </div>
+        <button onClick={generateLink} disabled={generating} className="ui-button-primary flex items-center gap-2">
+          {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+          {generating ? t('generating') : t('generate_new_link')}
+        </button>
       </div>
 
-      {/* Referred Schools Table */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/80">
-          <h2 className="text-lg font-bold text-gray-900">Referred Schools</h2>
+      {/* Current referral link */}
+      {data?.referralLink && (
+        <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6">
+          <p className="text-xs font-medium text-slate-500 mb-2">{t('your_referral_link')}</p>
+          <div className="flex items-center gap-3">
+            <code className="flex-1 bg-slate-50 border border-slate-100 rounded-lg px-4 py-2.5 text-sm text-slate-700 font-mono truncate">
+              {data.referralLink}
+            </code>
+            <button
+              onClick={copyLink}
+              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${copied ? 'bg-green-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+            >
+              {copied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copied ? t('copied') : t('copy')}
+            </button>
+          </div>
+          <p className="text-xs text-slate-400 mt-2">{t('code')}: <span className="font-mono">{data.referralCode}</span></p>
         </div>
-        <table className="min-w-full divide-y divide-gray-100">
-          <thead className="bg-gray-50/80">
-            <tr>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                New School
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Date
-              </th>
+      )}
+
+      {/* Referral history */}
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-900">{t('referral_history')}</h2>
+          <span className="text-xs text-slate-500">{data?.referrals.length || 0} {t('records')}</span>
+        </div>
+        <table className="w-full">
+          <thead>
+            <tr className="text-left text-xs font-medium text-slate-500 border-b border-slate-100 bg-slate-50">
+              <th className="px-5 py-3">{t('referred_school')}</th>
+              <th className="px-5 py-3">{t('date')}</th>
+              <th className="px-5 py-3">{t('status')}</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
-            {mockReferrals
-              .filter((ref) => ref.referrerSchool === 'Sunshine Montessori')
-              .map((referral) => (
-                <tr key={referral.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                    {referral.newSchool}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatDate(referral.date)}
-                  </td>
-                </tr>
-              ))}
+          <tbody className="divide-y divide-slate-100">
+            {data?.referrals.map((ref) => (
+              <tr key={ref.id} className="hover:bg-slate-50 transition-colors">
+                <td className="px-5 py-3 text-sm font-medium text-slate-900">{ref.newSchool}</td>
+                <td className="px-5 py-3 text-sm text-slate-500">{new Date(ref.date).toLocaleDateString()}</td>
+                <td className="px-5 py-3">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ref.status === 'converted' ? 'bg-green-50 text-green-700' :
+                      ref.status === 'active' ? 'bg-blue-50 text-blue-700' :
+                        'bg-yellow-50 text-yellow-700'
+                    }`}>
+                    {ref.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+            {(!data?.referrals || data.referrals.length === 0) && (
+              <tr>
+                <td colSpan={3} className="px-5 py-12 text-center">
+                  <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                  <p className="text-sm text-slate-500">{t('no_referrals_yet')}</p>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
     </div>
   );
 };
-

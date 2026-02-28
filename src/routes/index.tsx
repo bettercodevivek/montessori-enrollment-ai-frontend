@@ -15,25 +15,40 @@ import { AdminSchools } from '../pages/admin/Schools';
 import { AdminAnalytics } from '../pages/admin/Analytics';
 import { AdminIntegrations } from '../pages/admin/Integrations';
 import { AdminReferrals } from '../pages/admin/Referrals';
+import { Landing } from '../pages/Landing';
+import { InquiryForm } from '../pages/InquiryForm';
+import { ReferralSignup } from '../pages/ReferralSignup';
 
 const RootRedirect = () => {
   const { isAuthenticated, user } = useAuthStore();
-  
+
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
-  
+
   const redirectPath = user.role === 'admin' ? '/admin/dashboard' : '/school/dashboard';
   return <Navigate to={redirectPath} replace />;
 };
 
 export const router = createBrowserRouter([
   {
+    path: '/',
+    element: <Landing />,
+  },
+  {
     path: '/login',
     element: <Login />,
   },
   {
-    path: '/',
+    path: '/inquiry/:schoolId',
+    element: <InquiryForm />,
+  },
+  {
+    path: '/refer/:code',
+    element: <ReferralSignup />,
+  },
+  {
+    path: '/dashboard',
     element: <RootRedirect />,
   },
   {

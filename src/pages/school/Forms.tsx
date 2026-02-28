@@ -1,12 +1,29 @@
-import { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Plus, Trash2, Loader2, Save, FileText, CheckCircle, AlertCircle, GripVertical } from 'lucide-react';
+import api from '../../api/axios';
 import type { FormQuestion } from '../../types';
 
 export const SchoolForms = () => {
-  const [questions, setQuestions] = useState<FormQuestion[]>([
-    { id: '1', question: 'What is your child\'s name?', required: true },
-    { id: '2', question: 'What is your preferred contact method?', required: false },
-  ]);
+  const { t } = useTranslation();
+  const [questions, setQuestions] = useState<FormQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    const fetchForms = async () => {
+      try {
+        const res = await api.get('/school/forms');
+        setQuestions(res.data);
+      } catch (err) {
+        console.error('Failed to load forms:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchForms();
+  }, []);
 
   const addQuestion = () => {
     const newQuestion: FormQuestion = {
@@ -27,68 +44,123 @@ export const SchoolForms = () => {
     );
   };
 
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.post('/school/forms', { questions });
+      setSuccess(t('form_saved'));
+      setTimeout(() => setSuccess(''), 4000);
+    } catch (err) {
+      console.error('Failed to save forms:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[70vh] gap-3">
+        <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+        <p className="text-slate-500 text-sm">{t('loading')}</p>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
+    <div className="animate-soft max-w-5xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-            Forms
-          </h1>
-          <p className="text-gray-600">Build dynamic forms for your leads</p>
+          <h1 className="text-2xl font-semibold text-slate-900">{t('inquiry_form')}</h1>
+          <p className="text-sm text-slate-500">{t('inquiry_form_desc')}</p>
         </div>
-        <button
-          onClick={addQuestion}
-          className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/40 hover:shadow-xl"
-        >
-          <Plus className="w-5 h-5" />
-          Add Question
-        </button>
+        <div className="flex gap-3">
+          <button onClick={addQuestion} className="ui-button-secondary gap-2">
+            <Plus className="w-4 h-4" />
+            {t('add_question')}
+          </button>
+          <button onClick={handleSave} disabled={saving} className="ui-button-primary gap-2">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saving ? t('saving') : t('save')}
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        {questions.map((question) => (
+      {success && (
+        <div className="mb-6 bg-emerald-50 text-emerald-700 px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2 border border-emerald-200">
+          <CheckCircle className="w-4 h-4" />
+          {success}
+        </div>
+      )}
+
+      <div className="space-y-6">
+        {questions.map((question, index) => (
           <div
             key={question.id}
-            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all"
+            className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-slate-300 transition-all shadow-sm group"
           >
-            <div className="flex items-start gap-4">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={question.question}
-                  onChange={(e) => updateQuestion(question.id, 'question', e.target.value)}
-                  placeholder="Enter question..."
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/50 backdrop-blur-sm"
-                />
+            <div className="flex items-start gap-6">
+              <div className="flex flex-col items-center gap-2 pt-2">
+                <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-100">
+                  <span className="text-xs font-bold text-slate-500">{index + 1}</span>
+                </div>
+                <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors">
+                  <GripVertical className="w-4 h-4" />
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
+
+              <div className="flex-1 space-y-6">
+                <div className="relative group/input">
                   <input
-                    type="checkbox"
-                    checked={question.required}
-                    onChange={(e) => updateQuestion(question.id, 'required', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-primary-500"
+                    type="text"
+                    value={question.question}
+                    onChange={(e) => updateQuestion(question.id, 'question', e.target.value)}
+                    placeholder={t('question_placeholder')}
+                    className="ui-input rounded-lg p-3 text-sm text-slate-700 bg-white border-slate-200 focus:border-primary-500"
                   />
-                  <span className="text-sm font-medium text-gray-700">Required</span>
-                </label>
-                <button
-                  onClick={() => removeQuestion(question.id)}
-                  className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                  <FileText className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                  <div className="flex items-center gap-8">
+                    <label className="flex items-center gap-3 cursor-pointer group/toggle">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={question.required}
+                          onChange={(e) => updateQuestion(question.id, 'required', e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-all"></div>
+                        <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full peer-checked:translate-x-4 transition-transform"></div>
+                      </div>
+                      <span className="text-xs text-slate-500">{t('required')}</span>
+                    </label>
+                  </div>
+
+                  <button
+                    onClick={() => removeQuestion(question.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {t('remove')}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         ))}
-      </div>
 
-      {questions.length === 0 && (
-        <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-lg">
-          <p className="text-gray-500">No questions yet. Click "Add Question" to get started.</p>
-        </div>
-      )}
+        {questions.length === 0 && (
+          <div className="bg-white border border-dashed border-slate-200 rounded-xl p-12 text-center">
+            <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-slate-900 mb-1">{t('no_questions_yet')}</h3>
+            <p className="text-slate-500 text-sm mb-6">{t('no_questions_desc')}</p>
+            <button onClick={addQuestion} className="ui-button-primary">
+              {t('add_first_question')}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
-
