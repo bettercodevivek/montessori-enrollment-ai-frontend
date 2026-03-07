@@ -18,6 +18,7 @@ import { AdminReferrals } from '../pages/admin/Referrals';
 import { Landing } from '../pages/Landing';
 import { InquiryForm } from '../pages/InquiryForm';
 import { ReferralSignup } from '../pages/ReferralSignup';
+import { BookTour } from '../pages/BookTour';
 
 const RootRedirect = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -46,6 +47,10 @@ export const router = createBrowserRouter([
   {
     path: '/refer/:code',
     element: <ReferralSignup />,
+  },
+  {
+    path: '/book-tour/:schoolId',
+    element: <BookTour />,
   },
   {
     path: '/dashboard',
