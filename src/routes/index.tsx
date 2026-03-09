@@ -2,6 +2,8 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { ProtectedRoute } from './ProtectedRoute';
 import { Login } from '../pages/Login';
+import { SchoolLogin } from '../pages/SchoolLogin';
+import { MasterLogin } from '../pages/MasterLogin';
 import { SchoolLayout } from '../layouts/SchoolLayout';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { SchoolDashboard } from '../pages/school/Dashboard';
@@ -39,6 +41,14 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,
+  },
+  {
+    path: '/login/school',
+    element: <SchoolLogin />,
+  },
+  {
+    path: '/login/master',
+    element: <MasterLogin />,
   },
   {
     path: '/inquiry/:schoolId',

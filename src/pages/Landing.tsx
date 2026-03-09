@@ -4,7 +4,7 @@ import {
     Shield, Globe, ArrowRight, Zap, PhoneCall, FileText,
     Clock, CheckCircle2, Languages, LayoutGrid, Calendar, Users,
     Heart, MessageSquare, LineChart, AlertCircle, BarChart3,
-    Smartphone, Mail, Lock
+    Smartphone, Mail, Lock, School, ShieldCheck
 } from 'lucide-react';
 
 const FeatureCard = ({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) => (
@@ -298,6 +298,54 @@ export const Landing = () => {
                             "Help schools capture opportunities while reducing operational noise."
                         </p>
                         <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">The Core Mission</p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Role Selection */}
+            <section id="access" className="py-24 bg-slate-50 border-t border-slate-200">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-16 px-4">
+                        <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6">{t('role_selection')}</h2>
+                        <p className="text-xl text-slate-500 max-w-2xl mx-auto">{t('role_selection_desc')}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                        {/* School Card */}
+                        <div className="flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-xl hover:border-blue-400 p-8 transition-all group">
+                            <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
+                                <School className="w-7 h-7 text-blue-600 group-hover:text-white transition-colors" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-900 mb-3">{t('school_card')}</h3>
+                            <p className="text-slate-500 mb-8 leading-relaxed">
+                                {t('school_card_desc')}
+                            </p>
+                            <button
+                                onClick={() => navigate('/login/school')}
+                                className="mt-auto w-full py-4 rounded-lg bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                            >
+                                {t('access_portal')}
+                                <ArrowRight className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Master Card */}
+                        <div className="flex flex-col bg-slate-900 border border-slate-800 rounded-2xl shadow-sm hover:shadow-2xl hover:border-blue-500 p-8 transition-all group">
+                            <div className="w-14 h-14 rounded-xl bg-slate-800 flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
+                                <ShieldCheck className="w-7 h-7 text-slate-400 group-hover:text-white transition-colors" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-3">{t('admin_card')}</h3>
+                            <p className="text-slate-400 mb-8 leading-relaxed">
+                                {t('admin_card_desc')}
+                            </p>
+                            <button
+                                onClick={() => navigate('/login/master')}
+                                className="mt-auto w-full py-4 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                            >
+                                {t('access_portal')}
+                                <ArrowRight className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>

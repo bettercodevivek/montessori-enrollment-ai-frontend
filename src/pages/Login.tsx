@@ -1,39 +1,10 @@
-import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import { Globe, ArrowRight, Loader2 } from 'lucide-react';
+import { Globe, School, ShieldCheck, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuthStore();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    if (!email || !password) {
-      setError(t('please_enter_credentials'));
-      setLoading(false);
-      return;
-    }
-
-    try {
-      await login(email, password);
-      const user = useAuthStore.getState().user;
-      navigate(user?.role === 'admin' ? '/admin/dashboard' : '/school/dashboard');
-    } catch (err) {
-      setError(t('invalid_credentials'));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'es' : 'en';
@@ -42,80 +13,89 @@ export const Login = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 font-sans">
-      <div className="w-full max-w-md animate-soft">
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-xl p-10 overflow-hidden">
-          <div className="flex items-center justify-between mb-10">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-black text-lg">BB</span>
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-slate-900 leading-tight">
-                  {t('enrollment_ai')}
-                </h1>
-                <p className="text-xs text-slate-500 mt-0.5">{t('montessori_enrollment_ai')}</p>
-              </div>
+      <div className="w-full max-w-4xl animate-soft">
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-2 mb-6 cursor-pointer" onClick={() => navigate('/')}>
+            <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center shadow-lg shadow-primary-200">
+              <span className="text-white font-black text-lg">BB</span>
+            </div>
+            <span className="text-2xl font-black tracking-tight text-slate-900">
+              {t('enrollment_ai')}
+            </span>
+          </div>
+          <h2 className="text-3xl font-bold text-slate-900 mb-3">{t('role_selection')}</h2>
+          <p className="text-slate-500 max-w-md mx-auto">{t('role_selection_desc')}</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+          {/* School Login Card */}
+          <div
+            onClick={() => navigate('/login/school')}
+            className="group bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-xl hover:border-primary-400 p-8 transition-all cursor-pointer relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+              <School className="w-24 h-24" />
             </div>
 
-            <button
-              onClick={toggleLanguage}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-            >
-              <Globe className="w-3.5 h-3.5" />
-              {i18n.language === 'en' ? t('spanish') : t('english')}
-            </button>
+            <div className="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary-600 transition-colors">
+              <School className="w-6 h-6 text-primary-600 group-hover:text-white transition-colors" />
+            </div>
+
+            <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-primary-600 transition-colors">
+              {t('school_card')}
+            </h3>
+            <p className="text-sm text-slate-500 leading-relaxed mb-6">
+              {t('school_card_desc')}
+            </p>
+
+            <div className="flex items-center gap-2 text-sm font-bold text-primary-600">
+              {t('access_portal')}
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-slate-900 mb-1">{t('welcome')}</h2>
-            <p className="text-sm text-slate-500">{t('sign_in_portal')}</p>
+          {/* Admin/Master Login Card */}
+          <div
+            onClick={() => navigate('/login/master')}
+            className="group bg-slate-900 border border-slate-800 rounded-2xl shadow-sm hover:shadow-2xl hover:border-primary-500 p-8 transition-all cursor-pointer relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <ShieldCheck className="w-24 h-24 text-primary-400" />
+            </div>
+
+            <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary-600 transition-colors">
+              <ShieldCheck className="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" />
+            </div>
+
+            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-primary-400 transition-colors">
+              {t('admin_card')}
+            </h3>
+            <p className="text-sm text-slate-400 leading-relaxed mb-6">
+              {t('admin_card_desc')}
+            </p>
+
+            <div className="flex items-center gap-2 text-sm font-bold text-primary-400">
+              {t('access_portal')}
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
           </div>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
+        <div className="mt-12 text-center">
+          <button
+            onClick={toggleLanguage}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-500 hover:text-primary-600 hover:bg-white hover:shadow-sm rounded-full transition-all border border-transparent hover:border-slate-200"
+          >
+            <Globe className="w-4 h-4" />
+            {i18n.language === 'en' ? 'En Español' : 'In English'}
+          </button>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">{t('email')}</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="ui-input h-11"
-                placeholder="you@school.com"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">{t('password')}</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="ui-input h-11"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 ui-button-primary h-11 rounded-lg"
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-              <span className="font-medium text-sm">
-                {loading ? t('signing_in') : t('signin_btn')}
-              </span>
-              {!loading ? <ArrowRight className="w-4 h-4" /> : null}
-            </button>
-          </form>
+          <p className="mt-8 text-xs text-slate-400 font-bold uppercase tracking-widest">
+            System Security Protocols Active
+          </p>
         </div>
       </div>
     </div>
   );
 };
+
