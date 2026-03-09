@@ -24,7 +24,7 @@ const RootRedirect = () => {
   const { isAuthenticated, user } = useAuthStore();
 
   if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   const redirectPath = user.role === 'admin' ? '/admin/dashboard' : '/school/dashboard';

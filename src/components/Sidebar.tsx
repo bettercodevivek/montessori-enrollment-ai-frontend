@@ -35,7 +35,7 @@ export const Sidebar = ({ role }: SidebarProps) => {
       <div className="px-5 py-5 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
-            <span className="text-white font-bold text-sm">AI</span>
+            <span className="text-white font-bold text-sm">BB</span>
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-900 leading-none">{t('enrollment_ai')}</p>

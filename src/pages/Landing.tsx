@@ -1,14 +1,31 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Shield, Globe, ArrowRight, Zap, PhoneCall, Laptop, FileText } from 'lucide-react';
+import {
+    Shield, Globe, ArrowRight, Zap, PhoneCall, FileText,
+    Clock, CheckCircle2, Languages, LayoutGrid, Calendar, Users,
+    Heart, MessageSquare, LineChart, AlertCircle, BarChart3,
+    Smartphone, Mail, Lock
+} from 'lucide-react';
 
-const FeatureCard = ({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) => (
-    <div className="bg-white border border-slate-200 rounded-xl p-6 text-center hover:shadow-md transition-shadow">
-        <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center mx-auto mb-4 border border-slate-100">
-            {icon}
+const FeatureCard = ({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) => (
+    <div className="flex flex-col p-8 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
+        <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center mb-6 shrink-0 border border-blue-100">
+            <Icon className="w-6 h-6 text-blue-600" />
         </div>
-        <h3 className="text-base font-semibold text-slate-900 mb-1">{title}</h3>
-        <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
+        <h3 className="text-xl font-bold text-slate-900 mb-2">{title}</h3>
+        <p className="text-slate-600 leading-relaxed text-sm">{desc}</p>
+    </div>
+);
+
+const RoadmapItem = ({ icon: Icon, title, status }: { icon: any; title: string; status?: string }) => (
+    <div className="flex items-center gap-4 p-4 bg-white border border-slate-200 rounded-lg group hover:border-blue-400 transition-colors">
+        <div className="w-10 h-10 rounded-md bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors">
+            <Icon className="w-5 h-5 text-slate-500 group-hover:text-blue-600 transition-colors" />
+        </div>
+        <div className="flex-1">
+            <h4 className="text-sm font-semibold text-slate-900">{title}</h4>
+            {status && <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">{status}</span>}
+        </div>
     </div>
 );
 
@@ -17,112 +34,311 @@ export const Landing = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-white font-sans overflow-x-hidden">
-            {/* Nav */}
-            <nav className="fixed top-0 w-full z-50 bg-white border-b border-slate-200">
-                <div className="max-w-6xl mx-auto px-6 h-15 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">AI</span>
+        <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-blue-600 selection:text-white">
+            {/* Header */}
+            <header className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200">
+                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+                        <div className="w-9 h-9 bg-blue-600 rounded flex items-center justify-center">
+                            <span className="text-white font-bold text-base">BB</span>
                         </div>
-                        <span className="text-base font-semibold text-slate-900">{t('enrollment_ai')}</span>
+                        <span className="text-xl font-bold tracking-tight text-slate-900">
+                            BrightBridge
+                        </span>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+                        <a href="#problem" className="hover:text-blue-600 transition-colors">The Problem</a>
+                        <a href="#approach" className="hover:text-blue-600 transition-colors">Our Approach</a>
+                        <a href="#capabilities" className="hover:text-blue-600 transition-colors">Capabilities</a>
+                        <a href="#roadmap" className="hover:text-blue-600 transition-colors">Roadmap</a>
+                    </nav>
+                    <div className="flex items-center gap-4">
                         <button
                             onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'es' : 'en')}
-                            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 font-medium"
+                            className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors px-3 py-2 rounded-lg hover:bg-slate-100"
                         >
                             <Globe className="w-4 h-4" />
-                            {i18n.language === 'en' ? t('spanish') : t('english')}
+                            {i18n.language === 'en' ? 'ESP' : 'ENG'}
                         </button>
                         <button
                             onClick={() => navigate('/login')}
-                            className="ui-button-primary text-sm"
+                            className="px-5 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-all"
                         >
-                            {t('signin_btn')}
+                            Sign In
                         </button>
                     </div>
                 </div>
-            </nav>
+            </header>
 
             {/* Hero */}
-            <section className="pt-28 pb-20 px-6 text-center">
-                <div className="max-w-3xl mx-auto">
-                    <h1 className="text-4xl md:text-5xl font-semibold text-slate-900 mb-5 leading-tight">
-                        {t('hero_title')}
-                    </h1>
-                    <p className="text-lg text-slate-500 leading-relaxed">
-                        {t('hero_subtitle')}
+            <section className="pt-40 pb-24 md:pt-48 md:pb-32 bg-slate-50 relative">
+                <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-40"></div>
+                <div className="max-w-7xl mx-auto px-6 relative">
+                    <div className="max-w-4xl mx-auto text-center">
+                        <div className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-8">
+                            Built Specifically for Montessori Schools
+                        </div>
+                        <h1 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 leading-[1.05] tracking-tight">
+                            Capture Every <span className="text-blue-600">Enrollment</span> Opportunity.
+                        </h1>
+                        <p className="text-xl md:text-2xl text-slate-600 mb-12 leading-relaxed max-w-3xl mx-auto font-medium">
+                            A communication platform designed for childcare centers to manage parent inquiries, reduce front desk overload, and support diverse families.
+                        </p>
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                            <button
+                                onClick={() => navigate('/login')}
+                                className="w-full sm:w-auto px-10 py-4 rounded-lg bg-blue-600 text-white font-bold text-lg hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200/50 flex items-center justify-center gap-2"
+                            >
+                                Get Started Now
+                                <ArrowRight className="w-5 h-5" />
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Section 1 – The Reality */}
+            <section className="py-24 border-b border-slate-100">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+                        <div>
+                            <h2 className="text-3xl font-black text-slate-900 mb-8 leading-tight">The Reality Most Montessori Schools Face</h2>
+                            <div className="space-y-6 text-lg text-slate-600 leading-relaxed font-normal">
+                                <p>
+                                    Running a school means balancing education, parent relationships, and daily operations.
+                                </p>
+                                <p>
+                                    During busy classroom hours, phone calls often come at the worst possible time. Staff may already be helping students, assisting parents, or managing administrative tasks.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100">
+                                <Clock className="w-8 h-8 text-blue-600 mb-4" />
+                                <h4 className="font-bold text-slate-900 mb-2">Inquiries never stop</h4>
+                                <p className="text-sm text-slate-500">Calls happen during class, after hours, and on weekends when staff aren't available.</p>
+                            </div>
+                            <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100">
+                                <AlertCircle className="w-8 h-8 text-rose-500 mb-4" />
+                                <h4 className="font-bold text-slate-900 mb-2">Missed families</h4>
+                                <p className="text-sm text-slate-500">When calls are missed or rushed, potential families move on to other schools.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Section 2 – The Problem */}
+            <section id="problem" className="py-24 bg-white">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6">The Problem We Are Solving</h2>
+                    <p className="text-xl text-slate-500 max-w-3xl mx-auto mb-16">
+                        Most Montessori schools experience similar communication challenges that quietly impact enrollment growth and parent experience.
                     </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                        {[
+                            { icon: PhoneCall, title: "Missed Calls", text: "Enrollment inquiries are often missed during busy classroom periods." },
+                            { icon: MessageSquare, title: "Inconsistent Info", text: "Staff may give different answers to the same parent questions." },
+                            { icon: Clock, title: "After-Hours Gaps", text: "Parents calling after school closes receive no immediate response." },
+                            { icon: Zap, title: "Front Desk Overload", text: "Phone interruptions overwhelm staff during peak operation hours." },
+                            { icon: Languages, title: "Language Barriers", text: "Non-English speaking families face hurdles when seeking information." },
+                            { icon: Heart, title: "Poor First Touch", text: "A rushed or missed first call sets an unprofessional tone for your school." },
+                        ].map((item, i) => (
+                            <div key={i} className="text-left group cursor-default">
+                                <div className="w-12 h-12 rounded-lg bg-slate-50 flex items-center justify-center mb-6 group-hover:bg-blue-50 transition-colors">
+                                    <item.icon className="w-6 h-6 text-slate-500 group-hover:text-blue-600 transition-colors" />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h3>
+                                <p className="text-slate-500 text-sm leading-relaxed">{item.text}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </section>
 
-            {/* Features */}
-            <section className="py-16 px-6 bg-slate-50 border-y border-slate-200">
-                <div className="max-w-5xl mx-auto">
-                    <h2 className="text-xl font-semibold text-slate-900 text-center mb-10">{t('features_title')}</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <FeatureCard icon={<PhoneCall className="w-5 h-5 text-slate-500" />} title={t('feat_voice_title')} desc={t('feat_voice_desc')} />
-                        <FeatureCard icon={<Zap className="w-5 h-5 text-slate-500" />} title={t('feat_auto_title')} desc={t('feat_auto_desc')} />
-                        <FeatureCard icon={<FileText className="w-5 h-5 text-slate-500" />} title={t('feat_forms_title')} desc={t('feat_forms_desc')} />
+            {/* Section 3 - Our Approach */}
+            <section id="approach" className="py-24 bg-slate-900 text-white relative overflow-hidden">
+                <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center gap-16">
+                    <div className="flex-1 text-center md:text-left">
+                        <h2 className="text-3xl md:text-5xl font-black mb-8 leading-tight">Our Approach</h2>
+                        <p className="text-xl text-slate-300 font-medium leading-relaxed mb-8">
+                            We built a platform designed specifically for childcare centers to support the moment when a new family first reaches out.
+                        </p>
+                        <p className="text-lg text-blue-400 font-bold mb-8 italic">
+                            Help schools capture opportunities while reducing operational noise.
+                        </p>
+                        <ul className="space-y-4 text-slate-300 font-medium">
+                            <li className="flex items-center gap-3 justify-center md:justify-start">
+                                <CheckCircle2 className="w-5 h-5 text-blue-500" />
+                                <span>Answers every call calmly and consistently</span>
+                            </li>
+                            <li className="flex items-center gap-3 justify-center md:justify-start">
+                                <CheckCircle2 className="w-5 h-5 text-blue-500" />
+                                <span>Allows your team to focus on students</span>
+                            </li>
+                            <li className="flex items-center gap-3 justify-center md:justify-start">
+                                <CheckCircle2 className="w-5 h-5 text-blue-500" />
+                                <span>Maintains a professional first impression 24/7</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div className="flex-1 w-full max-w-md bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl">
+                        <div className="text-blue-400 font-bold text-sm mb-6 flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                            System Methodology
+                        </div>
+                        <div className="space-y-6">
+                            <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                                <div className="text-sm font-bold mb-1">Inquiry Receipt</div>
+                                <div className="text-xs text-slate-400">Caller ID and initial intent analysis</div>
+                            </div>
+                            <div className="p-4 rounded-xl bg-blue-600 border border-blue-500">
+                                <div className="text-sm font-bold mb-1">AI Assistant Interaction</div>
+                                <div className="text-xs text-blue-100">Program info & tour scheduling</div>
+                            </div>
+                            <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                                <div className="text-sm font-bold mb-1">Director Notification</div>
+                                <div className="text-xs text-slate-400">Instant summary & followup flag</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* Access Portals */}
-            <section className="py-20 px-6">
-                <div className="max-w-4xl mx-auto">
-                    <div className="text-center mb-10">
-                        <h2 className="text-2xl font-semibold text-slate-900 mb-2">{t('role_selection')}</h2>
-                        <p className="text-sm text-slate-500">{t('role_selection_desc')}</p>
+            {/* Current Offering */}
+            <section id="capabilities" className="py-24 bg-white">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="max-w-3xl mb-16 px-4 py-1.5 rounded-lg bg-blue-50 border border-blue-100 inline-block">
+                        <p className="text-blue-700 font-bold text-xs uppercase tracking-widest">Current Offering</p>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* School card */}
-                        <div className="bg-white border border-slate-200 rounded-xl p-8 hover:border-blue-400 hover:shadow-md transition-all group">
-                            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-5">
-                                <Laptop className="w-5 h-5 text-blue-600" />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+                        <div>
+                            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-8 leading-[1.1]">AI Enrollment Assistant</h2>
+                            <p className="text-xl text-slate-600 mb-10 leading-relaxed font-medium">
+                                A voice assistant designed to handle new parent inquiries and help families take the next step toward visiting your school.
+                            </p>
+                            <div className="bg-slate-50 border-l-4 border-blue-600 p-8 rounded-r-xl">
+                                <p className="text-lg text-slate-800 font-bold mb-2">Designed for seamless integration</p>
+                                <p className="text-slate-600">Your front desk continues to handle all existing parent calls. We handle the volume of new enrollment traffic.</p>
                             </div>
-                            <h3 className="text-lg font-semibold text-slate-900 mb-2">{t('school_card')}</h3>
-                            <p className="text-sm text-slate-500 leading-relaxed mb-6">{t('school_card_desc')}</p>
-                            <button
-                                onClick={() => navigate('/login')}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
-                            >
-                                {t('access_portal')}
-                                <ArrowRight className="w-4 h-4" />
-                            </button>
                         </div>
-
-                        {/* Admin card */}
-                        <div className="bg-white border border-slate-200 rounded-xl p-8 hover:border-slate-400 hover:shadow-md transition-all group">
-                            <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center mb-5">
-                                <Shield className="w-5 h-5 text-slate-600" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-slate-900 mb-2">{t('admin_card')}</h3>
-                            <p className="text-sm text-slate-500 leading-relaxed mb-6">{t('admin_card_desc')}</p>
-                            <button
-                                onClick={() => navigate('/login')}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors"
-                            >
-                                {t('access_portal')}
-                                <ArrowRight className="w-4 h-4" />
-                            </button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <FeatureCard icon={Smartphone} title="24/7 Availability" desc="Works after hours, during lunch, and on weekends." />
+                            <FeatureCard icon={MessageSquare} title="Unified Messaging" desc="Consistent program information for every caller." />
+                            <FeatureCard icon={Users} title="Inquiry Capture" desc="Automatically logs contact details and parent needs." />
+                            <FeatureCard icon={Calendar} title="Tour Booking" desc="Coordinates visits without manual back-and-forth." />
+                            <FeatureCard icon={Mail} title="Director Summaries" desc="Sends detailed conversation logs to management." />
+                            <FeatureCard icon={AlertCircle} title="Priority Flagging" desc="Identifies leads that need urgent personal attention." />
                         </div>
                     </div>
+                </div>
+            </section>
+
+            {/* Multilingual Support */}
+            <section className="py-24 bg-slate-50 border-y border-slate-200">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                        <div className="order-2 lg:order-1">
+                            <div className="flex gap-4 p-2 bg-white border border-slate-200 rounded-xl max-w-sm">
+                                <div className="flex-1 p-8 rounded-lg bg-blue-50 text-center border border-blue-100 group">
+                                    <div className="text-2xl font-black text-blue-600 mb-2 transition-transform group-hover:scale-110">EN</div>
+                                    <div className="text-[10px] uppercase font-black text-blue-400 tracking-widest">English</div>
+                                </div>
+                                <div className="flex-1 p-8 rounded-lg bg-slate-900 text-center text-white border border-slate-800 group">
+                                    <div className="text-2xl font-black text-blue-500 mb-2 transition-transform group-hover:scale-110">ES</div>
+                                    <div className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Español</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="order-1 lg:order-2">
+                            <div className="flex items-center gap-3 text-blue-600 font-bold mb-4 uppercase tracking-[0.2em] text-xs">
+                                <Languages className="w-4 h-4" />
+                                Global Accessibility
+                            </div>
+                            <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-8 leading-tight">Multilingual Support</h2>
+                            <p className="text-xl text-slate-600 mb-8 font-medium leading-relaxed">
+                                Many Montessori communities serve families from diverse backgrounds. Our system is designed to respond to parents in the language they feel most comfortable using.
+                            </p>
+                            <p className="text-slate-500 font-medium">This ensures every parent feels welcomed and understood from the very first interaction.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Roadmap */}
+            <section id="roadmap" className="py-24 bg-white">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">System Roadmap</h2>
+                        <p className="text-xl text-slate-500 max-w-3xl mx-auto">We are building a comprehensive toolkit for modern childcare operation. Coming in 2026.</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <RoadmapItem icon={LineChart} title="Parent Inquiry Dashboard" status="Available" />
+                        <RoadmapItem icon={BarChart3} title="Enrollment Pipeline Tracker" status="Available" />
+                        <RoadmapItem icon={Calendar} title="Automated Tour Scheduling" status="BETA" />
+                        <RoadmapItem icon={FileText} title="Waitlist Automation" />
+                        <RoadmapItem icon={Users} title="Customizable Childcare CRM" />
+                        <RoadmapItem icon={MessageSquare} title="Unified Communication Hub" />
+                        <RoadmapItem icon={Zap} title="Re-engagement Engine" />
+                        <RoadmapItem icon={Lock} title="School Security Protocols" />
+                    </div>
+                </div>
+            </section>
+
+            {/* Built for Childcare */}
+            <section className="py-24 bg-slate-900 text-white border-y border-slate-800">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                    <h2 className="text-3xl md:text-5xl font-black mb-8 tracking-tighter">Built for Childcare Operators</h2>
+                    <p className="text-xl text-slate-400 mb-12 font-medium leading-relaxed">
+                        Most tools available today are built for generic businesses. This platform is engineered around the specific daily rhythm of a childcare center.
+                    </p>
+                    <div className="p-10 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                        <p className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-200 mb-4 tracking-tight">
+                            "Help schools capture opportunities while reducing operational noise."
+                        </p>
+                        <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">The Core Mission</p>
+                    </div>
+                </div>
+            </section>
+
+            {/* CTA */}
+            <section className="py-24 bg-blue-600 text-white relative">
+                <div className="absolute inset-0 bg-blue-700/30 overflow-hidden">
+                    <div className="absolute top-1/2 left-0 w-full h-px bg-white/10 -rotate-12" />
+                    <div className="absolute top-1/2 left-0 w-full h-px bg-white/10 rotate-12" />
+                </div>
+                <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+                    <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight tracking-tight">Interested in learning more?</h2>
+                    <p className="text-xl text-blue-100 mb-12 font-semibold">
+                        We would be happy to walk through how the platform works and answer questions about supporting your specific school.
+                    </p>
+
                 </div>
             </section>
 
             {/* Footer */}
-            <footer className="py-8 px-6 border-t border-slate-100">
-                <div className="max-w-6xl mx-auto flex items-center justify-between text-sm text-slate-400">
-                    <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-                            <span className="text-white font-bold text-xs">AI</span>
+            <footer className="py-20 bg-white border-t border-slate-200">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                                    <span className="text-white font-bold text-sm">BB</span>
+                                </div>
+                                <span className="text-xl font-bold text-slate-900 tracking-tight">BrightBridge</span>
+                            </div>
+                            <p className="text-slate-400 text-sm max-w-xs font-medium">Empowering Montessori communities with professional AI enrollment intelligence.</p>
                         </div>
-                        <span className="font-medium text-slate-700">Enrollment AI</span>
+
                     </div>
-                    <span>&copy; 2026 Enrollment AI. All rights reserved.</span>
+                    <div className="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center">
+                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">&copy; 2026 BrightBridge. All Rights Reserved.</p>
+                        <div className="flex gap-4">
+                            <div className="w-8 h-8 rounded-full bg-slate-100" />
+                            <div className="w-8 h-8 rounded-full bg-slate-100" />
+                        </div>
+                    </div>
                 </div>
             </footer>
         </div>

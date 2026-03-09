@@ -47,7 +47,7 @@ export const Login = () => {
           <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-black text-lg">AI</span>
+                <span className="text-white font-black text-lg">BB</span>
               </div>
               <div>
                 <h1 className="text-lg font-semibold text-slate-900 leading-tight">
