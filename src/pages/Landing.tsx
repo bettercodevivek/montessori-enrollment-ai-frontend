@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-    Shield, Globe, ArrowRight, Zap, PhoneCall, FileText,
-    Clock, CheckCircle2, Languages, LayoutGrid, Calendar, Users,
+    Globe, ArrowRight, Zap, PhoneCall, FileText,
+    Clock, CheckCircle2, Languages, Calendar, Users,
     Heart, MessageSquare, LineChart, AlertCircle, BarChart3,
     Smartphone, Mail, Lock, School, ShieldCheck
 } from 'lucide-react';
