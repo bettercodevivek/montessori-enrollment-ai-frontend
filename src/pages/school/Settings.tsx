@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Save, Loader2, Phone, MessageSquare, Clock, Globe, Shield, CheckCircle, AlertCircle } from 'lucide-react';
+import { Save, Loader2, Phone, MessageSquare, Clock, Globe, Shield, CheckCircle, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import api from '../../api/axios';
+
+interface QAPair {
+  question: string;
+  answer: string;
+}
 
 interface SettingsData {
   aiNumber: string;
@@ -18,6 +23,43 @@ interface SettingsData {
   emailAutoFollowup: boolean;
   smsTemplate: string;
   emailTemplate: string;
+  qaPairs: QAPair[];
+}
+
+const DEFAULT_QA_PAIRS: QAPair[] = [
+  { question: "What makes your school different?", answer: "We follow the Montessori philosophy, which focuses on independence, hands-on learning, and child-led development in a structured classroom environment." },
+  { question: "What ages do you accept?", answer: "We accept children from [age]." },
+  { question: "Do you offer full-time and part-time options?", answer: "Yes, we offer full-time and part-time options depending on availability." },
+  { question: "Is there availability?", answer: "Availability varies by age group. I can check availability and help schedule a tour." },
+  { question: "How do I enroll?", answer: "The first step is to schedule a tour. After your visit, we guide you through the enrollment paperwork." },
+  { question: "Is there an enrollment fee?", answer: "Yes, there is a registration fee of [$amount]. Full details are shared during enrollment." },
+  { question: "How much is tuition?", answer: "Tuition depends on age and schedule. We review exact pricing during your tour." },
+  { question: "What are your hours?", answer: "We are open from [Opening Time] to [Closing Time], Monday through Friday." },
+  { question: "Are you year-round?", answer: "We operate on a [year-round / academic year] calendar." },
+  { question: "What is Montessori?", answer: "Montessori is a child-centered educational approach that encourages independence, self-paced learning, and hands-on materials." },
+  { question: "Are teachers certified?", answer: "Our teachers are trained in Montessori methods and early childhood education." },
+  { question: "What is the teacher-to-child ratio?", answer: "We follow all state-required ratios to ensure quality and safety." },
+  { question: "How do you ensure safety?", answer: "We maintain secure entry procedures and follow all licensing and safety standards." },
+  { question: "Do you provide meals?", answer: "[Yes / No]. If no, parents provide lunch and snacks." },
+  { question: "How do you handle allergies?", answer: "We take allergies seriously and work closely with families to ensure safety. Allergy information is documented during onboarding." },
+  { question: "Do children nap?", answer: "Yes, younger children have scheduled rest time." },
+  { question: "How do parents receive updates?", answer: "We provide updates through [app/email/daily report]." },
+  { question: "How long is a tour?", answer: "Tours typically last about 30–45 minutes." },
+  { question: "Can I bring my child to the tour?", answer: "Yes, you're welcome to bring your child." },
+  { question: "How do I schedule a tour?", answer: "I can help you schedule a tour now. What day works best?" },
+  { question: "Do you offer school pickup?", answer: "Yes, we offer pickup service from nearby schools within a [X-mile] radius." },
+  { question: "Which schools do you pick up from?", answer: "Pickup is available from select schools within our service area. I can confirm if your child's school qualifies." },
+  { question: "Is pickup included in tuition?", answer: "Pickup service may have an additional fee. Details are shared during the enrollment discussion." },
+  { question: "What time is pickup?", answer: "Pickup times depend on the partner school's dismissal schedule." },
+  { question: "Is transportation safe?", answer: "Yes, we follow all transportation safety guidelines and supervision policies." },
+  { question: "What if I live slightly outside the radius?", answer: "I can note your address and have our director confirm availability." },
+  { question: "Do you offer drop-off service too?", answer: "Currently we offer [pickup only / pickup and drop-off]." },
+  { question: "How do I register for pickup?", answer: "Pickup arrangements are finalized during enrollment. We confirm school details and scheduling at that time." },
+];
+
+// Strip any Mongoose _id fields from qaPairs
+function cleanQAPairs(pairs: any[]): QAPair[] {
+  return (pairs || []).map(p => ({ question: p.question || '', answer: p.answer || '' }));
 }
 
 type Tab = 'agent' | 'twilio' | 'automation';
@@ -30,31 +72,96 @@ export const SchoolSettings = () => {
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('agent');
 
+  // ── Load settings on mount ──────────────────────────────────────────────
   useEffect(() => {
     api.get('/school/settings')
-      .then(res => setSettings(res.data))
-      .catch(err => console.error('Failed to load settings:', err))
+      .then(async res => {
+        const data = res.data;
+        let qaPairs = cleanQAPairs(data.qaPairs);
+
+        // First-time setup: seed default Q&A to DB for this school
+        if (qaPairs.length === 0) {
+          qaPairs = DEFAULT_QA_PAIRS;
+          try {
+            await api.put('/school/settings', { qaPairs: DEFAULT_QA_PAIRS });
+            console.log('[Settings] Default Q&A pairs seeded to DB for this school.');
+          } catch (err) {
+            console.error('[Settings] Failed to seed default Q&A pairs:', err);
+          }
+        }
+
+        setSettings({ ...data, qaPairs });
+      })
+      .catch(err => {
+        console.error('[Settings] Failed to load settings:', err);
+      })
       .finally(() => setLoading(false));
   }, []);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // ── Save all settings to DB ──────────────────────────────────────────────
+  const saveSettings = useCallback(async () => {
+    if (!settings) return;
     setSaving(true);
     setStatus(null);
+
+    const payload = {
+      aiNumber: settings.aiNumber,
+      routingNumber: settings.routingNumber,
+      escalationNumber: settings.escalationNumber,
+      language: settings.language,
+      script: settings.script,
+      businessHoursStart: settings.businessHoursStart,
+      businessHoursEnd: settings.businessHoursEnd,
+      twilioSid: settings.twilioSid,
+      twilioAuthToken: settings.twilioAuthToken,
+      twilioPhoneNumber: settings.twilioPhoneNumber,
+      smsAutoFollowup: settings.smsAutoFollowup,
+      emailAutoFollowup: settings.emailAutoFollowup,
+      smsTemplate: settings.smsTemplate,
+      emailTemplate: settings.emailTemplate,
+      qaPairs: cleanQAPairs(settings.qaPairs),
+    };
+
     try {
-      await api.put('/school/settings', settings);
-      setStatus({ type: 'success', message: t('settings_saved') });
-    } catch (err) {
-      setStatus({ type: 'error', message: t('settings_save_failed') });
+      const res = await api.put('/school/settings', payload);
+      console.log('[Settings] Saved successfully:', res.data);
+      setStatus({ type: 'success', message: `Settings saved — ${res.data.qaPairsCount ?? 0} Q&A pairs stored.` });
+    } catch (err: any) {
+      console.error('[Settings] Save failed:', err);
+      const msg = err?.response?.data?.error || 'Failed to save settings. Please try again.';
+      setStatus({ type: 'error', message: msg });
     } finally {
       setSaving(false);
-      setTimeout(() => setStatus(null), 4000);
+      setTimeout(() => setStatus(null), 5000);
     }
-  };
+  }, [settings]);
 
-  const update = (field: keyof SettingsData, value: any) =>
+  // ── Update a single top-level field ─────────────────────────────────────
+  const update = useCallback(<K extends keyof SettingsData>(field: K, value: SettingsData[K]) => {
     setSettings(prev => prev ? { ...prev, [field]: value } : prev);
+  }, []);
 
+  // ── Update a Q&A pair ────────────────────────────────────────────────────
+  const updateQA = useCallback((index: number, field: 'question' | 'answer', value: string) => {
+    setSettings(prev => {
+      if (!prev) return prev;
+      const pairs = prev.qaPairs.map((p, i) => i === index ? { ...p, [field]: value } : p);
+      return { ...prev, qaPairs: pairs };
+    });
+  }, []);
+
+  const addQA = useCallback(() => {
+    setSettings(prev => prev ? { ...prev, qaPairs: [...prev.qaPairs, { question: '', answer: '' }] } : prev);
+  }, []);
+
+  const removeQA = useCallback((index: number) => {
+    setSettings(prev => {
+      if (!prev) return prev;
+      return { ...prev, qaPairs: prev.qaPairs.filter((_, i) => i !== index) };
+    });
+  }, []);
+
+  // ── Render ───────────────────────────────────────────────────────────────
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
@@ -66,27 +173,34 @@ export const SchoolSettings = () => {
   );
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'agent', label: t('tab_agent') },
+    { id: 'agent', label: 'AI Settings' },
     { id: 'twilio', label: t('tab_twilio') },
     { id: 'automation', label: t('tab_automation') },
   ];
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">{t('settings_title')}</h1>
           <p className="text-sm text-slate-500 mt-0.5">{t('settings_desc')}</p>
         </div>
-        <button onClick={handleSave} disabled={saving} className="ui-button-primary flex items-center gap-2">
+        <button
+          type="button"
+          onClick={saveSettings}
+          disabled={saving}
+          className="ui-button-primary flex items-center gap-2"
+        >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {saving ? t('saving') : t('save_settings')}
         </button>
       </div>
 
+      {/* Status banner */}
       {status && (
         <div className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium mb-6 border ${status.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
-          {status.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          {status.type === 'success' ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
           {status.message}
         </div>
       )}
@@ -96,6 +210,7 @@ export const SchoolSettings = () => {
         {tabs.map(tab => (
           <button
             key={tab.id}
+            type="button"
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
           >
@@ -104,11 +219,12 @@ export const SchoolSettings = () => {
         ))}
       </div>
 
-      <form onSubmit={handleSave} className="space-y-6">
+      <div className="space-y-6">
 
-        {/* ── AI Agent & Routing tab ── */}
+        {/* ── AI Settings tab ── */}
         {activeTab === 'agent' && (
           <>
+            {/* Phone Routing */}
             <div className="bg-white border border-slate-200 rounded-xl p-6">
               <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <Phone className="w-4 h-4 text-slate-400" />
@@ -151,6 +267,7 @@ export const SchoolSettings = () => {
               </div>
             </div>
 
+            {/* Business Hours & Language */}
             <div className="bg-white border border-slate-200 rounded-xl p-6">
               <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-slate-400" />
@@ -159,32 +276,18 @@ export const SchoolSettings = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t('opens_at')}</label>
-                  <input
-                    type="time"
-                    value={settings.businessHoursStart}
-                    onChange={e => update('businessHoursStart', e.target.value)}
-                    className="ui-input w-full"
-                  />
+                  <input type="time" value={settings.businessHoursStart} onChange={e => update('businessHoursStart', e.target.value)} className="ui-input w-full" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t('closes_at')}</label>
-                  <input
-                    type="time"
-                    value={settings.businessHoursEnd}
-                    onChange={e => update('businessHoursEnd', e.target.value)}
-                    className="ui-input w-full"
-                  />
+                  <input type="time" value={settings.businessHoursEnd} onChange={e => update('businessHoursEnd', e.target.value)} className="ui-input w-full" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     <Globe className="w-3 h-3 inline mr-1" />
                     {t('language')}
                   </label>
-                  <select
-                    value={settings.language}
-                    onChange={e => update('language', e.target.value)}
-                    className="ui-input w-full bg-white"
-                  >
+                  <select value={settings.language} onChange={e => update('language', e.target.value)} className="ui-input w-full bg-white">
                     <option value="en">{t('english')}</option>
                     <option value="es">{t('spanish')}</option>
                   </select>
@@ -192,6 +295,63 @@ export const SchoolSettings = () => {
               </div>
             </div>
 
+            {/* Q&A Knowledge Base */}
+            <div className="bg-white border border-slate-200 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-base font-semibold text-slate-900">AI Questionnaire / Knowledge Base</h2>
+                <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
+                  {settings.qaPairs.length} Q&A pairs
+                </span>
+              </div>
+              <p className="text-sm text-slate-500 mb-5">
+                These are saved per-school. Edit each answer to match your school's specific information.
+              </p>
+
+              <div className="space-y-3 mb-4">
+                {settings.qaPairs.map((pair, index) => (
+                  <div key={index} className="flex gap-3 items-start bg-slate-50 p-4 rounded-lg border border-slate-100 group">
+                    <div className="flex-shrink-0 w-7 h-7 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold mt-1">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="text"
+                        value={pair.question}
+                        onChange={e => updateQA(index, 'question', e.target.value)}
+                        className="ui-input w-full bg-white text-sm font-medium"
+                        placeholder="Enter question..."
+                      />
+                      <textarea
+                        value={pair.answer}
+                        onChange={e => updateQA(index, 'answer', e.target.value)}
+                        className="ui-input w-full bg-white text-sm text-slate-600"
+                        rows={2}
+                        placeholder="Enter the answer the AI should give..."
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeQA(index)}
+                      className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 mt-1 shrink-0"
+                      title="Remove this Q&A pair"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={addQA}
+                className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add Question
+              </button>
+            </div>
+
+            {/* AI Script */}
             <div className="bg-white border border-slate-200 rounded-xl p-6">
               <h2 className="text-base font-semibold text-slate-900 mb-1">{t('ai_agent_script')}</h2>
               <p className="text-sm text-slate-500 mb-4">
@@ -208,7 +368,7 @@ export const SchoolSettings = () => {
           </>
         )}
 
-        {/* ── Twilio / SMS tab ── */}
+        {/* ── Twilio tab ── */}
         {activeTab === 'twilio' && (
           <>
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
@@ -229,33 +389,15 @@ export const SchoolSettings = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t('account_sid')}</label>
-                  <input
-                    type="text"
-                    value={settings.twilioSid}
-                    onChange={e => update('twilioSid', e.target.value)}
-                    className="ui-input w-full font-mono text-sm"
-                    placeholder="ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                  />
+                  <input type="text" value={settings.twilioSid} onChange={e => update('twilioSid', e.target.value)} className="ui-input w-full font-mono text-sm" placeholder="ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t('auth_token')}</label>
-                  <input
-                    type="password"
-                    value={settings.twilioAuthToken}
-                    onChange={e => update('twilioAuthToken', e.target.value)}
-                    className="ui-input w-full font-mono text-sm"
-                    placeholder="••••••••••••••••••••••••••••••••"
-                  />
+                  <input type="password" value={settings.twilioAuthToken} onChange={e => update('twilioAuthToken', e.target.value)} className="ui-input w-full font-mono text-sm" placeholder="••••••••••••••••••••••••••••••••" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t('twilio_phone_number')} <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    value={settings.twilioPhoneNumber}
-                    onChange={e => update('twilioPhoneNumber', e.target.value)}
-                    className="ui-input w-full"
-                    placeholder="+15551234567"
-                  />
+                  <input type="text" value={settings.twilioPhoneNumber} onChange={e => update('twilioPhoneNumber', e.target.value)} className="ui-input w-full" placeholder="+15551234567" />
                   <p className="text-xs text-slate-400 mt-1">{t('twilio_phone_help')}</p>
                 </div>
               </div>
@@ -263,74 +405,64 @@ export const SchoolSettings = () => {
           </>
         )}
 
-        {/* ── Automated Follow-ups tab ── */}
+        {/* ── Automation tab ── */}
         {activeTab === 'automation' && (
-          <>
-            <div className="bg-white border border-slate-200 rounded-xl p-6">
-              <h2 className="text-base font-semibold text-slate-900 mb-1 flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-slate-400" />
-                Automated Follow-ups
-              </h2>
-              <p className="text-sm text-slate-500 mb-6">
-                When an enrollment inquiry call ends, the AI can automatically send an SMS and/or email to the parent with the inquiry form link.
-              </p>
+          <div className="bg-white border border-slate-200 rounded-xl p-6">
+            <h2 className="text-base font-semibold text-slate-900 mb-1 flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-slate-400" />
+              Automated Follow-ups
+            </h2>
+            <p className="text-sm text-slate-500 mb-6">
+              When an enrollment inquiry call ends, the AI can automatically send an SMS and/or email to the parent with the inquiry form link.
+            </p>
 
-              <div className="space-y-4 mb-6">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.smsAutoFollowup}
-                    onChange={e => update('smsAutoFollowup', e.target.checked)}
-                    className="w-4 h-4 rounded text-blue-600"
-                  />
-                  <div>
-                    <span className="text-sm font-medium text-slate-700">Send SMS follow-up after call</span>
-                    <p className="text-xs text-slate-400">Requires Twilio credentials to be configured on the Twilio tab.</p>
-                  </div>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.emailAutoFollowup}
-                    onChange={e => update('emailAutoFollowup', e.target.checked)}
-                    className="w-4 h-4 rounded text-blue-600"
-                  />
-                  <div>
-                    <span className="text-sm font-medium text-slate-700">Send Email follow-up after call</span>
-                    <p className="text-xs text-slate-400">Requires SMTP credentials configured in the server .env file.</p>
-                  </div>
-                </label>
-              </div>
+            <div className="space-y-4 mb-6">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={settings.smsAutoFollowup} onChange={e => update('smsAutoFollowup', e.target.checked)} className="w-4 h-4 rounded text-blue-600" />
+                <div>
+                  <span className="text-sm font-medium text-slate-700">Send SMS follow-up after call</span>
+                  <p className="text-xs text-slate-400">Requires Twilio credentials to be configured on the Twilio tab.</p>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={settings.emailAutoFollowup} onChange={e => update('emailAutoFollowup', e.target.checked)} className="w-4 h-4 rounded text-blue-600" />
+                <div>
+                  <span className="text-sm font-medium text-slate-700">Send Email follow-up after call</span>
+                  <p className="text-xs text-slate-400">Requires SMTP credentials configured in the server .env file.</p>
+                </div>
+              </label>
+            </div>
 
-              <div className="border-t border-slate-100 pt-6">
-                <p className="text-xs text-slate-400 mb-4 font-medium uppercase tracking-wide">Message Templates — use {'{parent_name}'}, {'{school_name}'}, {'{form_link}'}</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">{t('sms_template')}</label>
-                    <textarea
-                      rows={7}
-                      value={settings.smsTemplate}
-                      onChange={e => update('smsTemplate', e.target.value)}
-                      className="ui-input w-full text-sm"
-                      placeholder="Hi {parent_name}, thanks for your interest in {school_name}! Please complete our enrollment inquiry form: {form_link}"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">{t('email_template')}</label>
-                    <textarea
-                      rows={7}
-                      value={settings.emailTemplate}
-                      onChange={e => update('emailTemplate', e.target.value)}
-                      className="ui-input w-full text-sm"
-                      placeholder="Dear {parent_name},&#10;&#10;Thank you for contacting {school_name}. Please complete the form: {form_link}&#10;&#10;Warm regards,&#10;{school_name} Team"
-                    />
-                  </div>
+            <div className="border-t border-slate-100 pt-6">
+              <p className="text-xs text-slate-400 mb-4 font-medium uppercase tracking-wide">Message Templates — use {'{parent_name}'}, {'{school_name}'}, {'{form_link}'}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t('sms_template')}</label>
+                  <textarea rows={7} value={settings.smsTemplate} onChange={e => update('smsTemplate', e.target.value)} className="ui-input w-full text-sm" placeholder="Hi {parent_name}, thanks for your interest in {school_name}! Please complete our enrollment inquiry form: {form_link}" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t('email_template')}</label>
+                  <textarea rows={7} value={settings.emailTemplate} onChange={e => update('emailTemplate', e.target.value)} className="ui-input w-full text-sm" placeholder={"Dear {parent_name},\n\nThank you for contacting {school_name}. Please complete the form: {form_link}\n\nWarm regards,\n{school_name} Team"} />
                 </div>
               </div>
             </div>
-          </>
+          </div>
         )}
-      </form>
+
+        {/* Bottom save button */}
+        <div className="flex justify-end pb-8">
+          <button
+            type="button"
+            onClick={saveSettings}
+            disabled={saving}
+            className="ui-button-primary flex items-center gap-2"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saving ? t('saving') : t('save_settings')}
+          </button>
+        </div>
+
+      </div>
     </div>
   );
 };
