@@ -93,6 +93,17 @@ export const Login = () => {
           <p className="mt-8 text-xs text-slate-400 font-bold uppercase tracking-widest">
             System Security Protocols Active
           </p>
+          <div className="mt-8 text-center animate-soft" style={{ animationDelay: '200ms' }}>
+            <p className="text-slate-500 text-sm">
+              Don't have an account yet?{' '}
+              <button
+                onClick={() => navigate('/register/school')}
+                className="text-primary-600 font-bold hover:underline"
+              >
+                Register your school here
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     </div>

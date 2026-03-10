@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Save, Loader2, Phone, MessageSquare, Clock, Globe, Shield, CheckCircle, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { Save, Loader2, Phone, MessageSquare, Clock, Globe, Shield, CheckCircle, AlertCircle, Plus, Trash2, Calendar } from 'lucide-react';
 import api from '../../api/axios';
 
 interface QAPair {
@@ -9,6 +9,9 @@ interface QAPair {
 }
 
 interface SettingsData {
+  id: string;
+  name: string;
+  address: string;
   aiNumber: string;
   routingNumber: string;
   escalationNumber: string;
@@ -24,6 +27,9 @@ interface SettingsData {
   smsTemplate: string;
   emailTemplate: string;
   qaPairs: QAPair[];
+  preferredCalendar: 'google' | 'outlook' | 'both' | 'none';
+  googleConnected: boolean;
+  outlookConnected: boolean;
 }
 
 const DEFAULT_QA_PAIRS: QAPair[] = [
@@ -62,7 +68,7 @@ function cleanQAPairs(pairs: any[]): QAPair[] {
   return (pairs || []).map(p => ({ question: p.question || '', answer: p.answer || '' }));
 }
 
-type Tab = 'agent' | 'twilio' | 'automation';
+type Tab = 'agent' | 'twilio' | 'automation' | 'calendar';
 
 export const SchoolSettings = () => {
   const { t } = useTranslation();
@@ -105,6 +111,8 @@ export const SchoolSettings = () => {
     setStatus(null);
 
     const payload = {
+      name: settings.name,
+      address: settings.address,
       aiNumber: settings.aiNumber,
       routingNumber: settings.routingNumber,
       escalationNumber: settings.escalationNumber,
@@ -120,6 +128,7 @@ export const SchoolSettings = () => {
       smsTemplate: settings.smsTemplate,
       emailTemplate: settings.emailTemplate,
       qaPairs: cleanQAPairs(settings.qaPairs),
+      preferredCalendar: settings.preferredCalendar,
     };
 
     try {
@@ -174,8 +183,9 @@ export const SchoolSettings = () => {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'agent', label: 'AI Settings' },
-    { id: 'twilio', label: t('tab_twilio') },
+    // { id: 'twilio', label: t('tab_twilio') },
     { id: 'automation', label: t('tab_automation') },
+    { id: 'calendar', label: 'Calendar Sync' },
   ];
 
   return (
@@ -228,8 +238,31 @@ export const SchoolSettings = () => {
             <div className="bg-white border border-slate-200 rounded-xl p-6">
               <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <Phone className="w-4 h-4 text-slate-400" />
-                Phone Routing
+                School Identity & Routing
               </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">School Name</label>
+                  <input
+                    type="text"
+                    value={settings.name}
+                    onChange={e => update('name', e.target.value)}
+                    className="ui-input w-full"
+                    placeholder="Sunshine Montessori"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">School Address</label>
+                  <input
+                    type="text"
+                    value={settings.address}
+                    onChange={e => update('address', e.target.value)}
+                    className="ui-input w-full"
+                    placeholder="123 Education Way, City, ST"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t('ai_phone_number')}</label>
@@ -263,34 +296,6 @@ export const SchoolSettings = () => {
                     placeholder="+1 (555) 123-4569"
                   />
                   <p className="text-xs text-slate-400 mt-1">Fallback if AI cannot handle the call.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Business Hours & Language */}
-            <div className="bg-white border border-slate-200 rounded-xl p-6">
-              <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-slate-400" />
-                Business Hours & Language
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('opens_at')}</label>
-                  <input type="time" value={settings.businessHoursStart} onChange={e => update('businessHoursStart', e.target.value)} className="ui-input w-full" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('closes_at')}</label>
-                  <input type="time" value={settings.businessHoursEnd} onChange={e => update('businessHoursEnd', e.target.value)} className="ui-input w-full" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    <Globe className="w-3 h-3 inline mr-1" />
-                    {t('language')}
-                  </label>
-                  <select value={settings.language} onChange={e => update('language', e.target.value)} className="ui-input w-full bg-white">
-                    <option value="en">{t('english')}</option>
-                    <option value="es">{t('spanish')}</option>
-                  </select>
                 </div>
               </div>
             </div>
@@ -368,8 +373,64 @@ export const SchoolSettings = () => {
           </>
         )}
 
+        {/* ── Calendar Sync tab ── */}
+        {activeTab === 'calendar' && (
+          <div className="space-y-6 animate-soft">
+            <div className="bg-white border border-slate-200 rounded-xl p-6">
+              <h2 className="text-base font-semibold text-slate-900 mb-1 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-slate-400" />
+                Calendar Selection
+              </h2>
+              <p className="text-sm text-slate-500 mb-6">
+                Choose which calendar(s) the AI should use to check for tour availability and book new appointments.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { id: 'google', label: 'Google Calendar', icon: <div className="w-8 h-8 rounded bg-red-100 text-red-600 flex items-center justify-center font-bold">G</div>, desc: 'Sync only with Google Workspace.' },
+                  { id: 'outlook', label: 'Outlook Calendar', icon: <div className="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center font-bold">O</div>, desc: 'Sync only with Microsoft Outlook/365.' },
+                  { id: 'both', label: 'Sync Both', icon: <div className="w-8 h-8 rounded bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">G+O</div>, desc: 'Check both for busy times and book to both.' },
+                  { id: 'none', label: 'No Sync', icon: <div className="w-8 h-8 rounded bg-slate-100 text-slate-600 flex items-center justify-center font-bold">X</div>, desc: 'Disable external calendar sync logic.' },
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => update('preferredCalendar', opt.id as any)}
+                    className={`flex flex-col items-center text-center p-5 rounded-xl border-2 transition-all ${settings.preferredCalendar === opt.id
+                      ? 'border-blue-600 bg-blue-50/50 shadow-sm'
+                      : 'border-slate-100 hover:border-slate-300 bg-white'
+                      }`}
+                  >
+                    <div className="mb-3">{opt.icon}</div>
+                    <span className="text-sm font-bold text-slate-900 mb-1">{opt.label}</span>
+                    <p className="text-xs text-slate-500 leading-tight">{opt.desc}</p>
+                    <div className={`mt-4 w-5 h-5 rounded-full border-2 flex items-center justify-center ${settings.preferredCalendar === opt.id ? 'border-blue-600 bg-blue-600' : 'border-slate-200 bg-white'
+                      }`}>
+                      {settings.preferredCalendar === opt.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {((settings.preferredCalendar === 'google' && !settings.googleConnected) ||
+                (settings.preferredCalendar === 'outlook' && !settings.outlookConnected) ||
+                (settings.preferredCalendar === 'both' && (!settings.googleConnected || !settings.outlookConnected))) && (
+                  <div className="mt-8 p-4 bg-amber-50 rounded-xl border border-amber-200 flex gap-3 animate-soft">
+                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="text-sm text-amber-800">
+                      <p className="font-semibold mb-1">Make sure you are connected!</p>
+                      <p>Go to the <strong>Integrations</strong> page to connect your {
+                        settings.preferredCalendar === 'both' ? 'Google and Outlook' : (settings.preferredCalendar === 'google' ? 'Google' : 'Outlook')
+                      } account before choosing {settings.preferredCalendar === 'both' ? 'them' : 'it'} here.</p>
+                    </div>
+                  </div>
+                )}
+            </div>
+          </div>
+        )}
+
         {/* ── Twilio tab ── */}
-        {activeTab === 'twilio' && (
+        {/* {activeTab === 'twilio' && (
           <>
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
               <strong>How to set up Twilio:</strong>
@@ -404,7 +465,7 @@ export const SchoolSettings = () => {
             </div>
           </>
         )}
-
+*/}
         {/* ── Automation tab ── */}
         {activeTab === 'automation' && (
           <div className="bg-white border border-slate-200 rounded-xl p-6">

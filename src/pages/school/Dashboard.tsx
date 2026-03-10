@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, PlayCircle, Activity, PhoneCall, MessageSquare, Mail, FileText, ChevronDown, ChevronUp, Calendar, Mic } from 'lucide-react';
+import { Loader2, PlayCircle, Activity, PhoneCall, MessageSquare, Mail, FileText, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { MetricCard } from '../../components/MetricCard';
 import api from '../../api/axios';
 
 interface DashboardResponse {
   metrics: Array<{ label: string; value: number; change?: number }>;
+  chartData: Array<{ name: string; calls: number; inquiries: number }>;
   recentCalls: Array<{
     id: string;
     callerName: string;
@@ -82,7 +84,7 @@ export const SchoolDashboard = () => {
     );
   }
 
-  const { metrics, recentCalls } = data;
+  const { metrics, chartData, recentCalls } = data;
 
   return (
     <div className="animate-soft">
@@ -111,6 +113,35 @@ export const SchoolDashboard = () => {
         {metrics.map((metric) => (
           <MetricCard key={metric.label} {...metric} />
         ))}
+      </div>
+
+      {/* Analytics Chart */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8 shadow-sm">
+        <h2 className="text-base font-semibold text-slate-900 mb-6 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-slate-400" />
+          Call Volume (Last 14 Days)
+        </h2>
+        <div className="h-[300px] w-full">
+          {chartData?.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} minTickGap={20} />
+                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dx={-10} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  labelStyle={{ fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}
+                />
+                <Legend wrapperStyle={{ paddingTop: '20px' }} iconType="circle" />
+                <Line type="monotone" dataKey="calls" name="Total Calls" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+              No chart data available.
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Test SMS & Email - verify form link without making a call */}
@@ -210,7 +241,7 @@ export const SchoolDashboard = () => {
                       <span className={`ui-badge ${call.callType === 'inquiry'
                         ? 'bg-emerald-50 text-emerald-700'
                         : 'bg-slate-100 text-slate-600'
-                      }`}>
+                        }`}>
                         {call.callType}
                       </span>
                     </td>

@@ -82,7 +82,7 @@ const resources = {
             settings_save_failed: 'Failed to save settings. Please try again.',
             failed_to_load_settings: 'Failed to load settings.',
             tab_agent: 'AI Agent & Routing',
-            tab_twilio: 'Twilio / SMS',
+            //tab_twilio: 'Twilio / SMS',
             tab_automation: 'Automated Follow-ups',
             ai_phone_number: 'AI Phone Number',
             escalation_number: 'Escalation Number',
@@ -175,6 +175,7 @@ const resources = {
             admin_card_desc: 'Aggregate analytics across all schools and manage primary system settings.',
             access_portal: 'Access Portal',
             system_online: 'System online',
+            test_integration: 'Test Integration',
         },
     },
     es: {
@@ -255,7 +256,7 @@ const resources = {
             settings_save_failed: 'Error al guardar. Inténtalo de nuevo.',
             failed_to_load_settings: 'Error al cargar la configuración.',
             tab_agent: 'Agente IA y enrutamiento',
-            tab_twilio: 'Twilio / SMS',
+            //tab_twilio: 'Twilio / SMS',
             tab_automation: 'Seguimientos automáticos',
             ai_phone_number: 'Número de teléfono IA',
             escalation_number: 'Número de escalación',
@@ -347,6 +348,7 @@ const resources = {
             admin_card_desc: 'Analíticas de todas las escuelas y configuración del sistema.',
             access_portal: 'Acceder al portal',
             system_online: 'Sistema en línea',
+            test_integration: 'Probar integración',
         },
     },
 };

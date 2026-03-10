@@ -3,6 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { ProtectedRoute } from './ProtectedRoute';
 import { Login } from '../pages/Login';
 import { SchoolLogin } from '../pages/SchoolLogin';
+import { SchoolRegister } from '../pages/SchoolRegister';
 import { MasterLogin } from '../pages/MasterLogin';
 import { SchoolLayout } from '../layouts/SchoolLayout';
 import { AdminLayout } from '../layouts/AdminLayout';
@@ -12,6 +13,7 @@ import { SchoolSettings } from '../pages/school/Settings';
 import { SchoolFollowups } from '../pages/school/Followups';
 import { SchoolForms } from '../pages/school/Forms';
 import { SchoolReferrals } from '../pages/school/Referrals';
+import { SchoolTestIntegration } from '../pages/school/TestIntegration';
 import { AdminDashboard } from '../pages/admin/Dashboard';
 import { AdminSchools } from '../pages/admin/Schools';
 import { AdminAnalytics } from '../pages/admin/Analytics';
@@ -45,6 +47,10 @@ export const router = createBrowserRouter([
   {
     path: '/login/school',
     element: <SchoolLogin />,
+  },
+  {
+    path: '/register/school',
+    element: <SchoolRegister />,
   },
   {
     path: '/login/master',
@@ -97,6 +103,10 @@ export const router = createBrowserRouter([
       {
         path: 'referrals',
         element: <SchoolReferrals />,
+      },
+      {
+        path: 'test-integration',
+        element: <SchoolTestIntegration />,
       },
     ],
   },

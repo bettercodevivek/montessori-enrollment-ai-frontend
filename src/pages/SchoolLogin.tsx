@@ -126,7 +126,17 @@ export const SchoolLogin = () => {
                             {!loading ? <ArrowRight className="w-4 h-4" /> : null}
                         </button>
 
-                        <div className="pt-2 text-center">
+                        <div className="pt-2 text-center flex flex-col gap-2">
+                            <p className="text-xs text-slate-500">
+                                New here?{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/register/school')}
+                                    className="text-primary-600 font-semibold hover:underline"
+                                >
+                                    Register your school
+                                </button>
+                            </p>
                             <button
                                 type="button"
                                 onClick={() => navigate('/login')}
