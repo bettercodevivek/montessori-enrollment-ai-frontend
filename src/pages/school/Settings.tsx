@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Save, Loader2, Phone, MessageSquare, Clock, Globe, Shield, CheckCircle, AlertCircle, Plus, Trash2, Calendar } from 'lucide-react';
+import { Save, Loader2, Phone, MessageSquare, CheckCircle, AlertCircle, Plus, Trash2, Calendar } from 'lucide-react';
 import api from '../../api/axios';
 
 interface QAPair {

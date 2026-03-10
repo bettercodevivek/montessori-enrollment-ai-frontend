@@ -4,7 +4,7 @@ import {
     Globe, ArrowRight, Zap, PhoneCall, FileText,
     Clock, CheckCircle2, Languages, Calendar, Users,
     Heart, MessageSquare, LineChart, AlertCircle, BarChart3,
-    Smartphone, Mail, School, ShieldCheck, Play, LayoutGrid
+    Smartphone, Mail, Play, LayoutGrid
 } from 'lucide-react';
 
 const FeatureCard = ({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) => (
@@ -38,7 +38,7 @@ const RoadmapItem = ({ icon: Icon, title, status }: { icon: any; title: string; 
 };
 
 export const Landing = () => {
-    const { t, i18n } = useTranslation();
+    const { i18n } = useTranslation();
     const navigate = useNavigate();
 
     return (
