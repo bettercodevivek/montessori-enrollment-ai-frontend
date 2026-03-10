@@ -4,7 +4,7 @@ import {
     Globe, ArrowRight, Zap, PhoneCall, FileText,
     Clock, CheckCircle2, Languages, Calendar, Users,
     Heart, MessageSquare, LineChart, AlertCircle, BarChart3,
-    Smartphone, Mail, Lock, School, ShieldCheck, Play
+    Smartphone, Mail, School, ShieldCheck, Play, LayoutGrid
 } from 'lucide-react';
 
 const FeatureCard = ({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) => (
@@ -255,7 +255,7 @@ export const Landing = () => {
                                     >
                                         Your browser does not support the audio element.
                                     </audio>
-                                 
+
                                 </div>
                             </div>
                         </div>
@@ -315,18 +315,17 @@ export const Landing = () => {
                             <LayoutGrid className="w-4 h-4" />
                             Future Outlook
                         </div>
-                        <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Platform Roadmap</h2>
+                        <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Future Platform Features</h2>
                         <p className="text-xl text-slate-600 max-w-2xl mx-auto font-medium">We are building a comprehensive toolkit for modern childcare operation. Coming in 2026.</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <RoadmapItem icon={LineChart} title="New Parent Inquiry Dashboard"  />
-                        <RoadmapItem icon={BarChart3} title="Enrollment Pipeline Tracker"  />
-                        <RoadmapItem icon={Calendar} title="Automated Tour Scheduling" />
-                        <RoadmapItem icon={FileText} title="Waitlist Automation" />
-                        <RoadmapItem icon={Users} title="Customizable Childcare CRM" />
-                        <RoadmapItem icon={MessageSquare} title="Unified Communication Hub" />
-                        <RoadmapItem icon={Zap} title="Re-engagement Engine" />
-                        <RoadmapItem icon={Lock} title="School Security Protocols" />
+                        <RoadmapItem icon={LineChart} title="New Parent Inquiry Dashboard" />
+                        <RoadmapItem icon={BarChart3} title="Enrollment Pipeline Tracker" />
+                        <RoadmapItem icon={Calendar} title="Tour Scheduling & Automated Reminders" />
+                        <RoadmapItem icon={FileText} title="New Parent Onboarding Automation" />
+                        <RoadmapItem icon={Users} title="Childcare CRM" />
+                        <RoadmapItem icon={MessageSquare} title="New Parent Communication Hub" />
+                        <RoadmapItem icon={Zap} title="Re-engagement Campaigns for Interested Families" />
                     </div>
                 </div>
             </section>
