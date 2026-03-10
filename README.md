@@ -1,4 +1,5 @@
-# Montessori Enrollment AI Frontend
+# Montessori Enrollment AI Frontend 
+
 
 A production-ready SaaS dashboard application for Montessori school enrollment management with separate portals for schools and administrators.
 
