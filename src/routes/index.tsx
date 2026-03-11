@@ -11,6 +11,7 @@ import { SchoolDashboard } from '../pages/school/Dashboard';
 import { SchoolIntegrations } from '../pages/school/Integrations';
 import { SchoolSettings } from '../pages/school/Settings';
 import { SchoolFollowups } from '../pages/school/Followups';
+import { SchoolCallLogs } from '../pages/school/CallLogs';
 import { SchoolForms } from '../pages/school/Forms';
 import { SchoolReferrals } from '../pages/school/Referrals';
 import { SchoolTestIntegration } from '../pages/school/TestIntegration';
@@ -95,6 +96,10 @@ export const router = createBrowserRouter([
       {
         path: 'followups',
         element: <SchoolFollowups />,
+      },
+      {
+        path: 'call-logs',
+        element: <SchoolCallLogs />,
       },
       {
         path: 'forms',
