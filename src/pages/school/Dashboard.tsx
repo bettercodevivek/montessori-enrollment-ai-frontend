@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, PlayCircle, Activity, PhoneCall, MessageSquare, Mail, FileText, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp } from 'lucide-react';
+import { Loader2, PlayCircle, Activity, PhoneCall, MessageSquare, Mail, FileText, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp, Save, User } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { MetricCard } from '../../components/MetricCard';
 import api from '../../api/axios';
@@ -44,18 +44,23 @@ export const SchoolDashboard = () => {
     calendarProvider: string | null;
   }>>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [emailSaveMessage, setEmailSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dashboardRes, submissionsRes, toursRes] = await Promise.all([
+        const [dashboardRes, submissionsRes, toursRes, settingsRes] = await Promise.all([
           api.get('/school/dashboard'),
           api.get('/school/inquiry-submissions').catch(() => ({ data: [] })),
           api.get('/school/tour-bookings').catch(() => ({ data: [] })),
+          api.get('/school/settings').catch(() => ({ data: { adminEmail: '' } })),
         ]);
         setData(dashboardRes.data);
         setSubmissions(Array.isArray(submissionsRes.data) ? submissionsRes.data : []);
         setTourBookings(Array.isArray(toursRes.data) ? toursRes.data : []);
+        setAdminEmail(settingsRes.data?.adminEmail || '');
       } catch (err) {
         console.error('Failed to load dashboard data:', err);
       } finally {
@@ -64,6 +69,25 @@ export const SchoolDashboard = () => {
     };
     fetchData();
   }, []);
+
+  const handleSaveAdminEmail = async () => {
+    if (!adminEmail.trim()) {
+      setEmailSaveMessage({ type: 'error', text: 'Please enter an email address' });
+      return;
+    }
+    
+    setSavingEmail(true);
+    setEmailSaveMessage(null);
+    try {
+      await api.put('/school/settings', { adminEmail: adminEmail.trim() });
+      setEmailSaveMessage({ type: 'success', text: 'Admin email saved successfully!' });
+      setTimeout(() => setEmailSaveMessage(null), 5000);
+    } catch (err: any) {
+      setEmailSaveMessage({ type: 'error', text: err.response?.data?.error || 'Failed to save admin email' });
+    } finally {
+      setSavingEmail(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -107,6 +131,46 @@ export const SchoolDashboard = () => {
           <PlayCircle className="w-4 h-4" />
           {t('simulate_inquiry_call')}
         </button>
+      </div>
+
+      {/* Admin Email Configuration */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
+            <User className="w-5 h-5 text-purple-600" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-sm font-semibold text-slate-900">Admin Email Notification</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Receive email notifications when calls are received via webhook</p>
+          </div>
+        </div>
+        {emailSaveMessage && (
+          <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${emailSaveMessage.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+            {emailSaveMessage.text}
+          </div>
+        )}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[300px]">
+            <label className="block text-xs font-medium text-slate-600 mb-1">Admin Email Address</label>
+            <input
+              type="email"
+              value={adminEmail}
+              onChange={(e) => setAdminEmail(e.target.value)}
+              placeholder="admin@school.com"
+              className="ui-input text-sm py-2 w-full"
+            />
+            <p className="text-xs text-slate-400 mt-1">You will receive an email notification whenever a call transcript is received</p>
+          </div>
+          <button
+            type="button"
+            disabled={savingEmail}
+            onClick={handleSaveAdminEmail}
+            className="ui-button-primary gap-2 disabled:opacity-50"
+          >
+            {savingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {savingEmail ? 'Saving...' : 'Save Email'}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
