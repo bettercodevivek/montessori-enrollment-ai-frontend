@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, PlayCircle, Activity, PhoneCall, MessageSquare, Mail, FileText, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp, Save, User } from 'lucide-react';
+import { Loader2, PlayCircle, Activity, PhoneCall, MessageSquare, Mail, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp, Save, User } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { MetricCard } from '../../components/MetricCard';
 import api from '../../api/axios';
@@ -41,7 +41,7 @@ export const SchoolDashboard = () => {
   const [testEmail, setTestEmail] = useState('');
   const [testSending, setTestSending] = useState(false);
   const [testMessage, setTestMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [submissions, setSubmissions] = useState<Array<{
+  const [, setSubmissions] = useState<Array<{
     id: string;
     parentName: string;
     email: string;
