@@ -10,12 +10,26 @@ interface DashboardResponse {
   chartData: Array<{ name: string; calls: number; inquiries: number }>;
   recentCalls: Array<{
     id: string;
+    conversationId?: string | null;
     callerName: string;
     callerPhone: string;
     callType: string;
     duration: number;
     timestamp: string;
     recordingUrl: string | null;
+    summary?: string;
+    tourBookingDetected?: boolean;
+    tourBookingDate?: string | null;
+    aiProcessed?: boolean;
+  }>;
+  adminEmailNotifications?: Array<{
+    id: string;
+    recipient: string;
+    status: string;
+    subject: string;
+    sentAt: string;
+    conversationId?: string | null;
+    callerNumber?: string | null;
   }>;
 }
 
@@ -44,6 +58,15 @@ export const SchoolDashboard = () => {
     calendarProvider: string | null;
   }>>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [adminEmailNotifications, setAdminEmailNotifications] = useState<Array<{
+    id: string;
+    recipient: string;
+    status: string;
+    subject: string;
+    sentAt: string;
+    conversationId?: string | null;
+    callerNumber?: string | null;
+  }>>([]);
   const [adminEmail, setAdminEmail] = useState('');
   const [savingEmail, setSavingEmail] = useState(false);
   const [emailSaveMessage, setEmailSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -60,6 +83,7 @@ export const SchoolDashboard = () => {
         setData(dashboardRes.data);
         setSubmissions(Array.isArray(submissionsRes.data) ? submissionsRes.data : []);
         setTourBookings(Array.isArray(toursRes.data) ? toursRes.data : []);
+        setAdminEmailNotifications(Array.isArray(dashboardRes.data?.adminEmailNotifications) ? dashboardRes.data.adminEmailNotifications : []);
         setAdminEmail(settingsRes.data?.adminEmail || '');
       } catch (err) {
         console.error('Failed to load dashboard data:', err);
@@ -109,6 +133,9 @@ export const SchoolDashboard = () => {
   }
 
   const { metrics, chartData, recentCalls } = data;
+  
+  // Get calls with transcript summaries
+  const callsWithSummaries = recentCalls.filter(call => call.summary && call.summary.trim().length > 0);
 
   return (
     <div className="animate-soft">
@@ -331,43 +358,123 @@ export const SchoolDashboard = () => {
           </div>
         </div>
 
+        {/* Call Transcript Summaries */}
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-slate-500" />
-              Recent form submissions
+              <Mic className="w-4 h-4 text-slate-500" />
+              Call Transcript Summaries
             </h2>
           </div>
-          <div className="divide-y divide-slate-100">
-            {submissions.length === 0 ? (
-              <div className="px-6 py-8 text-center text-slate-500 text-sm">No form submissions yet.</div>
+          <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+            {callsWithSummaries.length === 0 ? (
+              <div className="px-6 py-8 text-center text-slate-500 text-sm">No transcript summaries available yet.</div>
             ) : (
-              submissions.map((sub) => (
-                <div key={sub.id} className="px-6 py-3 hover:bg-slate-50/50 transition-colors">
+              callsWithSummaries.map((call) => (
+                <div key={call.id} className="px-6 py-3 hover:bg-slate-50/50 transition-colors">
                   <button
                     type="button"
                     className="w-full text-left flex items-center justify-between gap-2"
-                    onClick={() => setExpandedId(expandedId === sub.id ? null : sub.id)}
+                    onClick={() => setExpandedId(expandedId === call.id ? null : call.id)}
                   >
-                    <div>
-                      <div className="text-sm font-medium text-slate-900">{sub.parentName || '—'}</div>
-                      <div className="text-xs text-slate-500">{sub.email || sub.phone || 'No contact'}</div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-slate-900">{call.callerName || 'Parent'}</div>
+                      <div className="text-xs text-slate-500">{call.callerPhone || 'Unknown'}</div>
+                      {call.tourBookingDetected && (
+                        <span className="inline-block mt-1 text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">
+                          Tour Booked
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs text-slate-400">
-                        {new Date(sub.submittedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        {new Date(call.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </span>
-                      {expandedId === sub.id ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                      {expandedId === call.id ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                     </div>
                   </button>
-                  {expandedId === sub.id && (
-                    <div className="mt-2 pt-2 border-t border-slate-100 space-y-1.5">
-                      {sub.phone && (
-                        <p className="text-xs text-slate-600"><span className="font-medium text-slate-500">Phone:</span> {sub.phone}</p>
+                  {expandedId === call.id && (
+                    <div className="mt-2 pt-2 border-t border-slate-100 space-y-2">
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 mb-1">Summary:</p>
+                        <p className="text-xs text-slate-700 leading-relaxed">{call.summary}</p>
+                      </div>
+                      {call.tourBookingDate && (
+                        <div>
+                          <p className="text-xs font-medium text-slate-500 mb-1">Tour Scheduled:</p>
+                          <p className="text-xs text-slate-700">
+                            {new Date(call.tourBookingDate).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' })}
+                          </p>
+                        </div>
                       )}
-                      {sub.answers?.length > 0 && sub.answers.map((a, i) => (
-                        <p key={i} className="text-xs text-slate-600"><span className="font-medium text-slate-500">{a.question}:</span> {a.value || '—'}</p>
-                      ))}
+                      {call.conversationId && (
+                        <p className="text-xs text-slate-400">Conversation ID: {call.conversationId}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Admin Email Notifications */}
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <Mail className="w-4 h-4 text-slate-500" />
+              Admin Email Notifications
+            </h2>
+          </div>
+          <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+            {adminEmailNotifications.length === 0 ? (
+              <div className="px-6 py-8 text-center text-slate-500 text-sm">No admin email notifications sent yet.</div>
+            ) : (
+              adminEmailNotifications.map((email) => (
+                <div key={email.id} className="px-6 py-3 hover:bg-slate-50/50 transition-colors">
+                  <button
+                    type="button"
+                    className="w-full text-left flex items-center justify-between gap-2"
+                    onClick={() => setExpandedId(expandedId === email.id ? null : email.id)}
+                  >
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-slate-900">{email.subject || 'New Call Received'}</div>
+                      <div className="text-xs text-slate-500">{email.recipient}</div>
+                      {email.callerNumber && (
+                        <div className="text-xs text-slate-400 mt-0.5">Caller: {email.callerNumber}</div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-xs px-2 py-0.5 rounded ${
+                        email.status === 'sent' 
+                          ? 'bg-green-50 text-green-700' 
+                          : email.status === 'failed'
+                          ? 'bg-red-50 text-red-700'
+                          : 'bg-yellow-50 text-yellow-700'
+                      }`}>
+                        {email.status}
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        {new Date(email.sentAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {expandedId === email.id ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                    </div>
+                  </button>
+                  {expandedId === email.id && (
+                    <div className="mt-2 pt-2 border-t border-slate-100 space-y-1.5">
+                      {email.conversationId && (
+                        <p className="text-xs text-slate-600">
+                          <span className="font-medium text-slate-500">Conversation ID:</span> {email.conversationId}
+                        </p>
+                      )}
+                      {email.callerNumber && (
+                        <p className="text-xs text-slate-600">
+                          <span className="font-medium text-slate-500">Caller:</span> {email.callerNumber}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-600">
+                        <span className="font-medium text-slate-500">Sent to:</span> {email.recipient}
+                      </p>
                     </div>
                   )}
                 </div>
