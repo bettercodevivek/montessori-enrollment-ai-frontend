@@ -17,6 +17,7 @@ interface SettingsData {
   escalationNumber: string;
   language: string;
   script: string;
+  systemPrompt: string;
   businessHoursStart: string;
   businessHoursEnd: string;
   twilioSid: string;
@@ -118,6 +119,7 @@ export const SchoolSettings = () => {
       escalationNumber: settings.escalationNumber,
       language: settings.language,
       script: settings.script,
+      systemPrompt: settings.systemPrompt,
       businessHoursStart: settings.businessHoursStart,
       businessHoursEnd: settings.businessHoursEnd,
       twilioSid: settings.twilioSid,
@@ -356,19 +358,43 @@ export const SchoolSettings = () => {
               </button>
             </div>
 
-            {/* AI Script */}
+            {/* Agent Configuration */}
             <div className="bg-white border border-slate-200 rounded-xl p-6">
-              <h2 className="text-base font-semibold text-slate-900 mb-1">{t('ai_agent_script')}</h2>
-              <p className="text-sm text-slate-500 mb-4">
-                Write the exact script your AI agent follows during enrollment inquiry calls. Use {'{parent_name}'}, {'{school_name}'} as variables.
-              </p>
-              <textarea
-                rows={10}
-                value={settings.script}
-                onChange={e => update('script', e.target.value)}
-                className="ui-input w-full text-sm font-mono leading-relaxed"
-                placeholder={t('script_placeholder')}
-              />
+              <h2 className="text-base font-semibold text-slate-900 mb-4">Agent Configuration</h2>
+              
+              {/* First Message */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  First Message (Opening Greeting)
+                </label>
+                <p className="text-xs text-slate-500 mb-2">
+                  The first message the AI agent says when answering a call. Use {'{parent_name}'}, {'{school_name}'} as variables.
+                </p>
+                <textarea
+                  rows={4}
+                  value={settings.script}
+                  onChange={e => update('script', e.target.value)}
+                  className="ui-input w-full text-sm leading-relaxed"
+                  placeholder="Welcome to {school_name}! How can I help you today?"
+                />
+              </div>
+
+              {/* System Prompt */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  System Prompt
+                </label>
+                <p className="text-xs text-slate-500 mb-2">
+                  Instructions for the AI agent on how to behave, what information to provide, and how to handle conversations. This guides the agent's overall behavior and responses.
+                </p>
+                <textarea
+                  rows={8}
+                  value={settings.systemPrompt || ''}
+                  onChange={e => update('systemPrompt', e.target.value)}
+                  className="ui-input w-full text-sm font-mono leading-relaxed"
+                  placeholder="You are a friendly and professional enrollment assistant for a Montessori school. Your goal is to help parents learn about the school and schedule tours. Be warm, informative, and helpful. Use the knowledge base to answer questions accurately."
+                />
+              </div>
             </div>
           </>
         )}
