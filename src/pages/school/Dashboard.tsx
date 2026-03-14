@@ -1,9 +1,117 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, PlayCircle, Activity, PhoneCall, MessageSquare, Mail, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp, Save, User } from 'lucide-react';
+import { Loader2, PlayCircle, Activity, PhoneCall, MessageSquare, Mail, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp, Save, User, Play, Pause, Headphones, Download } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { MetricCard } from '../../components/MetricCard';
+import { useRef } from 'react';
 import api from '../../api/axios';
+
+const AudioPlayer = ({ src }: { src: string }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!audioRef.current || error) return;
+    isPlaying ? audioRef.current.pause() : audioRef.current.play();
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleSeek = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!audioRef.current || !progressBarRef.current || error) return;
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width;
+    const percentage = Math.max(0, Math.min(1, x / width));
+    audioRef.current.currentTime = percentage * audioRef.current.duration;
+  };
+
+  const formatTime = (time: number) => {
+    if (isNaN(time)) return '0:00';
+    const min = Math.floor(time / 60);
+    const sec = Math.floor(time % 60);
+    return `${min}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <div className={`bg-slate-50 border border-slate-200 rounded-xl p-3 w-full ${error ? 'opacity-75' : ''}`}>
+      <audio
+        ref={audioRef} src={src}
+        onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
+        onLoadedMetadata={() => {
+          if (audioRef.current) {
+            setDuration(audioRef.current.duration);
+            setLoading(false);
+          }
+        }}
+        onCanPlay={() => setLoading(false)}
+        onError={() => {
+          setError(true);
+          setLoading(false);
+        }}
+        onEnded={() => setIsPlaying(false)}
+        hidden
+      />
+
+      <div className="flex items-center gap-3 mb-2">
+        <button 
+          onClick={togglePlay} 
+          disabled={error || loading}
+          className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all shrink-0 ${
+            error ? 'bg-slate-200 text-slate-400' : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          {loading ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : isPlaying ? (
+            <Pause className="w-3.5 h-3.5" />
+          ) : (
+            <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+          )}
+        </button>
+        <div className="flex-1">
+          {error ? (
+            <div className="h-6 flex items-center justify-center text-[10px] font-semibold text-red-500 bg-red-50 rounded italic">
+              Recording unavailable or still processing
+            </div>
+          ) : (
+            <>
+              <div ref={progressBarRef} onClick={handleSeek} className="h-1.5 bg-slate-200 rounded-full cursor-pointer relative">
+                <div className="absolute inset-y-0 left-0 bg-blue-500 rounded-full" style={{ width: `${progressPercentage}%` }} />
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className="text-[10px] font-bold text-slate-400">{formatTime(currentTime)}</span>
+                <span className="text-[10px] font-bold text-slate-400">{formatTime(duration)}</span>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+        <div className="flex items-center gap-1.5 text-slate-400">
+          <Headphones className="w-3 h-3" />
+          <span className="text-[8px] font-bold uppercase tracking-wider">
+            {error ? 'Error loading audio' : 'Recording Console'}
+          </span>
+        </div>
+        {!error && !loading && (
+          <a href={src} download className="text-slate-400 hover:text-blue-600">
+            <Download className="w-3 h-3" />
+          </a>
+        )}
+      </div>
+    </div>
+  );
+};
 
 interface DashboardResponse {
   metrics: Array<{ label: string; value: number; change?: number }>;
@@ -323,35 +431,56 @@ export const SchoolDashboard = () => {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {recentCalls.map((call) => (
-                  <tr key={call.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-3">
-                      <div className="text-sm font-medium text-slate-900">{call.callerName}</div>
-                      <div className="text-xs text-slate-500">{call.callerPhone}</div>
-                    </td>
-                    <td className="px-6 py-3">
-                      <span className={`ui-badge ${call.callType === 'inquiry'
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : 'bg-slate-100 text-slate-600'
-                        }`}>
-                        {call.callType}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3 text-sm text-slate-700">
-                      {Math.floor(call.duration / 60)}m {call.duration % 60}s
-                    </td>
-                    <td className="px-6 py-3 text-right text-xs text-slate-500">
-                      {new Date(call.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td className="px-6 py-3 text-right">
-                      {call.recordingUrl ? (
-                        <a href={call.recordingUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary-600 hover:underline">
-                          <Mic className="w-3.5 h-3.5" /> Play
-                        </a>
-                      ) : (
-                        <span className="text-xs text-slate-400">—</span>
-                      )}
-                    </td>
-                  </tr>
+                  <React.Fragment key={call.id}>
+                    <tr className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-3">
+                        <div className="text-sm font-medium text-slate-900">{call.callerName}</div>
+                        <div className="text-xs text-slate-500">{call.callerPhone}</div>
+                      </td>
+                      <td className="px-6 py-3">
+                        <span className={`ui-badge ${call.callType === 'inquiry'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-slate-100 text-slate-600'
+                          }`}>
+                          {call.callType}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3 text-sm text-slate-700">
+                        {Math.floor(call.duration / 60)}m {call.duration % 60}s
+                      </td>
+                      <td className="px-6 py-3 text-right text-xs text-slate-500">
+                        {new Date(call.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td className="px-6 py-3 text-right">
+                        {call.recordingUrl ? (
+                          <button 
+                            onClick={() => setExpandedId(expandedId === call.id ? null : call.id)}
+                            className="inline-flex items-center gap-1 text-xs text-primary-600 hover:underline"
+                          >
+                            <Mic className="w-3.5 h-3.5" /> 
+                            {expandedId === call.id ? 'Hide' : 'Play'}
+                          </button>
+                        ) : (
+                          <span className="text-xs text-slate-400">—</span>
+                        )}
+                      </td>
+                    </tr>
+                    {expandedId === call.id && call.recordingUrl && (
+                      <tr className="bg-slate-50/50">
+                        <td colSpan={5} className="px-6 py-4">
+                          <div className="max-w-md ml-auto">
+                            <AudioPlayer src={call.recordingUrl} />
+                          </div>
+                          {call.summary && (
+                            <div className="mt-4 p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+                              <p className="text-xs font-semibold text-slate-900 mb-2 uppercase tracking-wider">Call Summary</p>
+                              <p className="text-sm text-slate-600 leading-relaxed italic">"{call.summary}"</p>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
