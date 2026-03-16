@@ -15,7 +15,7 @@ interface SchoolData {
   tours: number;
 }
 
-const emptyCreateForm = { name: '', email: '', password: '', referrerSchoolId: '', elevenlabsAgentId: '' };
+const emptyCreateForm = { name: '', email: '', password: '', address: '', referrerSchoolId: '', elevenlabsAgentId: '', aiNumber: '' };
 
 export const AdminSchools = () => {
   const { t } = useTranslation();
@@ -29,7 +29,7 @@ export const AdminSchools = () => {
 
   // Edit modal
   const [editSchool, setEditSchool] = useState<SchoolData | null>(null);
-  const [editForm, setEditForm] = useState({ elevenlabsAgentId: '', status: 'active' as 'active' | 'inactive' });
+  const [editForm, setEditForm] = useState({ name: '', address: '', elevenlabsAgentId: '', status: 'active' as 'active' | 'inactive', aiNumber: '' });
   const [saving, setSaving] = useState(false);
 
   const [error, setError] = useState('');
@@ -53,7 +53,7 @@ export const AdminSchools = () => {
     setCreating(true);
     setError('');
     try {
-      await api.post('/admin/schools', { ...form, aiNumber: '', routingNumber: '' });
+      await api.post('/admin/schools', { ...form, routingNumber: '' });
       setSuccess(t('school_created'));
       setShowModal(false);
       setForm(emptyCreateForm);
@@ -82,7 +82,13 @@ export const AdminSchools = () => {
 
   const openEdit = (school: SchoolData) => {
     setEditSchool(school);
-    setEditForm({ elevenlabsAgentId: school.elevenlabsAgentId || '', status: school.status });
+    setEditForm({ 
+      name: school.name || '', 
+      address: (school as any).address || '', 
+      elevenlabsAgentId: school.elevenlabsAgentId || '', 
+      status: school.status, 
+      aiNumber: school.aiNumber || '' 
+    });
     setError('');
   };
 
@@ -93,8 +99,11 @@ export const AdminSchools = () => {
     setError('');
     try {
       await api.put(`/admin/schools/${editSchool.id}`, {
+        name: editForm.name,
+        address: editForm.address,
         elevenlabsAgentId: editForm.elevenlabsAgentId,
         status: editForm.status,
+        aiNumber: editForm.aiNumber,
       });
       setSuccess('School updated successfully!');
       setEditSchool(null);
@@ -224,6 +233,10 @@ export const AdminSchools = () => {
 
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">School Address</label>
+                  <input type="text" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="ui-input" placeholder="123 Education Lane, City, ST" />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t('school_name')}</label>
                   <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="ui-input" placeholder="Sunshine Montessori" required />
@@ -238,10 +251,17 @@ export const AdminSchools = () => {
                 <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className="ui-input" placeholder={t('create_password')} required />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">ElevenLabs Agent ID</label>
-                <input type="text" value={form.elevenlabsAgentId} onChange={e => setForm({ ...form, elevenlabsAgentId: e.target.value })} className="ui-input" placeholder="agent_xyz123..." />
-                <p className="text-xs text-slate-400 mt-1">Leave blank if no agent is assigned yet.</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">ElevenLabs Agent ID</label>
+                  <input type="text" value={form.elevenlabsAgentId} onChange={e => setForm({ ...form, elevenlabsAgentId: e.target.value })} className="ui-input" placeholder="agent_xyz123..." />
+                  <p className="text-xs text-slate-400 mt-1">Leave blank if not assigned.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">AI Phone Number</label>
+                  <input type="text" value={form.aiNumber} onChange={e => setForm({ ...form, aiNumber: e.target.value })} className="ui-input" placeholder="+12223334444" />
+                  <p className="text-xs text-slate-400 mt-1">The number parents will call.</p>
+                </div>
               </div>
 
               <div>
@@ -286,18 +306,51 @@ export const AdminSchools = () => {
             )}
 
             <form onSubmit={handleEditSave} className="space-y-5">
-              {/* Agent ID */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">ElevenLabs Agent ID</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">School Name</label>
                 <input
                   type="text"
-                  value={editForm.elevenlabsAgentId}
-                  onChange={e => setEditForm({ ...editForm, elevenlabsAgentId: e.target.value })}
-                  className="ui-input font-mono text-sm"
-                  placeholder="agent_xyz123..."
+                  value={editForm.name}
+                  onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                  className="ui-input"
+                  placeholder="School Name"
+                  required
                 />
-                <p className="text-xs text-slate-400 mt-1">
-                  Found in your ElevenLabs dashboard → Agents → Agent Settings.
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">School Address</label>
+                <input
+                  type="text"
+                  value={editForm.address}
+                  onChange={e => setEditForm({ ...editForm, address: e.target.value })}
+                  className="ui-input"
+                  placeholder="School Address"
+                />
+              </div>
+               {/* Agent ID & AI Number */}
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">ElevenLabs Agent ID</label>
+                  <input
+                    type="text"
+                    value={editForm.elevenlabsAgentId}
+                    onChange={e => setEditForm({ ...editForm, elevenlabsAgentId: e.target.value })}
+                    className="ui-input font-mono text-sm"
+                    placeholder="agent_xyz123..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">AI Phone Number</label>
+                  <input
+                    type="text"
+                    value={editForm.aiNumber}
+                    onChange={e => setEditForm({ ...editForm, aiNumber: e.target.value })}
+                    className="ui-input font-mono text-sm"
+                    placeholder="+12223334444"
+                  />
+                </div>
+                <p className="text-xs text-slate-400">
+                  Agent ID is found in ElevenLabs. AI Number is the Twilio number.
                 </p>
               </div>
 

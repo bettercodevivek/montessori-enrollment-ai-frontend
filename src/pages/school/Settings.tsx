@@ -31,6 +31,10 @@ interface SettingsData {
   preferredCalendar: 'google' | 'outlook' | 'both' | 'none';
   googleConnected: boolean;
   outlookConnected: boolean;
+  adminEmail: string;
+  timezone: string;
+  tourConfirmationEmailTemplate: string;
+  tourReminderSmsTemplate: string;
 }
 
 const DEFAULT_QA_PAIRS: QAPair[] = [
@@ -248,8 +252,8 @@ export const SchoolSettings = () => {
                   <input
                     type="text"
                     value={settings.name}
-                    onChange={e => update('name', e.target.value)}
-                    className="ui-input w-full"
+                    readOnly
+                    className="ui-input w-full bg-slate-50 cursor-not-allowed border-dashed"
                     placeholder="Sunshine Montessori"
                   />
                 </div>
@@ -258,11 +262,20 @@ export const SchoolSettings = () => {
                   <input
                     type="text"
                     value={settings.address}
-                    onChange={e => update('address', e.target.value)}
-                    className="ui-input w-full"
+                    readOnly
+                    className="ui-input w-full bg-slate-50 cursor-not-allowed border-dashed"
                     placeholder="123 Education Way, City, ST"
                   />
                 </div>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Timezone (Auto-detected)</label>
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-blue-700 text-sm font-mono">
+                   <Calendar className="w-4 h-4" />
+                   {settings.timezone || 'UTC'}
+                </div>
+                <p className="text-xs text-slate-400 mt-1 italic">Automatically updated based on your school address by the administrator.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -271,9 +284,9 @@ export const SchoolSettings = () => {
                   <input
                     type="text"
                     value={settings.aiNumber}
-                    onChange={e => update('aiNumber', e.target.value)}
-                    className="ui-input w-full"
-                    placeholder="+1 (555) 123-4567"
+                    readOnly
+                    className="ui-input w-full bg-slate-50 cursor-not-allowed border-dashed"
+                    placeholder="Auto-assigned number"
                   />
                   <p className="text-xs text-slate-400 mt-1">The dedicated AI-managed number callers dial.</p>
                 </div>
@@ -520,21 +533,52 @@ export const SchoolSettings = () => {
               </label>
             </div>
 
+            <div className="mb-6 pt-4 border-t border-slate-100">
+              <label className="block text-sm font-medium text-slate-700 mb-1 text-blue-600">Admin Notification Email</label>
+              <input 
+                type="email" 
+                value={settings.adminEmail || ''} 
+                onChange={e => update('adminEmail', e.target.value)}
+                className="ui-input w-full" 
+                placeholder="notifications@school.com"
+              />
+              <p className="text-xs text-slate-400 mt-1">The primary email address where summary notifications and tour alerts will be sent.</p>
+            </div>
+
             <div className="border-t border-slate-100 pt-6">
-              <p className="text-xs text-slate-400 mb-4 font-medium uppercase tracking-wide">Message Templates — use {'{parent_name}'}, {'{school_name}'}, {'{form_link}'}</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <p className="text-xs text-slate-500 mb-4 font-bold uppercase tracking-wide flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                Inquiry Follow-up Templates
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">{t('sms_template')}</label>
-                  <textarea rows={7} value={settings.smsTemplate} onChange={e => update('smsTemplate', e.target.value)} className="ui-input w-full text-sm" placeholder="Hi {parent_name}, thanks for your interest in {school_name}! Please complete our enrollment inquiry form: {form_link}" />
+                  <label className="block text-sm font-bold text-slate-700 mb-2">SMS Follow-up</label>
+                  <textarea rows={6} value={settings.smsTemplate} onChange={e => update('smsTemplate', e.target.value)} className="ui-input w-full text-sm" placeholder="Hi {parent_name}, thanks for your interest in {school_name}! Please complete our enrollment inquiry form: {form_link}" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">{t('email_template')}</label>
-                  <textarea rows={7} value={settings.emailTemplate} onChange={e => update('emailTemplate', e.target.value)} className="ui-input w-full text-sm" placeholder={"Dear {parent_name},\n\nThank you for contacting {school_name}. Please complete the form: {form_link}\n\nWarm regards,\n{school_name} Team"} />
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Email Follow-up</label>
+                  <textarea rows={6} value={settings.emailTemplate} onChange={e => update('emailTemplate', e.target.value)} className="ui-input w-full text-sm leading-relaxed" placeholder="Dear {parent_name}, Thank you for your interest in {school_name}..." />
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-500 mb-4 font-bold uppercase tracking-wide flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Tour Confirmation Templates
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">SMS Confirmation & Reminder</label>
+                  <textarea rows={6} value={settings.tourReminderSmsTemplate || ''} onChange={e => update('tourReminderSmsTemplate', e.target.value)} className="ui-input w-full text-sm" placeholder="Hi {parent_name}, your tour at {school_name} is confirmed for {tour_date}." />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Email Confirmation</label>
+                  <textarea rows={6} value={settings.tourConfirmationEmailTemplate || ''} onChange={e => update('tourConfirmationEmailTemplate', e.target.value)} className="ui-input w-full text-sm leading-relaxed" placeholder="Dear {parent_name}, your tour at {school_name} is confirmed for {tour_date}..." />
                 </div>
               </div>
             </div>
           </div>
         )}
+
 
         {/* Bottom save button */}
         <div className="flex justify-end pb-8">

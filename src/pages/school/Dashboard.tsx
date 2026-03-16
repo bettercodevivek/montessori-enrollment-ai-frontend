@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, PlayCircle, Activity, PhoneCall, MessageSquare, Mail, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp, Save, User, Play, Pause, Headphones, Download } from 'lucide-react';
+import { Loader2, PlayCircle, Activity, PhoneCall, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp, Play, Pause, Headphones, Download } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { MetricCard } from '../../components/MetricCard';
 import { useRef } from 'react';
@@ -130,25 +130,14 @@ interface DashboardResponse {
     tourBookingDate?: string | null;
     aiProcessed?: boolean;
   }>;
-  adminEmailNotifications?: Array<{
-    id: string;
-    recipient: string;
-    status: string;
-    subject: string;
-    sentAt: string;
-    conversationId?: string | null;
-    callerNumber?: string | null;
-  }>;
+
 }
 
 export const SchoolDashboard = () => {
   const { t } = useTranslation();
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [testPhone, setTestPhone] = useState('');
-  const [testEmail, setTestEmail] = useState('');
-  const [testSending, setTestSending] = useState(false);
-  const [testMessage, setTestMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   const [, setSubmissions] = useState<Array<{
     id: string;
     parentName: string;
@@ -166,33 +155,19 @@ export const SchoolDashboard = () => {
     calendarProvider: string | null;
   }>>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [adminEmailNotifications, setAdminEmailNotifications] = useState<Array<{
-    id: string;
-    recipient: string;
-    status: string;
-    subject: string;
-    sentAt: string;
-    conversationId?: string | null;
-    callerNumber?: string | null;
-  }>>([]);
-  const [adminEmail, setAdminEmail] = useState('');
-  const [savingEmail, setSavingEmail] = useState(false);
-  const [emailSaveMessage, setEmailSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dashboardRes, submissionsRes, toursRes, settingsRes] = await Promise.all([
+        const [dashboardRes, submissionsRes, toursRes] = await Promise.all([
           api.get('/school/dashboard'),
           api.get('/school/inquiry-submissions').catch(() => ({ data: [] })),
           api.get('/school/tour-bookings').catch(() => ({ data: [] })),
-          api.get('/school/settings').catch(() => ({ data: { adminEmail: '' } })),
         ]);
         setData(dashboardRes.data);
         setSubmissions(Array.isArray(submissionsRes.data) ? submissionsRes.data : []);
         setTourBookings(Array.isArray(toursRes.data) ? toursRes.data : []);
-        setAdminEmailNotifications(Array.isArray(dashboardRes.data?.adminEmailNotifications) ? dashboardRes.data.adminEmailNotifications : []);
-        setAdminEmail(settingsRes.data?.adminEmail || '');
       } catch (err) {
         console.error('Failed to load dashboard data:', err);
       } finally {
@@ -202,24 +177,7 @@ export const SchoolDashboard = () => {
     fetchData();
   }, []);
 
-  const handleSaveAdminEmail = async () => {
-    if (!adminEmail.trim()) {
-      setEmailSaveMessage({ type: 'error', text: 'Please enter an email address' });
-      return;
-    }
-    
-    setSavingEmail(true);
-    setEmailSaveMessage(null);
-    try {
-      await api.put('/school/settings', { adminEmail: adminEmail.trim() });
-      setEmailSaveMessage({ type: 'success', text: 'Admin email saved successfully!' });
-      setTimeout(() => setEmailSaveMessage(null), 5000);
-    } catch (err: any) {
-      setEmailSaveMessage({ type: 'error', text: err.response?.data?.error || 'Failed to save admin email' });
-    } finally {
-      setSavingEmail(false);
-    }
-  };
+
 
   if (loading) {
     return (
@@ -268,45 +226,7 @@ export const SchoolDashboard = () => {
         </button>
       </div>
 
-      {/* Admin Email Configuration */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8">
-        <div className="flex items-start gap-3 mb-4">
-          <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
-            <User className="w-5 h-5 text-purple-600" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-sm font-semibold text-slate-900">Admin Email Notification</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Receive email notifications when calls are received via webhook</p>
-          </div>
-        </div>
-        {emailSaveMessage && (
-          <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${emailSaveMessage.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
-            {emailSaveMessage.text}
-          </div>
-        )}
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[300px]">
-            <label className="block text-xs font-medium text-slate-600 mb-1">Admin Email Address</label>
-            <input
-              type="email"
-              value={adminEmail}
-              onChange={(e) => setAdminEmail(e.target.value)}
-              placeholder="admin@school.com"
-              className="ui-input text-sm py-2 w-full"
-            />
-            <p className="text-xs text-slate-400 mt-1">You will receive an email notification whenever a call transcript is received</p>
-          </div>
-          <button
-            type="button"
-            disabled={savingEmail}
-            onClick={handleSaveAdminEmail}
-            className="ui-button-primary gap-2 disabled:opacity-50"
-          >
-            {savingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {savingEmail ? 'Saving...' : 'Save Email'}
-          </button>
-        </div>
-      </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {metrics.map((metric) => (
@@ -343,72 +263,7 @@ export const SchoolDashboard = () => {
         </div>
       </div>
 
-      {/* Test SMS & Email - verify form link without making a call */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8">
-        <div className="flex items-start gap-3 mb-4">
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-            <MessageSquare className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">{t('test_followup_title')}</h2>
-            <p className="text-xs text-slate-500 mt-0.5">{t('test_followup_desc')}</p>
-          </div>
-        </div>
-        {testMessage && (
-          <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${testMessage.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
-            {testMessage.text}
-          </div>
-        )}
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="min-w-[180px]">
-            <label className="block text-xs font-medium text-slate-600 mb-1">{t('recipient')} (SMS)</label>
-            <input
-              type="tel"
-              value={testPhone}
-              onChange={(e) => setTestPhone(e.target.value)}
-              placeholder={t('test_followup_phone_placeholder')}
-              className="ui-input text-sm py-2"
-            />
-          </div>
-          <div className="min-w-[200px]">
-            <label className="block text-xs font-medium text-slate-600 mb-1">{t('email')}</label>
-            <input
-              type="email"
-              value={testEmail}
-              onChange={(e) => setTestEmail(e.target.value)}
-              placeholder={t('test_followup_email_placeholder')}
-              className="ui-input text-sm py-2"
-            />
-          </div>
-          <button
-            type="button"
-            disabled={testSending || (!testPhone.trim() && !testEmail.trim())}
-            onClick={async () => {
-              setTestMessage(null);
-              setTestSending(true);
-              try {
-                const payload: { phone?: string; email?: string } = {};
-                if (testPhone.trim()) payload.phone = testPhone.trim();
-                if (testEmail.trim()) payload.email = testEmail.trim();
-                const res = await api.post('/school/test-followup', payload);
-                const msg = res.data?.message || t('test_followup_success');
-                setTestMessage({ type: 'success', text: res.data?.partialErrors?.length ? `${msg} (${res.data.partialErrors.join('; ')})` : msg });
-                setTimeout(() => setTestMessage(null), 8000);
-              } catch (err: any) {
-                const serverError = err.response?.data?.error;
-                setTestMessage({ type: 'error', text: serverError || t('test_followup_error') });
-              } finally {
-                setTestSending(false);
-              }
-            }}
-            className="ui-button-primary gap-2 disabled:opacity-50"
-          >
-            {testSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-            {t('send_test_followup')}
-          </button>
-        </div>
-        <p className="text-xs text-slate-400 mt-3">{t('test_followup_hint')}</p>
-      </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -547,70 +402,7 @@ export const SchoolDashboard = () => {
           </div>
         </div>
 
-        {/* Admin Email Notifications */}
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-              <Mail className="w-4 h-4 text-slate-500" />
-              Admin Email Notifications
-            </h2>
-          </div>
-          <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
-            {adminEmailNotifications.length === 0 ? (
-              <div className="px-6 py-8 text-center text-slate-500 text-sm">No admin email notifications sent yet.</div>
-            ) : (
-              adminEmailNotifications.map((email) => (
-                <div key={email.id} className="px-6 py-3 hover:bg-slate-50/50 transition-colors">
-                  <button
-                    type="button"
-                    className="w-full text-left flex items-center justify-between gap-2"
-                    onClick={() => setExpandedId(expandedId === email.id ? null : email.id)}
-                  >
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-slate-900">{email.subject || 'New Call Received'}</div>
-                      <div className="text-xs text-slate-500">{email.recipient}</div>
-                      {email.callerNumber && (
-                        <div className="text-xs text-slate-400 mt-0.5">Caller: {email.callerNumber}</div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className={`text-xs px-2 py-0.5 rounded ${
-                        email.status === 'sent' 
-                          ? 'bg-green-50 text-green-700' 
-                          : email.status === 'failed'
-                          ? 'bg-red-50 text-red-700'
-                          : 'bg-yellow-50 text-yellow-700'
-                      }`}>
-                        {email.status}
-                      </span>
-                      <span className="text-xs text-slate-400">
-                        {new Date(email.sentAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      {expandedId === email.id ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                    </div>
-                  </button>
-                  {expandedId === email.id && (
-                    <div className="mt-2 pt-2 border-t border-slate-100 space-y-1.5">
-                      {email.conversationId && (
-                        <p className="text-xs text-slate-600">
-                          <span className="font-medium text-slate-500">Conversation ID:</span> {email.conversationId}
-                        </p>
-                      )}
-                      {email.callerNumber && (
-                        <p className="text-xs text-slate-600">
-                          <span className="font-medium text-slate-500">Caller:</span> {email.callerNumber}
-                        </p>
-                      )}
-                      <p className="text-xs text-slate-600">
-                        <span className="font-medium text-slate-500">Sent to:</span> {email.recipient}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+
 
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">

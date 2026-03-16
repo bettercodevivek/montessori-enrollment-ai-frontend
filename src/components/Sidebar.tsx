@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  BarChart3, School, Settings, Users, Plug2, History, FileText, LayoutDashboard, Globe, Phone
+  BarChart3, School, Settings, Users, Plug2, History, LayoutDashboard, Phone
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -25,9 +25,7 @@ export const Sidebar = ({ role }: SidebarProps) => {
     { path: '/school/settings', icon: Settings, labelKey: 'settings' },
     { path: '/school/followups', icon: History, labelKey: 'followups' },
     { path: '/school/call-logs', icon: Phone, labelKey: 'call_logs' },
-    { path: '/school/forms', icon: FileText, labelKey: 'forms' },
     { path: '/school/referrals', icon: Users, labelKey: 'referrals' },
-    { path: '/school/test-integration', icon: Globe, labelKey: 'test_integration' },
   ];
 
   const items = role === 'admin' ? adminItems : schoolItems;
