@@ -135,6 +135,7 @@ export const SchoolSettings = () => {
       emailTemplate: settings.emailTemplate,
       qaPairs: cleanQAPairs(settings.qaPairs),
       preferredCalendar: settings.preferredCalendar,
+      timezone: settings.timezone,
     };
 
     try {
@@ -252,8 +253,8 @@ export const SchoolSettings = () => {
                   <input
                     type="text"
                     value={settings.name}
-                    readOnly
-                    className="ui-input w-full bg-slate-50 cursor-not-allowed border-dashed"
+                    onChange={e => update('name', e.target.value)}
+                    className="ui-input w-full"
                     placeholder="Sunshine Montessori"
                   />
                 </div>
@@ -262,20 +263,28 @@ export const SchoolSettings = () => {
                   <input
                     type="text"
                     value={settings.address}
-                    readOnly
-                    className="ui-input w-full bg-slate-50 cursor-not-allowed border-dashed"
+                    onChange={e => update('address', e.target.value)}
+                    className="ui-input w-full"
                     placeholder="123 Education Way, City, ST"
                   />
                 </div>
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Timezone (Auto-detected)</label>
-                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-blue-700 text-sm font-mono">
-                   <Calendar className="w-4 h-4" />
-                   {settings.timezone || 'UTC'}
-                </div>
-                <p className="text-xs text-slate-400 mt-1 italic">Automatically updated based on your school address by the administrator.</p>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Timezone</label>
+                <select
+                  value={settings.timezone || 'America/Chicago'}
+                  onChange={e => update('timezone', e.target.value)}
+                  className="ui-input w-full text-sm font-medium bg-white"
+                >
+                  <option value="America/Chicago">Central Time (CST/CDT)</option>
+                  <option value="America/New_York">Eastern Time (EST/EDT)</option>
+                  <option value="America/Denver">Mountain Time (MST/MDT)</option>
+                  <option value="America/Los_Angeles">Pacific Time (PST/PDT)</option>
+                  <option value="America/Anchorage">Alaska Time</option>
+                  <option value="Pacific/Honolulu">Hawaii Time</option>
+                </select>
+                <p className="text-xs text-slate-400 mt-1 italic">Select your school's local timezone. CST is the default.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
