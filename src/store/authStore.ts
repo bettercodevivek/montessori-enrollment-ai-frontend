@@ -8,6 +8,7 @@ interface AuthStore {
   token: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (token: string, user: User) => void;
   logout: () => void;
   setUser: (user: User | null) => void;
 }
@@ -29,6 +30,13 @@ export const useAuthStore = create<AuthStore>()(
             role: user.role,
             schoolId: user.schoolId,
           },
+          token,
+          isAuthenticated: true,
+        });
+      },
+      loginWithGoogle: (token: string, user: User) => {
+        set({
+          user,
           token,
           isAuthenticated: true,
         });

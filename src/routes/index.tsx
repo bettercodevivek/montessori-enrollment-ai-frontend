@@ -24,6 +24,7 @@ import { Landing } from '../pages/Landing';
 import { InquiryForm } from '../pages/InquiryForm';
 import { ReferralSignup } from '../pages/ReferralSignup';
 import { BookTour } from '../pages/BookTour';
+import { GoogleAuthCallback } from '../pages/GoogleAuthCallback';
 
 const RootRedirect = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -52,6 +53,10 @@ export const router = createBrowserRouter([
   {
     path: '/register/school',
     element: <SchoolRegister />,
+  },
+  {
+    path: '/auth/google/callback',
+    element: <GoogleAuthCallback />,
   },
   {
     path: '/login/master',

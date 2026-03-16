@@ -174,7 +174,17 @@ export const SchoolDashboard = () => {
         setLoading(false);
       }
     };
+    
+    // Initial fetch
     fetchData();
+    
+    // Set up polling to refresh data every 30 seconds
+    const intervalId = setInterval(() => {
+      fetchData();
+    }, 30000);
+    
+    // Cleanup interval on unmount
+    return () => clearInterval(intervalId);
   }, []);
 
 
