@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Loader2 } from 'lucide-react';
@@ -76,14 +76,18 @@ export const GoogleAuthCallback = () => {
         );
     }
 
-    return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-            <div className="bg-white border border-slate-200 rounded-xl p-8 max-w-md w-full text-center">
-                <Loader2 className="w-8 h-8 text-primary-600 animate-spin mx-auto mb-4" />
-                <h2 className="text-lg font-semibold text-slate-900 mb-2">Completing sign in...</h2>
-                <p className="text-sm text-slate-500">Please wait while we authenticate your account.</p>
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
+                <div className="bg-white border border-slate-200 rounded-xl p-8 max-w-md w-full text-center">
+                    <Loader2 className="w-8 h-8 text-primary-600 animate-spin mx-auto mb-4" />
+                    <h2 className="text-lg font-semibold text-slate-900 mb-2">Completing sign in...</h2>
+                    <p className="text-sm text-slate-500">Please wait while we authenticate your account.</p>
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
+
+    return null;
 };
 

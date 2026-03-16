@@ -10,7 +10,7 @@ export const SchoolLogin = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login, logout, loginWithGoogle } = useAuthStore();
+    const { login, logout } = useAuthStore();
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
 
