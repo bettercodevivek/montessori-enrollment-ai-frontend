@@ -64,10 +64,10 @@ const AudioPlayer = ({ src }: { src: string }) => {
                 ref={audioRef} src={src}
                 onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
                 onLoadedMetadata={() => {
-                   if (audioRef.current) {
+                    if (audioRef.current) {
                         setDuration(audioRef.current.duration);
                         setLoading(false);
-                   }
+                    }
                 }}
                 onCanPlay={() => setLoading(false)}
                 onError={() => {
@@ -79,12 +79,11 @@ const AudioPlayer = ({ src }: { src: string }) => {
             />
 
             <div className="flex items-center gap-4 mb-2">
-                <button 
-                  onClick={togglePlay} 
-                  disabled={error || loading}
-                  className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all shrink-0 ${
-                    error ? 'bg-slate-200 text-slate-400' : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
+                <button
+                    onClick={togglePlay}
+                    disabled={error || loading}
+                    className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all shrink-0 ${error ? 'bg-slate-200 text-slate-400' : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
                 >
                     {loading ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

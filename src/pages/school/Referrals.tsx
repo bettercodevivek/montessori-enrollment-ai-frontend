@@ -110,8 +110,8 @@ export const SchoolReferrals = () => {
                 <td className="px-5 py-3 text-sm text-slate-500">{new Date(ref.date).toLocaleDateString()}</td>
                 <td className="px-5 py-3">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ref.status === 'converted' ? 'bg-green-50 text-green-700' :
-                      ref.status === 'active' ? 'bg-blue-50 text-blue-700' :
-                        'bg-yellow-50 text-yellow-700'
+                    ref.status === 'active' ? 'bg-blue-50 text-blue-700' :
+                      'bg-yellow-50 text-yellow-700'
                     }`}>
                     {ref.status}
                   </span>

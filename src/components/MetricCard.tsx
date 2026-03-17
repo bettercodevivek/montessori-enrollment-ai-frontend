@@ -23,8 +23,8 @@ export const MetricCard = ({ label, value, change }: MetricCardProps) => {
       {change !== undefined && (
         <div className="mt-4 flex items-center gap-2">
           <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold leading-none ${isPositive
-              ? 'bg-emerald-50 text-emerald-700'
-              : 'bg-rose-50 text-rose-700'
+            ? 'bg-emerald-50 text-emerald-700'
+            : 'bg-rose-50 text-rose-700'
             }`}>
             {isPositive ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
             {Math.abs(change)}%
