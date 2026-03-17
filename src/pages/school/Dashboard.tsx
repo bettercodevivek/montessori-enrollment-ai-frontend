@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, PlayCircle, Activity, PhoneCall, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp, Play, Pause, Headphones, Download } from 'lucide-react';
+import { Loader2, PlayCircle, Activity, PhoneCall, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp, Play, Pause, Headphones, Download, ArrowRight } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { MetricCard } from '../../components/MetricCard';
 import { useRef } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../api/axios';
 
 const AudioPlayer = ({ src }: { src: string }) => {
@@ -282,6 +283,9 @@ export const SchoolDashboard = () => {
               <PhoneCall className="w-4 h-4 text-primary-600" />
               {t('recent_calls')}
             </h2>
+            <Link to="/school/call-logs" className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+              View All <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
