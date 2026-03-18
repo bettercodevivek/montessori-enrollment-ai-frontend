@@ -100,6 +100,9 @@ export const SchoolIntegrations = () => {
 
               <div className="flex-1">
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">{isGoogle ? 'Google Workspace' : 'Microsoft Office 365'}</h3>
+                {integration.connected && integration.email && (
+                  <p className="text-[11px] font-bold text-blue-600 mt-1">{integration.email}</p>
+                )}
                 <p className="text-xs text-slate-500 mt-2 leading-relaxed font-medium">
                   {isGoogle 
                     ? 'Sync Google Calendar and Gmail to enable automated tour scheduling and parent follow-ups.' 

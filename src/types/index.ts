@@ -27,6 +27,7 @@ export interface Integration {
   type: 'outlook' | 'google';
   connected: boolean;
   connectedAt?: string;
+  email?: string | null;
 }
 
 export interface Followup {
