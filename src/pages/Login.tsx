@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Globe, School, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Globe, School, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const Login = () => {
@@ -27,7 +27,7 @@ export const Login = () => {
           <p className="text-slate-500 max-w-md mx-auto">{t('role_selection_desc')}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 gap-8 max-w-sm mx-auto">
           {/* School Login Card */}
           <div
             onClick={() => navigate('/login/school')}
@@ -55,7 +55,7 @@ export const Login = () => {
           </div>
 
           {/* Admin/Master Login Card */}
-          <div
+          {/* <div
             onClick={() => navigate('/login/master')}
             className="group bg-slate-900 border border-slate-800 rounded-2xl shadow-sm hover:shadow-2xl hover:border-primary-500 p-8 transition-all cursor-pointer relative overflow-hidden"
           >
@@ -78,7 +78,7 @@ export const Login = () => {
               {t('access_portal')}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="mt-12 text-center">

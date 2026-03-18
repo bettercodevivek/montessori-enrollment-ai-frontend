@@ -84,13 +84,13 @@ export const Landing = () => {
                 <div className="max-w-7xl mx-auto px-6 relative">
                     <div className="max-w-4xl mx-auto text-center">
                         <div className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-8">
-                            Built Specifically for Montessori Schools
+                            Built for Childcare Operators
                         </div>
                         <h1 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 leading-[1.05] tracking-tight">
                             Capture Every <span className="text-blue-600">Enrollment</span> Opportunity.
                         </h1>
                         <p className="text-xl md:text-2xl text-slate-600 mb-12 leading-relaxed max-w-3xl mx-auto font-medium">
-                            A communication platform designed for childcare centers to manage new parent inquiries, reduce front desk overload, and support diverse families.
+                            A communication platform designed for childcare centers to capture new parent inquiries, reduce front desk overload, and support diverse families.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                             <button

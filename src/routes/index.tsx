@@ -4,7 +4,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { Login } from '../pages/Login';
 import { SchoolLogin } from '../pages/SchoolLogin';
 import { SchoolRegister } from '../pages/SchoolRegister';
-import { MasterLogin } from '../pages/MasterLogin';
+// import { MasterLogin } from '../pages/MasterLogin';
 import { SchoolLayout } from '../layouts/SchoolLayout';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { SchoolDashboard } from '../pages/school/Dashboard';
@@ -58,10 +58,10 @@ export const router = createBrowserRouter([
     path: '/auth/google/callback',
     element: <GoogleAuthCallback />,
   },
-  {
-    path: '/login/master',
-    element: <MasterLogin />,
-  },
+  // {
+  //   path: '/login/master',
+  //   element: <MasterLogin />,
+  // },
   {
     path: '/inquiry/:schoolId',
     element: <InquiryForm />,
