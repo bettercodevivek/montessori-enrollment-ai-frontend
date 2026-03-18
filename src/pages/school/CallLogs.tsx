@@ -192,11 +192,11 @@ export const SchoolCallLogs = () => {
                                     <div className="flex items-center gap-3 mt-0.5">
                                         <span className="flex items-center gap-1 text-[11px] font-bold text-slate-400 uppercase">
                                             <Calendar className="w-3 h-3" />
-                                            {new Date(log.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                            {new Date(log.createdAt).toLocaleDateString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric' })}
                                         </span>
                                         <span className="flex items-center gap-1 text-[11px] font-bold text-slate-400 uppercase">
                                             <Clock className="w-3 h-3" />
-                                            {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(log.createdAt).toLocaleTimeString('en-US', { timeZone: 'America/Chicago', hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                         <span className="text-[11px] font-bold text-blue-600">
                                             {formatDuration(log.duration)}

@@ -91,11 +91,12 @@ export const SchoolTestIntegration = () => {
     };
 
     const formatSlotTime = (iso: string) => {
-        return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return new Date(iso).toLocaleTimeString('en-US', { timeZone: 'America/Chicago', hour: '2-digit', minute: '2-digit' });
     };
 
     const formatBookedDate = (iso: string) => {
         return new Date(iso).toLocaleString('en-US', {
+            timeZone: 'America/Chicago',
             weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
             hour: 'numeric', minute: '2-digit',
         });
@@ -195,7 +196,7 @@ export const SchoolTestIntegration = () => {
                             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-4 py-2.5 flex items-center gap-3">
                                 <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500 animate-pulse" />
                                 <span className="text-sm font-medium text-emerald-400">
-                                    {new Date(selectedSlot!.start).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}{' '}
+                                    {new Date(selectedSlot!.start).toLocaleDateString('en-US', { timeZone: 'America/Chicago', weekday: 'short', month: 'short', day: 'numeric' })}{' '}
                                     at {formatSlotTime(selectedSlot!.start)}
                                 </span>
                             </div>
