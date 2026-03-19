@@ -6,6 +6,7 @@ import { MetricCard } from '../../components/MetricCard';
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
+import { Calendar as CalendarUI } from '../../components/Calendar';
 
 const AudioPlayer = ({ src }: { src: string }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -114,7 +115,7 @@ const AudioPlayer = ({ src }: { src: string }) => {
 };
 
 interface DashboardResponse {
-  metrics: Array<{ label: string; value: number; change?: number }>;
+  metrics: Array<{ label: string; value: number; change?: number; maxValue?: number }>;
   chartData: Array<{ name: string; calls: number; inquiries: number }>;
   recentCalls: Array<{
     id: string;
@@ -244,32 +245,39 @@ export const SchoolDashboard = () => {
         ))}
       </div>
 
-      {/* Analytics Chart */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8 shadow-sm">
-        <h2 className="text-base font-semibold text-slate-900 mb-6 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-slate-400" />
-          Call Volume (Last 14 Days)
-        </h2>
-        <div className="h-[300px] w-full">
-          {chartData?.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} minTickGap={20} />
-                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dx={-10} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  labelStyle={{ fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}
-                />
-                <Legend wrapperStyle={{ paddingTop: '20px' }} iconType="circle" />
-                <Line type="monotone" dataKey="calls" name="Total Calls" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }} activeDot={{ r: 6 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-              No chart data available.
-            </div>
-          )}
+
+      {/* Analytics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col h-full">
+          <h2 className="text-base font-semibold text-slate-900 mb-6 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-slate-400" />
+            Call Volume (Last 14 Days)
+          </h2>
+          <div className="flex-1 h-[300px] w-full min-h-[300px]">
+            {chartData?.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} minTickGap={20} />
+                  <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dx={-10} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    labelStyle={{ fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} iconType="circle" />
+                  <Line type="monotone" dataKey="calls" name="Total Calls" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+                No chart data available.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm overflow-hidden h-full flex flex-col">
+          <CalendarUI bookings={tourBookings} />
         </div>
       </div>
 
@@ -292,9 +300,9 @@ export const SchoolDashboard = () => {
               <thead>
                 <tr className="text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
                   <th className="px-6 py-4 bg-slate-50/30">{t('caller')}</th>
-                  <th className="px-6 py-4 bg-slate-50/30">{t('type')}</th>
+                  <th className="px-6 py-4 bg-slate-50/30">Status</th>
+                  <th className="px-6 py-4 bg-slate-50/30">Tour Date</th>
                   <th className="px-6 py-4 bg-slate-50/30">{t('duration')}</th>
-                  <th className="px-6 py-4 bg-slate-50/30">{t('time')}</th>
                   <th className="px-6 py-4 bg-slate-50/30 text-right">Action</th>
                 </tr>
               </thead>
@@ -307,25 +315,31 @@ export const SchoolDashboard = () => {
                         <div className="text-xs text-slate-500 font-medium">{call.callerPhone}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${call.callType === 'inquiry'
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${call.tourBookingDetected
                           ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                          : 'bg-slate-100 text-slate-600 border border-slate-200'
+                          : 'bg-amber-100 text-amber-700 border border-amber-200'
                           }`}>
-                          {call.callType}
+                          {call.tourBookingDetected ? 'Tour booked' : 'Need attention'}
                         </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {call.tourBookingDate ? (
+                          <>
+                            <div className="text-sm font-medium text-slate-600 tabular-nums">
+                              {new Date(call.tourBookingDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                              {new Date(call.tourBookingDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-slate-300 font-bold">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
                           <Activity className="w-3.5 h-3.5 text-slate-300" />
                           {Math.floor(call.duration / 60)}m {call.duration % 60}s
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-slate-600 tabular-nums">
-                          {new Date(call.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
-                          {new Date(call.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -413,17 +427,6 @@ export const SchoolDashboard = () => {
                           <p className="text-[9px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Detail Summary</p>
                           <p className="text-xs text-slate-700 leading-relaxed font-medium italic">"{call.summary}"</p>
                         </div>
-                        {call.tourBookingDate && (
-                          <div className="flex items-center gap-3 text-emerald-700 bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
-                            <Calendar className="w-4 h-4 text-emerald-500" />
-                            <div>
-                              <p className="text-[9px] font-bold uppercase tracking-tighter opacity-70">Scheduled Tour</p>
-                              <p className="text-xs font-bold whitespace-nowrap">
-                                {new Date(call.tourBookingDate).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' })}
-                              </p>
-                            </div>
-                          </div>
-                        )}
                         {call.conversationId && (
                           <p className="text-[9px] text-slate-400 font-mono tracking-tighter">REF: {call.conversationId}</p>
                         )}
