@@ -111,7 +111,7 @@ export const Landing = () => {
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                         <div>
-                            <h2 className="text-3xl font-black text-slate-900 mb-8 leading-tight">The Reality Most Montessori Schools Face</h2>
+                            <h2 className="text-3xl font-black text-slate-900 mb-8 leading-tight">The Reality Most Childcare Schools Face</h2>
                             <div className="space-y-6 text-lg text-slate-600 leading-relaxed font-normal">
                                 <p>
                                     Running a school means balancing education, parent relationships, and daily operations.
@@ -142,7 +142,7 @@ export const Landing = () => {
                 <div className="max-w-7xl mx-auto px-6 text-center">
                     <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6">The Problem We Are Solving</h2>
                     <p className="text-xl text-slate-500 max-w-3xl mx-auto mb-16">
-                        Most Montessori schools experience similar communication challenges that quietly impact enrollment growth and parent experience.
+                        Most childcare schools experience similar communication challenges that quietly impact enrollment growth and parent experience.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                         {[
@@ -299,7 +299,7 @@ export const Landing = () => {
                             </div>
                             <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-8 leading-tight">Multilingual Support</h2>
                             <p className="text-xl text-slate-600 mb-8 font-medium leading-relaxed">
-                                Many Montessori communities serve families from diverse backgrounds. Our system is designed to respond to new parents in the language they feel most comfortable using.
+                                Many childcare communities serve families from diverse backgrounds. Our system is designed to respond to new parents in the language they feel most comfortable using.
                             </p>
                             <p className="text-slate-500 font-medium">This ensures every new parent feels welcomed and understood from the very first interaction.</p>
                         </div>
@@ -354,7 +354,7 @@ export const Landing = () => {
                         <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-8 leading-tight tracking-tight">Early Partner Schools</h2>
                         <div className="space-y-6 text-xl text-slate-600 font-medium leading-relaxed">
                             <p>
-                                We are currently working with a small group of Montessori schools to help shape the platform and ensure it solves real operational challenges.
+                                We are currently working with a small group of childcare schools to help shape the platform and ensure it solves real operational challenges.
                             </p>
                             <p>
                                 These early partners help us refine the system so it works naturally within the daily rhythm of a childcare center.
@@ -391,7 +391,7 @@ export const Landing = () => {
                                 </div>
                                 <span className="text-xl font-bold text-slate-900 tracking-tight">BrightBridge</span>
                             </div>
-                            <p className="text-slate-400 text-sm max-w-xs font-medium">Empowering Montessori communities with professional AI enrollment intelligence.</p>
+                            <p className="text-slate-400 text-sm max-w-xs font-medium">Empowering childcare communities with professional AI enrollment intelligence.</p>
                         </div>
 
                     </div>

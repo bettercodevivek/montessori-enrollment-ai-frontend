@@ -12,7 +12,9 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   const { isAuthenticated, user } = useAuthStore();
 
   if (!isAuthenticated || !user) {
-    return <Navigate to="/" replace />;
+    // If trying to access admin route, send to admin login; otherwise to root
+    const isAdminRoute = window.location.pathname.startsWith('/admin');
+    return <Navigate to={isAdminRoute ? '/admin' : '/'} replace />;
   }
 
   if (requiredRole && user.role !== requiredRole) {

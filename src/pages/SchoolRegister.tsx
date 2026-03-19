@@ -170,7 +170,7 @@ export const SchoolRegister = () => {
                                     value={formData.schoolName}
                                     onChange={handleChange}
                                     className="ui-input h-10 text-sm"
-                                    placeholder="Sunshine Montessori"
+                                    placeholder="Sunshine Childcare"
                                     required
                                 />
                             </div>

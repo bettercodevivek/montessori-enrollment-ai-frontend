@@ -38,7 +38,7 @@ interface SettingsData {
 }
 
 const DEFAULT_QA_PAIRS: QAPair[] = [
-  { question: "What makes your school different?", answer: "We follow the Montessori philosophy, which focuses on independence, hands-on learning, and child-led development in a structured classroom environment." },
+  { question: "What makes your school different?", answer: "We focus on independence, hands-on learning, and child-led development in a structured childcare environment." },
   { question: "What ages do you accept?", answer: "We accept children from [age]." },
   { question: "Do you offer full-time and part-time options?", answer: "Yes, we offer full-time and part-time options depending on availability." },
   { question: "Is there availability?", answer: "Availability varies by age group. I can check availability and help schedule a tour." },
@@ -47,8 +47,8 @@ const DEFAULT_QA_PAIRS: QAPair[] = [
   { question: "How much is tuition?", answer: "Tuition depends on age and schedule. We review exact pricing during your tour." },
   { question: "What are your hours?", answer: "We are open from [Opening Time] to [Closing Time], Monday through Friday." },
   { question: "Are you year-round?", answer: "We operate on a [year-round / academic year] calendar." },
-  { question: "What is Montessori?", answer: "Montessori is a child-centered educational approach that encourages independence, self-paced learning, and hands-on materials." },
-  { question: "Are teachers certified?", answer: "Our teachers are trained in Montessori methods and early childhood education." },
+  { question: "What is your philosophy?", answer: "Our approach is child-centered and encourages independence, self-paced learning, and hands-on materials." },
+  { question: "Are teachers certified?", answer: "Our teachers are trained in early childhood education." },
   { question: "What is the teacher-to-child ratio?", answer: "We follow all state-required ratios to ensure quality and safety." },
   { question: "How do you ensure safety?", answer: "We maintain secure entry procedures and follow all licensing and safety standards." },
   { question: "Do you provide meals?", answer: "[Yes / No]. If no, parents provide lunch and snacks." },
@@ -284,7 +284,7 @@ export const SchoolSettings = () => {
                     value={settings.name}
                     onChange={e => update('name', e.target.value)}
                     className="ui-input w-full"
-                    placeholder="Sunshine Montessori"
+                    placeholder="Sunshine Childcare"
                   />
                 </div>
                 <div>

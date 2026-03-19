@@ -112,7 +112,7 @@ export const ReferralSignup = () => {
               value={schoolName}
               onChange={(e) => setSchoolName(e.target.value)}
               className="ui-input"
-              placeholder="e.g. Oak Montessori"
+              placeholder="e.g. Oak Childcare"
               required
             />
           </div>

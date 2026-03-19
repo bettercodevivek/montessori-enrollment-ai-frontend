@@ -25,6 +25,7 @@ import { InquiryForm } from '../pages/InquiryForm';
 import { ReferralSignup } from '../pages/ReferralSignup';
 import { BookTour } from '../pages/BookTour';
 import { GoogleAuthCallback } from '../pages/GoogleAuthCallback';
+import { MasterLogin } from '../pages/MasterLogin';
 
 const RootRedirect = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -122,31 +123,55 @@ export const router = createBrowserRouter([
   },
   {
     path: '/admin',
-    element: (
-      <ProtectedRoute requiredRole="admin">
-        <AdminLayout />
-      </ProtectedRoute>
-    ),
     children: [
       {
+        index: true,
+        element: <MasterLogin />,
+      },
+      {
         path: 'dashboard',
-        element: <AdminDashboard />,
+        element: (
+          <ProtectedRoute requiredRole="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        ),
+        children: [{ index: true, element: <AdminDashboard /> }],
       },
       {
         path: 'schools',
-        element: <AdminSchools />,
+        element: (
+          <ProtectedRoute requiredRole="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        ),
+        children: [{ index: true, element: <AdminSchools /> }],
       },
       {
         path: 'analytics',
-        element: <AdminAnalytics />,
+        element: (
+          <ProtectedRoute requiredRole="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        ),
+        children: [{ index: true, element: <AdminAnalytics /> }],
       },
       {
         path: 'integrations',
-        element: <AdminIntegrations />,
+        element: (
+          <ProtectedRoute requiredRole="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        ),
+        children: [{ index: true, element: <AdminIntegrations /> }],
       },
       {
         path: 'referrals',
-        element: <AdminReferrals />,
+        element: (
+          <ProtectedRoute requiredRole="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        ),
+        children: [{ index: true, element: <AdminReferrals /> }],
       },
     ],
   },

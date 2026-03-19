@@ -7,12 +7,16 @@ import { Plus, X, Loader2, Trash2, CheckCircle, Pencil } from 'lucide-react';
 interface SchoolData {
   id: string;
   name: string;
+  address: string;
   aiNumber: string;
   routingNumber: string;
   elevenlabsAgentId: string;
   status: 'active' | 'inactive';
   calls: number;
   tours: number;
+  twilioSid: string;
+  twilioAuthToken: string;
+  twilioPhoneNumber: string;
 }
 
 const emptyCreateForm = { name: '', email: '', password: '', address: '', referrerSchoolId: '', elevenlabsAgentId: '', aiNumber: '' };
@@ -29,7 +33,7 @@ export const AdminSchools = () => {
 
   // Edit modal
   const [editSchool, setEditSchool] = useState<SchoolData | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', address: '', elevenlabsAgentId: '', status: 'active' as 'active' | 'inactive', aiNumber: '' });
+  const [editForm, setEditForm] = useState({ name: '', address: '', elevenlabsAgentId: '', status: 'active' as 'active' | 'inactive', aiNumber: '', twilioSid: '', twilioAuthToken: '', twilioPhoneNumber: '' });
   const [saving, setSaving] = useState(false);
 
   const [error, setError] = useState('');
@@ -87,7 +91,10 @@ export const AdminSchools = () => {
       address: (school as any).address || '', 
       elevenlabsAgentId: school.elevenlabsAgentId || '', 
       status: school.status, 
-      aiNumber: school.aiNumber || '' 
+      aiNumber: school.aiNumber || '',
+      twilioSid: school.twilioSid || '',
+      twilioAuthToken: school.twilioAuthToken || '',
+      twilioPhoneNumber: school.twilioPhoneNumber || '',
     });
     setError('');
   };
@@ -104,6 +111,9 @@ export const AdminSchools = () => {
         elevenlabsAgentId: editForm.elevenlabsAgentId,
         status: editForm.status,
         aiNumber: editForm.aiNumber,
+        twilioSid: editForm.twilioSid,
+        twilioAuthToken: editForm.twilioAuthToken,
+        twilioPhoneNumber: editForm.twilioPhoneNumber,
       });
       setSuccess('School updated successfully!');
       setEditSchool(null);
@@ -239,7 +249,7 @@ export const AdminSchools = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t('school_name')}</label>
-                  <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="ui-input" placeholder="Sunshine Montessori" required />
+                  <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="ui-input" placeholder="Sunshine Childcare" required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t('admin_email')}</label>
@@ -290,7 +300,7 @@ export const AdminSchools = () => {
       {/* ── Edit Modal ── */}
       {editSchool && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Edit School</h2>
@@ -327,7 +337,7 @@ export const AdminSchools = () => {
                   placeholder="School Address"
                 />
               </div>
-               {/* Agent ID & AI Number */}
+              {/* Agent ID & AI Number */}
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">ElevenLabs Agent ID</label>
@@ -352,6 +362,47 @@ export const AdminSchools = () => {
                 <p className="text-xs text-slate-400">
                   Agent ID is found in ElevenLabs. AI Number is the Twilio number.
                 </p>
+              </div>
+
+              {/* Twilio Credentials */}
+              <div className="border-t border-slate-100 pt-4">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                  Twilio / SMS Credentials
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Account SID</label>
+                    <input
+                      type="text"
+                      value={editForm.twilioSid}
+                      onChange={e => setEditForm({ ...editForm, twilioSid: e.target.value })}
+                      className="ui-input font-mono text-sm"
+                      placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Auth Token</label>
+                    <input
+                      type="text"
+                      value={editForm.twilioAuthToken}
+                      onChange={e => setEditForm({ ...editForm, twilioAuthToken: e.target.value })}
+                      className="ui-input font-mono text-sm"
+                      placeholder="••••••••••••••••"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Twilio Phone Number</label>
+                    <input
+                      type="text"
+                      value={editForm.twilioPhoneNumber}
+                      onChange={e => setEditForm({ ...editForm, twilioPhoneNumber: e.target.value })}
+                      className="ui-input font-mono text-sm"
+                      placeholder="+15551234567"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">SMS follow-ups are sent from this number.</p>
+                  </div>
+                </div>
               </div>
 
               {/* Status toggle */}
