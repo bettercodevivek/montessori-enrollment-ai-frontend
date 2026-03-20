@@ -20,7 +20,7 @@ import { AdminSchools } from '../pages/admin/Schools';
 import { AdminAnalytics } from '../pages/admin/Analytics';
 import { AdminIntegrations } from '../pages/admin/Integrations';
 import { AdminReferrals } from '../pages/admin/Referrals';
-import { AdminPhoneNumbers } from '../pages/admin/PhoneNumbers';
+import { AdminPhoneNumbers } from '../pages/admin/AdminPhoneNumbers';
 import { Landing } from '../pages/Landing';
 import { InquiryForm } from '../pages/InquiryForm';
 import { ReferralSignup } from '../pages/ReferralSignup';

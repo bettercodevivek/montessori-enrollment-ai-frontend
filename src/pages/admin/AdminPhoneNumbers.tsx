@@ -14,7 +14,7 @@ interface PhoneNumber {
 }
 
 export const AdminPhoneNumbers = () => {
-  const { t } = useTranslation();
+  useTranslation();
   const [numbers, setNumbers] = useState<PhoneNumber[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
