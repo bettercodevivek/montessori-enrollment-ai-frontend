@@ -15,7 +15,7 @@ export const Sidebar = ({ role }: SidebarProps) => {
     { path: '/admin/dashboard', icon: LayoutDashboard, labelKey: 'dashboard' },
     { path: '/admin/schools', icon: School, labelKey: 'schools' },
     { path: '/admin/analytics', icon: BarChart3, labelKey: 'analytics' },
-    { path: '/admin/integrations', icon: Plug2, labelKey: 'integrations' },
+    { path: '/admin/phone-numbers', icon: Phone, labelKey: 'phone_numbers' },
     { path: '/admin/referrals', icon: Users, labelKey: 'referrals' },
   ];
 

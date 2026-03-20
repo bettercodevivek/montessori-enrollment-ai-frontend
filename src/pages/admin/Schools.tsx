@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StatusBadge } from '../../components/StatusBadge';
 import api from '../../api/axios';
-import { Plus, X, Loader2, Trash2, CheckCircle, Pencil, Phone, PhoneOff } from 'lucide-react';
+import { Plus, X, Loader2, Trash2, CheckCircle, Pencil, Phone } from 'lucide-react';
 
 interface SchoolData {
   id: string;
@@ -33,23 +33,13 @@ export const AdminSchools = () => {
 
   // Edit modal
   const [editSchool, setEditSchool] = useState<SchoolData | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', address: '', elevenlabsAgentId: '', status: 'active' as 'active' | 'inactive', aiNumber: '', twilioSid: '', twilioAuthToken: '', twilioPhoneNumber: '' });
+  const [editForm, setEditForm] = useState({ name: '', address: '', elevenlabsAgentId: '', status: 'active' as 'active' | 'inactive', aiNumber: '', twilioPhoneNumber: '' });
   const [saving, setSaving] = useState(false);
 
-  // Phone Import Modal (formerly SIP)
-  const [sipModalSchool, setSipModalSchool] = useState<SchoolData | null>(null);
-  const [phoneForm, setPhoneForm] = useState({
-    provider: 'sip_trunk' as 'sip_trunk' | 'twilio',
-    phone_number: '',
-    label: '',
-    // SIP specific
-    sip_address: 'sip.rtc.elevenlabs.io:5060',
-    sip_username: '',
-    sip_password: '',
-    // Twilio specific
-    twilio_sid: '',
-    twilio_token: '',
-  });
+  // Phone Assignment Modal (Pooled)
+  const [assignModalSchool, setAssignModalSchool] = useState<SchoolData | null>(null);
+  const [availableNumbers, setAvailableNumbers] = useState<any[]>([]);
+  const [selectedPhoneId, setSelectedPhoneId] = useState('');
 
 
   const [error, setError] = useState('');
@@ -66,7 +56,24 @@ export const AdminSchools = () => {
     }
   };
 
+  const fetchAvailableNumbers = async () => {
+    try {
+      const res = await api.get('/admin/phone-numbers');
+      // Filter for unassigned numbers OR numbers assigned to this specific school
+      const available = res.data.filter((n: any) => !n.schoolId || n.schoolId._id === assignModalSchool?.id);
+      setAvailableNumbers(available);
+    } catch (err) {
+      console.error('Failed to fetch available numbers:', err);
+    }
+  };
+
   useEffect(() => { fetchSchools(); }, []);
+
+  useEffect(() => {
+    if (assignModalSchool) {
+      fetchAvailableNumbers();
+    }
+  }, [assignModalSchool]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,8 +115,6 @@ export const AdminSchools = () => {
       elevenlabsAgentId: school.elevenlabsAgentId || '', 
       status: school.status, 
       aiNumber: school.aiNumber || '',
-      twilioSid: school.twilioSid || '',
-      twilioAuthToken: school.twilioAuthToken || '',
       twilioPhoneNumber: school.twilioPhoneNumber || '',
     });
     setError('');
@@ -127,8 +132,6 @@ export const AdminSchools = () => {
         elevenlabsAgentId: editForm.elevenlabsAgentId,
         status: editForm.status,
         aiNumber: editForm.aiNumber,
-        twilioSid: editForm.twilioSid,
-        twilioAuthToken: editForm.twilioAuthToken,
         twilioPhoneNumber: editForm.twilioPhoneNumber,
       });
       setSuccess('School updated successfully!');
@@ -144,76 +147,27 @@ export const AdminSchools = () => {
 
   const handleAssignPhone = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!sipModalSchool) return;
+    if (!assignModalSchool || !selectedPhoneId) return;
     setSaving(true);
     setError('');
     try {
-      let payload: any = {
-        phone_number: phoneForm.phone_number,
-        label: phoneForm.label || `${sipModalSchool.name} AI Line`,
-      };
-
-      if (phoneForm.provider === 'twilio') {
-        payload.sid = phoneForm.twilio_sid;
-        payload.token = phoneForm.twilio_token;
-      } else {
-        payload.provider = 'sip_trunk';
-        payload.inbound_trunk_config = {
-          address: phoneForm.sip_address,
-          credentials: {
-            username: phoneForm.sip_username,
-            password: phoneForm.sip_password,
-          }
-        };
-        payload.outbound_trunk_config = {
-          address: phoneForm.sip_address,
-          credentials: {
-            username: phoneForm.sip_username,
-            password: phoneForm.sip_password,
-          }
-        };
-      }
-
-      await api.post(`/admin/schools/${sipModalSchool.id}/phone-number`, payload);
+      await api.post(`/admin/schools/${assignModalSchool.id}/assign-number`, { phoneNumberId: selectedPhoneId });
       setSuccess('Phone number assigned successfully!');
-      setSipModalSchool(null);
+      setAssignModalSchool(null);
+      setSelectedPhoneId('');
       await fetchSchools();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to assign phone number.');
+      setError(err.response?.data?.error || 'Failed to assign number.');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeletePhone = async (school: SchoolData) => {
-    if (!confirm(`Are you sure you want to delete the phone number ${school.aiNumber} for ${school.name}? This will also remove it from ElevenLabs.`)) return;
-    setSaving(true);
-    setError('');
-    try {
-      await api.delete(`/admin/schools/${school.id}/phone-number`);
-      setSuccess('Phone number deleted successfully!');
-      await fetchSchools();
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to delete phone number.');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const openPhoneModal = (school: SchoolData) => {
-    setSipModalSchool(school);
-    setPhoneForm({
-      provider: 'sip_trunk',
-      phone_number: school.aiNumber || '',
-      label: `${school.name} AI Line`,
-      sip_address: 'sip.rtc.elevenlabs.io:5060',
-      sip_username: school.aiNumber || '',
-      sip_password: '',
-      twilio_sid: '',
-      twilio_token: '',
-    });
+    setAssignModalSchool(school);
+    setSelectedPhoneId('');
     setError('');
   };
 
@@ -270,18 +224,7 @@ export const AdminSchools = () => {
                   <p className="text-xs text-slate-400 font-mono">#{school.id.slice(-6)}</p>
                 </td>
                 <td className="px-5 py-3 text-xs text-slate-600 font-mono">
-                  <div className="flex items-center gap-2">
-                    {school.aiNumber || '-'}
-                    {school.aiNumber && (
-                      <button
-                        onClick={() => handleDeletePhone(school)}
-                        title="Delete phone number"
-                        className="p-1 text-slate-300 hover:text-red-500 transition-colors"
-                      >
-                        <PhoneOff className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
+                  {school.aiNumber || '-'}
                 </td>
                 <td className="px-5 py-3">
                   {school.elevenlabsAgentId ? (
@@ -475,35 +418,8 @@ export const AdminSchools = () => {
                 </p>
               </div>
 
-              {/* Twilio Credentials */}
-              <div className="border-t border-slate-100 pt-4">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-                  Twilio / SMS Credentials
-                </p>
-                <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Account SID</label>
-                    <input
-                      type="text"
-                      value={editForm.twilioSid}
-                      onChange={e => setEditForm({ ...editForm, twilioSid: e.target.value })}
-                      className="ui-input font-mono text-sm"
-                      placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Auth Token</label>
-                    <input
-                      type="text"
-                      value={editForm.twilioAuthToken}
-                      onChange={e => setEditForm({ ...editForm, twilioAuthToken: e.target.value })}
-                      className="ui-input font-mono text-sm"
-                      placeholder="••••••••••••••••"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Twilio Phone Number</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Twilio Phone Number (for SMS)</label>
                     <input
                       type="text"
                       value={editForm.twilioPhoneNumber}
@@ -513,8 +429,6 @@ export const AdminSchools = () => {
                     />
                     <p className="text-xs text-slate-400 mt-1">SMS follow-ups are sent from this number.</p>
                   </div>
-                </div>
-              </div>
 
               {/* Status toggle */}
               <div>
@@ -557,94 +471,58 @@ export const AdminSchools = () => {
         </div>
       )}
 
-      {/* ── Phone Import Modal ── */}
-      {sipModalSchool && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 max-h-[95vh] overflow-y-auto">
+      {/* ── Phone Assignment Modal ── */}
+      {assignModalSchool && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Import Phone Number</h2>
-                <p className="text-sm text-slate-500 mt-0.5">{sipModalSchool.name}</p>
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">Assign AI Number</h2>
+                <p className="text-sm text-slate-500 font-medium">{assignModalSchool.name}</p>
               </div>
-              <button onClick={() => setSipModalSchool(null)} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
+              <button onClick={() => setAssignModalSchool(null)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {error && (
-              <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>
+              <div className="mb-4 px-4 py-3 bg-red-50 border border-red-100 text-red-700 text-sm rounded-xl font-medium">{error}</div>
             )}
 
-            <form onSubmit={handleAssignPhone} className="space-y-4">
+            <form onSubmit={handleAssignPhone} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
-                <input
-                  type="text"
-                  value={phoneForm.label}
-                  onChange={e => setPhoneForm({ ...phoneForm, label: e.target.value })}
-                  className="ui-input"
-                  placeholder="e.g., Italy SIP Line"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
-                <input
-                  type="text"
-                  value={phoneForm.phone_number}
-                  onChange={e => setPhoneForm({ ...phoneForm, phone_number: e.target.value })}
-                  className="ui-input font-mono"
-                  placeholder="+390620199287"
-                  required
-                />
-              </div>
-
-              <div className="space-y-4 pt-2 border-t border-slate-50">
-                  <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Inbound Trunk Configuration</p>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Inbound SIP Address</label>
-                    <input
-                      type="text"
-                      value={phoneForm.sip_address}
-                      onChange={e => setPhoneForm({ ...phoneForm, sip_address: e.target.value })}
-                      className="ui-input font-mono text-sm"
-                      placeholder="sip.rtc.elevenlabs.io:5060"
-                      required
-                    />
-                    <p className="text-[10px] text-slate-400 mt-1">Default: sip.rtc.elevenlabs.io:5060</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                      <input
-                        type="text"
-                        value={phoneForm.sip_username}
-                        onChange={e => setPhoneForm({ ...phoneForm, sip_username: e.target.value })}
-                        className="ui-input font-mono text-sm"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                      <input
-                        type="password"
-                        value={phoneForm.sip_password}
-                        onChange={e => setPhoneForm({ ...phoneForm, sip_password: e.target.value })}
-                        className="ui-input font-mono text-sm"
-                        required
-                      />
-                    </div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Available Numbers</label>
+                <div className="relative">
+                  <select
+                    value={selectedPhoneId}
+                    onChange={e => setSelectedPhoneId(e.target.value)}
+                    className="ui-input h-12 pr-10 appearance-none bg-slate-50 border-slate-200 focus:bg-white"
+                    required
+                  >
+                    <option value="">Select a number...</option>
+                    {availableNumbers.map(n => (
+                      <option key={n._id} value={n._id}>
+                        {n.phone_number} ({n.label})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <Phone className="w-4 h-4" />
                   </div>
                 </div>
+                {availableNumbers.length === 0 && (
+                  <p className="mt-2 text-[11px] text-orange-600 font-semibold flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                    No available numbers. Import some first in the Phone Management tab.
+                  </p>
+                )}
+              </div>
 
-
-              <div className="flex gap-3 pt-3">
-                <button type="button" onClick={() => setSipModalSchool(null)} className="ui-button-secondary flex-1">Cancel</button>
-                <button type="submit" disabled={saving} className="ui-button-primary bg-indigo-600 hover:bg-indigo-700 flex-1 flex items-center justify-center gap-2">
+              <div className="flex gap-3 pt-4 border-t border-slate-100">
+                <button type="button" onClick={() => setAssignModalSchool(null)} className="ui-button-secondary flex-1 h-11">Cancel</button>
+                <button type="submit" disabled={saving || !selectedPhoneId} className="ui-button-primary flex-1 h-11 flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {saving ? 'Importing…' : 'Import Number'}
+                  {saving ? 'Assigning…' : 'Assign Number'}
                 </button>
               </div>
             </form>
