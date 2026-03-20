@@ -600,20 +600,7 @@ export const AdminSchools = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Provider</label>
-                <select
-                  value={phoneForm.provider}
-                  onChange={e => setPhoneForm({ ...phoneForm, provider: e.target.value as any })}
-                  className="ui-input"
-                >
-                  <option value="sip_trunk">SIP Trunk</option>
-                  <option value="twilio">Twilio</option>
-                </select>
-              </div>
-
-              {phoneForm.provider === 'sip_trunk' ? (
-                <div className="space-y-4 pt-2 border-t border-slate-50">
+              <div className="space-y-4 pt-2 border-t border-slate-50">
                   <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Inbound Trunk Configuration</p>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Inbound SIP Address</label>
@@ -651,32 +638,7 @@ export const AdminSchools = () => {
                     </div>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-4 pt-2 border-t border-slate-50">
-                  <p className="text-xs font-bold text-orange-600 uppercase tracking-wider">Twilio Credentials</p>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Account SID</label>
-                    <input
-                      type="text"
-                      value={phoneForm.twilio_sid}
-                      onChange={e => setPhoneForm({ ...phoneForm, twilio_sid: e.target.value })}
-                      className="ui-input font-mono text-sm"
-                      placeholder="ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Auth Token</label>
-                    <input
-                      type="password"
-                      value={phoneForm.twilio_token}
-                      onChange={e => setPhoneForm({ ...phoneForm, twilio_token: e.target.value })}
-                      className="ui-input font-mono text-sm"
-                      required
-                    />
-                  </div>
-                </div>
-              )}
+
 
               <div className="flex gap-3 pt-3">
                 <button type="button" onClick={() => setSipModalSchool(null)} className="ui-button-secondary flex-1">Cancel</button>
