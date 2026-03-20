@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { MetricCard } from '../../components/MetricCard';
 import { StatusBadge } from '../../components/StatusBadge';
 import api from '../../api/axios';
-import { Phone, MessageSquare, Loader2 } from 'lucide-react';
+import { Loader2, Phone } from 'lucide-react';
 
 interface DashboardData {
   metrics: Array<{ label: string; value: number }>;
@@ -54,13 +54,13 @@ export const AdminDashboard = () => {
         <p className="text-sm text-slate-500 mt-0.5">{t('admin_dashboard_desc')}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {data.metrics.map((metric) => (
           <MetricCard key={metric.label} {...metric} />
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
             <Phone className="w-4 h-4 text-slate-400" />
@@ -85,34 +85,6 @@ export const AdminDashboard = () => {
             ))}
             {data.recentCalls.length === 0 && (
               <div className="px-5 py-10 text-center text-slate-400 text-sm">{t('no_calls_yet')}</div>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-slate-400" />
-            <h2 className="text-sm font-semibold text-slate-900">{t('followup_history')}</h2>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {data.recentFollowups.map((followup) => (
-              <div key={followup.id} className="px-5 py-3 hover:bg-slate-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">{followup.lead_name}</p>
-                    <p className="text-xs text-slate-500">{followup.school_name} · {followup.type}</p>
-                  </div>
-                  <div className="text-right">
-                    <StatusBadge status={followup.status as any} />
-                    <p className="text-xs text-slate-400 mt-1">
-                      {new Date(followup.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {data.recentFollowups.length === 0 && (
-              <div className="px-5 py-10 text-center text-slate-400 text-sm">{t('no_followups_yet')}</div>
             )}
           </div>
         </div>

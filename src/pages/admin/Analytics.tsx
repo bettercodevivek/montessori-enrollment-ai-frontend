@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/axios';
-import { Loader2, BarChart3, TrendingUp, Phone, Users } from 'lucide-react';
+import { Loader2, BarChart3, Phone, Users } from 'lucide-react';
 
 interface AnalyticsData {
   callsByMonth: Array<{ month: string; total: number; inquiries: number; general: number; routed: number }>;
@@ -106,26 +106,7 @@ export const AdminAnalytics = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Follow-up Stats */}
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <TrendingUp className="w-4 h-4 text-slate-400" />
-            <h2 className="text-sm font-semibold text-slate-900">Follow-up Summary</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {data.followupStats.map((stat, i) => (
-              <div key={i} className="bg-slate-50 border border-slate-100 rounded-lg p-4">
-                <p className="text-xs text-slate-500 mb-1">{stat.type} · {stat.status}</p>
-                <p className="text-2xl font-bold text-slate-900">{stat.count}</p>
-              </div>
-            ))}
-            {data.followupStats.length === 0 && (
-              <p className="text-slate-400 text-sm text-center py-8 col-span-2">No follow-up data yet.</p>
-            )}
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 gap-6">
         {/* Top Schools */}
         <div className="bg-white border border-slate-200 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-6">
