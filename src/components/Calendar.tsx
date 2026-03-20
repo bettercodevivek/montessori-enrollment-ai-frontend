@@ -133,7 +133,7 @@ export const Calendar: React.FC<CalendarProps> = ({ bookings }) => {
           </span>
         </div>
         
-        <div className="space-y-3 max-h-[140px] overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
           {selectedDateBookings.length === 0 ? (
             <p className="text-xs text-slate-400 italic font-medium py-2">No tours scheduled for this date.</p>
           ) : (
