@@ -14,9 +14,6 @@ interface SchoolData {
   status: 'active' | 'inactive';
   calls: number;
   tours: number;
-  twilioSid: string;
-  twilioAuthToken: string;
-  twilioPhoneNumber: string;
 }
 
 const emptyCreateForm = { name: '', email: '', password: '', address: '', referrerSchoolId: '', elevenlabsAgentId: '', aiNumber: '' };
@@ -33,7 +30,7 @@ export const AdminSchools = () => {
 
   // Edit modal
   const [editSchool, setEditSchool] = useState<SchoolData | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', address: '', elevenlabsAgentId: '', status: 'active' as 'active' | 'inactive', aiNumber: '', twilioPhoneNumber: '' });
+  const [editForm, setEditForm] = useState({ name: '', address: '', elevenlabsAgentId: '', status: 'active' as 'active' | 'inactive', aiNumber: '' });
   const [saving, setSaving] = useState(false);
 
   // Phone Assignment Modal (Pooled)
@@ -115,7 +112,6 @@ export const AdminSchools = () => {
       elevenlabsAgentId: school.elevenlabsAgentId || '', 
       status: school.status, 
       aiNumber: school.aiNumber || '',
-      twilioPhoneNumber: school.twilioPhoneNumber || '',
     });
     setError('');
   };
@@ -132,7 +128,6 @@ export const AdminSchools = () => {
         elevenlabsAgentId: editForm.elevenlabsAgentId,
         status: editForm.status,
         aiNumber: editForm.aiNumber,
-        twilioPhoneNumber: editForm.twilioPhoneNumber,
       });
       setSuccess('School updated successfully!');
       setEditSchool(null);
@@ -414,21 +409,10 @@ export const AdminSchools = () => {
                   />
                 </div>
                 <p className="text-xs text-slate-400">
-                  Agent ID is found in ElevenLabs. AI Number is the Twilio number.
+                  Agent ID is found in ElevenLabs. AI Number is assigned in the Phone Management tab.
                 </p>
               </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Twilio Phone Number (for SMS)</label>
-                    <input
-                      type="text"
-                      value={editForm.twilioPhoneNumber}
-                      onChange={e => setEditForm({ ...editForm, twilioPhoneNumber: e.target.value })}
-                      className="ui-input font-mono text-sm"
-                      placeholder="+15551234567"
-                    />
-                    <p className="text-xs text-slate-400 mt-1">SMS follow-ups are sent from this number.</p>
-                  </div>
 
               {/* Status toggle */}
               <div>

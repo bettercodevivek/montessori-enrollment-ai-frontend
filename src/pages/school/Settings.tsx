@@ -70,7 +70,7 @@ function cleanQAPairs(pairs: any[]): QAPair[] {
   return (pairs || []).map(p => ({ question: p.question || '', answer: p.answer || '' }));
 }
 
-type Tab = 'agent' | 'twilio' | 'automation';
+type Tab = 'agent' | 'automation';
 
 export const SchoolSettings = () => {
   const { t } = useTranslation();
@@ -208,7 +208,6 @@ export const SchoolSettings = () => {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'agent', label: 'AI Settings' },
-    // { id: 'twilio', label: t('tab_twilio') },
     { id: 'automation', label: t('tab_automation') },
   ];
 
@@ -533,43 +532,6 @@ export const SchoolSettings = () => {
         )}
 
 
-        {/* ── Twilio tab ── */}
-        {/* {activeTab === 'twilio' && (
-          <>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-              <strong>How to set up Twilio:</strong>
-              <ol className="mt-2 ml-4 space-y-1 text-xs list-decimal">
-                <li>Create a free account at <a href="https://www.twilio.com" target="_blank" rel="noreferrer" className="underline">twilio.com</a></li>
-                <li>From the Twilio Console dashboard, copy your <strong>Account SID</strong> and <strong>Auth Token</strong></li>
-                <li>Buy or provision a Twilio phone number (this is the number SMS will be sent <em>from</em>)</li>
-                <li>Paste all three values below and save</li>
-              </ol>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-xl p-6">
-              <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-slate-400" />
-                Twilio API Credentials
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('account_sid')}</label>
-                  <input type="text" value={settings.twilioSid} onChange={e => update('twilioSid', e.target.value)} className="ui-input w-full font-mono text-sm" placeholder="ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('auth_token')}</label>
-                  <input type="password" value={settings.twilioAuthToken} onChange={e => update('twilioAuthToken', e.target.value)} className="ui-input w-full font-mono text-sm" placeholder="••••••••••••••••••••••••••••••••" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('twilio_phone_number')} <span className="text-red-500">*</span></label>
-                  <input type="text" value={settings.twilioPhoneNumber} onChange={e => update('twilioPhoneNumber', e.target.value)} className="ui-input w-full" placeholder="+15551234567" />
-                  <p className="text-xs text-slate-400 mt-1">{t('twilio_phone_help')}</p>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-*/}
         {/* ── Automation tab ── */}
         {activeTab === 'automation' && (
           <div className="bg-white border border-slate-200 rounded-xl p-6">
