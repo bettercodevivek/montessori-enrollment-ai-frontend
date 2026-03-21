@@ -20,9 +20,6 @@ interface SettingsData {
   systemPrompt: string;
   businessHoursStart: string;
   businessHoursEnd: string;
-  twilioSid: string;
-  twilioAuthToken: string;
-  twilioPhoneNumber: string;
   smsAutoFollowup: boolean;
   emailAutoFollowup: boolean;
   smsTemplate: string;
@@ -127,9 +124,6 @@ export const SchoolSettings = () => {
       systemPrompt: settings.systemPrompt,
       businessHoursStart: settings.businessHoursStart,
       businessHoursEnd: settings.businessHoursEnd,
-      twilioSid: settings.twilioSid,
-      twilioAuthToken: settings.twilioAuthToken,
-      twilioPhoneNumber: settings.twilioPhoneNumber,
       smsAutoFollowup: settings.smsAutoFollowup,
       emailAutoFollowup: settings.emailAutoFollowup,
       smsTemplate: settings.smsTemplate,
@@ -589,13 +583,6 @@ export const SchoolSettings = () => {
 
             <div className="space-y-4 mb-6">
               <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={settings.smsAutoFollowup} onChange={e => update('smsAutoFollowup', e.target.checked)} className="w-4 h-4 rounded text-blue-600" />
-                <div>
-                  <span className="text-sm font-medium text-slate-700">Send SMS follow-up after call</span>
-                  <p className="text-xs text-slate-400">Requires Twilio credentials to be configured on the Twilio tab.</p>
-                </div>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={settings.emailAutoFollowup} onChange={e => update('emailAutoFollowup', e.target.checked)} className="w-4 h-4 rounded text-blue-600" />
                 <div>
                   <span className="text-sm font-medium text-slate-700">Send Email follow-up after call</span>
@@ -623,8 +610,7 @@ export const SchoolSettings = () => {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">SMS Follow-up</label>
-                  <textarea rows={6} value={settings.smsTemplate} onChange={e => update('smsTemplate', e.target.value)} className="ui-input w-full text-sm" placeholder="Hi {parent_name}, thanks for your interest in {school_name}! Please complete our enrollment inquiry form: {form_link}" />
+{([] as any[]).map(() => null)}
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Email Follow-up</label>
@@ -638,8 +624,7 @@ export const SchoolSettings = () => {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">SMS Confirmation & Reminder</label>
-                  <textarea rows={6} value={settings.tourReminderSmsTemplate || ''} onChange={e => update('tourReminderSmsTemplate', e.target.value)} className="ui-input w-full text-sm" placeholder="Hi {parent_name}, your tour at {school_name} is confirmed for {tour_date}." />
+{([] as any[]).map(() => null)}
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Email Confirmation</label>

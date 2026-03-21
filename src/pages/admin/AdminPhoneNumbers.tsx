@@ -7,7 +7,7 @@ interface PhoneNumber {
   _id: string;
   phone_number: string;
   phone_number_id: string;
-  provider: 'sip_trunk' | 'twilio';
+  provider: 'sip_trunk';
   label: string;
   schoolId: { _id: string; name: string } | null;
   createdAt: string;
@@ -23,16 +23,11 @@ export const AdminPhoneNumbers = () => {
   const [success, setSuccess] = useState('');
 
   const [form, setForm] = useState({
-    provider: 'sip_trunk' as 'sip_trunk' | 'twilio',
+    provider: 'sip_trunk' as 'sip_trunk',
     phone_number: '',
     label: '',
     // SIP
     sip_address: 'sip.rtc.elevenlabs.io:5060',
-    sip_username: '',
-    sip_password: '',
-    // Twilio
-    sid: '',
-    token: '',
   });
 
   const fetchNumbers = async () => {
@@ -56,7 +51,7 @@ export const AdminPhoneNumbers = () => {
       await api.post('/admin/phone-numbers', form);
       setSuccess('Phone number imported successfully!');
       setShowModal(false);
-      setForm({ ...form, phone_number: '', label: '', sip_username: '', sip_password: '', sid: '', token: '' });
+      setForm({ ...form, phone_number: '', label: '' });
       await fetchNumbers();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
@@ -129,10 +124,8 @@ export const AdminPhoneNumbers = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                      num.provider === 'twilio' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-indigo-50 text-indigo-700 border border-indigo-100'
-                    }`}>
-                      {num.provider === 'twilio' ? 'Twilio' : 'SIP Trunk'}
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
+                      SIP Trunk
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -149,7 +142,7 @@ export const AdminPhoneNumbers = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button 
+                    <button
                       onClick={() => handleDelete(num._id, num.phone_number)}
                       className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                     >
@@ -212,84 +205,19 @@ export const AdminPhoneNumbers = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Provider</label>
-                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
-                  {(['sip_trunk', 'twilio'] as const).map(p => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setForm({ ...form, provider: p })}
-                      className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                        form.provider === p ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      {p === 'sip_trunk' ? 'SIP Trunk' : 'Twilio'}
-                    </button>
-                  ))}
+
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Inbound SIP Address</label>
+                  <input
+                    type="text"
+                    value={form.sip_address}
+                    onChange={e => setForm({ ...form, sip_address: e.target.value })}
+                    className="ui-input text-sm h-11"
+                    required
+                  />
                 </div>
               </div>
-
-              {form.provider === 'sip_trunk' ? (
-                <div className="space-y-4 pt-4 border-t border-slate-100">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Inbound SIP Address</label>
-                    <input
-                      type="text"
-                      value={form.sip_address}
-                      onChange={e => setForm({ ...form, sip_address: e.target.value })}
-                      className="ui-input text-sm h-11"
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                      <input
-                        type="text"
-                        value={form.sip_username}
-                        onChange={e => setForm({ ...form, sip_username: e.target.value })}
-                        className="ui-input text-sm h-11"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                      <input
-                        type="password"
-                        value={form.sip_password}
-                        onChange={e => setForm({ ...form, sip_password: e.target.value })}
-                        className="ui-input text-sm h-11"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4 pt-4 border-t border-slate-100">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Account SID</label>
-                    <input
-                      type="text"
-                      value={form.sid}
-                      onChange={e => setForm({ ...form, sid: e.target.value })}
-                      className="ui-input text-sm h-11 lowercase"
-                      placeholder="AC..."
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Auth Token</label>
-                    <input
-                      type="password"
-                      value={form.token}
-                      onChange={e => setForm({ ...form, token: e.target.value })}
-                      className="ui-input text-sm h-11"
-                      required
-                    />
-                  </div>
-                </div>
-              )}
 
               <div className="flex gap-3 pt-6 border-t border-slate-100">
                 <button type="button" onClick={() => setShowModal(false)} className="ui-button-secondary flex-1 h-11">Cancel</button>
