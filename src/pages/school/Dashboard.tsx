@@ -305,8 +305,8 @@ export const SchoolDashboard = () => {
               <thead>
                 <tr className="text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
                   <th className="px-6 py-4 bg-slate-50/30">{t('caller')}</th>
+                  <th className="px-6 py-4 bg-slate-50/30 whitespace-nowrap">{t('call_time')}</th>
                   <th className="px-6 py-4 bg-slate-50/30">Status</th>
-                  <th className="px-6 py-4 bg-slate-50/30 whitespace-nowrap">{t('call_received_at_time')}</th>
                   <th className="px-6 py-4 bg-slate-50/30">Tour Date</th>
                   <th className="px-6 py-4 bg-slate-50/30">{t('duration')}</th>
                   <th className="px-6 py-4 bg-slate-50/30 text-right">Action</th>
@@ -321,14 +321,6 @@ export const SchoolDashboard = () => {
                         <div className="text-xs text-slate-500 font-medium">{call.callerPhone}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${call.tourBookingDetected
-                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                          : 'bg-amber-100 text-amber-700 border border-amber-200'
-                          }`}>
-                          {call.tourBookingDetected ? 'Tour booked' : 'Need attention'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
                         {call.timestamp ? (
                           <>
                             <div className="text-sm font-medium text-slate-600 tabular-nums">
@@ -341,6 +333,14 @@ export const SchoolDashboard = () => {
                         ) : (
                           <span className="text-slate-300 font-bold">-</span>
                         )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${call.tourBookingDetected
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-100 text-amber-700 border border-amber-200'
+                          }`}>
+                          {call.tourBookingDetected ? 'Tour booked' : 'Need attention'}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         {call.tourBookingDate ? (
