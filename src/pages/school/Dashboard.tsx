@@ -304,8 +304,8 @@ export const SchoolDashboard = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
-                  <th className="px-6 py-4 bg-slate-50/30">{t('caller')}</th>
                   <th className="px-6 py-4 bg-slate-50/30 whitespace-nowrap">{t('call_time')}</th>
+                  <th className="px-6 py-4 bg-slate-50/30">{t('caller')}</th>
                   <th className="px-6 py-4 bg-slate-50/30">Status</th>
                   <th className="px-6 py-4 bg-slate-50/30">Tour Date</th>
                   <th className="px-6 py-4 bg-slate-50/30">{t('duration')}</th>
@@ -316,10 +316,6 @@ export const SchoolDashboard = () => {
                 {recentCalls.map((call) => (
                   <React.Fragment key={call.id}>
                     <tr className="hover:bg-blue-50/30 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">{call.callerName}</div>
-                        <div className="text-xs text-slate-500 font-medium">{call.callerPhone}</div>
-                      </td>
                       <td className="px-6 py-4">
                         {call.timestamp ? (
                           <>
@@ -333,6 +329,10 @@ export const SchoolDashboard = () => {
                         ) : (
                           <span className="text-slate-300 font-bold">-</span>
                         )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">{call.callerName}</div>
+                        <div className="text-xs text-slate-500 font-medium">{call.callerPhone}</div>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${call.tourBookingDetected
