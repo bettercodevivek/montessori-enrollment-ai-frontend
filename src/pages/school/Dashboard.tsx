@@ -306,6 +306,7 @@ export const SchoolDashboard = () => {
                 <tr className="text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
                   <th className="px-6 py-4 bg-slate-50/30">{t('caller')}</th>
                   <th className="px-6 py-4 bg-slate-50/30">Status</th>
+                  <th className="px-6 py-4 bg-slate-50/30 whitespace-nowrap">{t('call_received_at_time')}</th>
                   <th className="px-6 py-4 bg-slate-50/30">Tour Date</th>
                   <th className="px-6 py-4 bg-slate-50/30">{t('duration')}</th>
                   <th className="px-6 py-4 bg-slate-50/30 text-right">Action</th>
@@ -326,6 +327,20 @@ export const SchoolDashboard = () => {
                           }`}>
                           {call.tourBookingDetected ? 'Tour booked' : 'Need attention'}
                         </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {call.timestamp ? (
+                          <>
+                            <div className="text-sm font-medium text-slate-600 tabular-nums">
+                              {new Date(call.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                              {new Date(call.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-slate-300 font-bold">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         {call.tourBookingDate ? (
@@ -363,7 +378,7 @@ export const SchoolDashboard = () => {
                     </tr>
                     {expandedId === call.id && call.recordingUrl && (
                       <tr className="bg-slate-50/30 border-l-4 border-l-blue-500">
-                        <td colSpan={5} className="px-8 py-6">
+                        <td colSpan={6} className="px-8 py-6">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-4">
                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
