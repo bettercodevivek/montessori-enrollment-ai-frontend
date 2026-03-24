@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  BarChart3, School, Settings, Users, Plug2, LayoutDashboard, Phone
+  BarChart3, School, Settings, Users, Plug2, LayoutDashboard, Phone, Lightbulb
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -21,6 +21,7 @@ export const Sidebar = ({ role }: SidebarProps) => {
 
   const schoolItems = [
     { path: '/school/dashboard', icon: LayoutDashboard, labelKey: 'dashboard' },
+    { path: '/school/daily-insights', icon: Lightbulb, labelKey: 'daily_insights' },
     { path: '/school/integrations', icon: Plug2, labelKey: 'integrations' },
     { path: '/school/settings', icon: Settings, labelKey: 'settings' },
     { path: '/school/call-logs', icon: Phone, labelKey: 'call_logs' },

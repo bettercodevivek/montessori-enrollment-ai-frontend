@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, PlayCircle, Activity, PhoneCall, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp, Play, Pause, Headphones, Download, ArrowRight } from 'lucide-react';
+import { Loader2, PlayCircle, Activity, PhoneCall, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp, Play, Pause, Headphones, Download, ArrowRight, Lightbulb } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { MetricCard } from '../../components/MetricCard';
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { Calendar as CalendarUI } from '../../components/Calendar';
+
+type Period = 'daily' | 'weekly' | 'monthly';
 
 const AudioPlayer = ({ src }: { src: string }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -138,15 +140,9 @@ export const SchoolDashboard = () => {
   const { t } = useTranslation();
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState<Period>('daily');
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  const [, setSubmissions] = useState<Array<{
-    id: string;
-    parentName: string;
-    email: string;
-    phone: string;
-    answers: Array<{ questionId: string; question: string; value: string }>;
-    submittedAt: string;
-  }>>([]);
   const [tourBookings, setTourBookings] = useState<Array<{
     id: string;
     parentName: string;
@@ -157,36 +153,31 @@ export const SchoolDashboard = () => {
   }>>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  const fetchData = React.useCallback(async (p: Period) => {
+    console.log(`[Dashboard] Fetching data for period: ${p}`);
+    try {
+      const [dashboardRes, toursRes] = await Promise.all([
+        api.get(`/school/dashboard?period=${p}`),
+        api.get('/school/tour-bookings').catch(() => ({ data: [] })),
+      ]);
+      console.log(`[Dashboard] Received data for period: ${dashboardRes.data.period}`, dashboardRes.data.metrics);
+      setData(dashboardRes.data);
+      setTourBookings(Array.isArray(toursRes.data) ? toursRes.data : []);
+      setLastUpdated(new Date());
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [dashboardRes, submissionsRes, toursRes] = await Promise.all([
-          api.get('/school/dashboard'),
-          api.get('/school/inquiry-submissions').catch(() => ({ data: [] })),
-          api.get('/school/tour-bookings').catch(() => ({ data: [] })),
-        ]);
-        setData(dashboardRes.data);
-        setSubmissions(Array.isArray(submissionsRes.data) ? submissionsRes.data : []);
-        setTourBookings(Array.isArray(toursRes.data) ? toursRes.data : []);
-      } catch (err) {
-        console.error('Failed to load dashboard data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Initial fetch
-    fetchData();
-
-    // Set up polling to refresh data every 30 seconds
-    const intervalId = setInterval(() => {
-      fetchData();
-    }, 30000);
-
-    // Cleanup interval on unmount
+    console.log(`[Dashboard] useEffect triggered by period: ${period}`);
+    setLoading(true);
+    fetchData(period);
+    const intervalId = setInterval(() => fetchData(period), 30000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [period, fetchData]);
 
 
 
@@ -214,27 +205,60 @@ export const SchoolDashboard = () => {
   // Get calls with transcript summaries
   const callsWithSummaries = recentCalls.filter(call => call.summary && call.summary.trim().length > 0);
 
+  const periodLabel = period === 'daily' ? 'Last 24 Hours' : period === 'weekly' ? 'Last 7 Days' : 'Last 30 Days';
+
   return (
     <div className="animate-soft">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">{t('dashboard')}</h1>
-          <p className="text-sm text-slate-500">{t('dashboard_desc')}</p>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-semibold text-slate-900">{t('dashboard')}</h1>
+            <span className="text-[10px] font-medium text-slate-400 mt-1 uppercase tracking-wider tabular-nums">
+              • Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          </div>
+          <p className="text-sm text-slate-500">{t('dashboard_desc')} ({periodLabel})</p>
         </div>
-        <button
-          onClick={async () => {
-            try {
-              await api.post('/school/test-call');
-              window.location.reload();
-            } catch (err) {
-              alert(t('test_call_failed'));
-            }
-          }}
-          className="ui-button-primary gap-2"
-        >
-          <PlayCircle className="w-4 h-4" />
-          {t('simulate_inquiry_call')}
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Period Filter Pills */}
+          <div className="flex items-center bg-slate-200/50 border border-slate-200 rounded-lg p-1 gap-1">
+            {(['daily', 'weekly', 'monthly'] as Period[]).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all capitalize shadow-sm ${
+                  period === p
+                    ? 'bg-blue-600 text-white shadow-blue-100'
+                    : 'bg-transparent text-slate-500 hover:bg-white/50 hover:text-slate-800'
+                }`}
+              >
+                {p === 'daily' ? 'Daily' : p === 'weekly' ? 'Weekly' : 'Monthly'}
+              </button>
+            ))}
+          </div>
+          {/* Daily Insights Link */}
+          <Link
+            to="/school/daily-insights"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all"
+          >
+            <Lightbulb className="w-3.5 h-3.5" />
+            Daily Insights
+          </Link>
+          <button
+            onClick={async () => {
+              try {
+                await api.post('/school/test-call');
+                window.location.reload();
+              } catch (err) {
+                alert(t('test_call_failed'));
+              }
+            }}
+            className="ui-button-primary gap-2"
+          >
+            <PlayCircle className="w-4 h-4" />
+            {t('simulate_inquiry_call')}
+          </button>
+        </div>
       </div>
 
 
@@ -254,7 +278,7 @@ export const SchoolDashboard = () => {
           <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col flex-1">
             <h2 className="text-base font-semibold text-slate-900 mb-6 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-slate-400" />
-              Call Volume (Last 14 Days)
+              Call Volume — {periodLabel}
             </h2>
             <div className="flex-1 w-full min-h-[340px]">
               {chartData?.length > 0 ? (

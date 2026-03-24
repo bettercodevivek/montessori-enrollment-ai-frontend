@@ -27,6 +27,7 @@ import { ReferralSignup } from '../pages/ReferralSignup';
 import { BookTour } from '../pages/BookTour';
 import { GoogleAuthCallback } from '../pages/GoogleAuthCallback';
 import { MasterLogin } from '../pages/MasterLogin';
+import { DailyInsights } from '../pages/school/DailyInsights';
 
 const RootRedirect = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -91,6 +92,10 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: <SchoolDashboard />,
+      },
+      {
+        path: 'daily-insights',
+        element: <DailyInsights />,
       },
       {
         path: 'integrations',
