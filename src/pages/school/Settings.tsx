@@ -26,6 +26,7 @@ interface SettingsData {
   emailTemplate: string;
   qaPairs: QAPair[];
   preferredCalendar: 'google' | 'outlook' | 'both' | 'none';
+  preferredEmailProvider: 'google' | 'outlook';
   googleConnected: boolean;
   outlookConnected: boolean;
   adminEmail: string;
@@ -130,6 +131,7 @@ export const SchoolSettings = () => {
       emailTemplate: settings.emailTemplate,
       qaPairs: cleanQAPairs(settings.qaPairs),
       preferredCalendar: settings.preferredCalendar,
+      preferredEmailProvider: settings.preferredEmailProvider,
       timezone: settings.timezone,
       adminEmail: settings.adminEmail,
       tourConfirmationEmailTemplate: settings.tourConfirmationEmailTemplate,
@@ -553,16 +555,30 @@ export const SchoolSettings = () => {
               </label>
             </div>
 
-            <div className="mb-6 pt-4 border-t border-slate-100">
-              <label className="block text-sm font-medium text-slate-700 mb-1 text-blue-600">Admin Notification Email</label>
-              <input
-                type="email"
-                value={settings.adminEmail || ''}
-                onChange={e => update('adminEmail', e.target.value)}
-                className="ui-input w-full"
-                placeholder="notifications@school.com"
-              />
-              <p className="text-xs text-slate-400 mt-1">The primary email address where summary notifications and tour alerts will be sent.</p>
+            <div className="mb-6 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Admin Notification Email</label>
+                <input
+                  type="email"
+                  value={settings.adminEmail || ''}
+                  onChange={e => update('adminEmail', e.target.value)}
+                  className="ui-input w-full"
+                  placeholder="notifications@school.com"
+                />
+                <p className="text-xs text-slate-400 mt-1">The primary email address where summary notifications and tour alerts will be sent.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Preferred Email Provider</label>
+                <select
+                  value={settings.preferredEmailProvider || 'google'}
+                  onChange={e => update('preferredEmailProvider', e.target.value as 'google' | 'outlook')}
+                  className="ui-input w-full"
+                >
+                  <option value="google">Google Workspace / Gmail</option>
+                  <option value="outlook">Microsoft Outlook</option>
+                </select>
+                <p className="text-xs text-slate-400 mt-1">If preferred provider is unavailable, system will automatically use the other connected one.</p>
+              </div>
             </div>
 
             <div className="border-t border-slate-100 pt-6">
