@@ -223,11 +223,10 @@ export const SchoolDashboard = () => {
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-5 py-2 rounded-lg text-xs font-bold transition-all capitalize ${
-                  period === p
+                className={`px-5 py-2 rounded-lg text-xs font-bold transition-all capitalize ${period === p
                     ? 'bg-white text-slate-900 shadow-md'
                     : 'bg-transparent text-slate-400 hover:text-slate-600'
-                }`}
+                  }`}
               >
                 {p}
               </button>
@@ -417,7 +416,7 @@ export const SchoolDashboard = () => {
                             {call.summary && (
                               <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                                 <p className="text-[10px] font-bold text-slate-900 mb-4 uppercase tracking-widest border-b border-slate-100 pb-2 flex items-center gap-2">
-                                  <Lightbulb className="w-3.5 h-3.5 text-amber-500" /> 
+                                  <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
                                   AI Generated Insights
                                 </p>
                                 <p className="text-sm text-slate-600 leading-relaxed italic font-medium">"{call.summary}"</p>

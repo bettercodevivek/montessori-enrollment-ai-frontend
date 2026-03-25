@@ -313,6 +313,8 @@ const WordCloud = ({ words, height = 250 }: { words: WordCloudWord[]; height?: n
 export const DailyInsights = () => {
   const [needsAttention, setNeedsAttention] = useState<NeedsAttentionCall[]>([]);
   const [todaysTours, setTodaysTours] = useState<TodayTour[]>([]);
+  const [wordCloud, setWordCloud] = useState<WordCloudWord[]>([]);
+  const [todayCalls, setTodayCalls] = useState<{ id: string; timestamp: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedCall, setExpandedCall] = useState<string | null>(null);
   const [, setNow] = useState(Date.now());
@@ -328,6 +330,8 @@ export const DailyInsights = () => {
         const res = await api.get('/school/daily-insights');
         setNeedsAttention(res.data.needsAttention || []);
         setTodaysTours(res.data.todaysTours || []);
+        setWordCloud(res.data.wordCloud || []);
+        setTodayCalls(res.data.todayCalls || []);
       } catch (err) {
         console.error('Failed to load daily insights:', err);
       } finally {
@@ -347,8 +351,14 @@ export const DailyInsights = () => {
   const actionNeededToday = needsAttention.length;
 
   const wordCloudWords = useMemo(() => {
-    // Pull from every available text source for the richest cloud
+    // 1. Prefer OpenAI-powered cloud from backend if available
+    if (wordCloud && wordCloud.length > 0) {
+      return wordCloud;
+    }
+
+    // 2. Fallback: Pull from every available text source for the richest cloud
     const allTexts: string[] = [
+      // ... (fallback logic) ...
       // Tour questions asked during calls
       ...todaysTours.flatMap(t => t.questionsAsked || []),
       // Tour call summaries
@@ -377,13 +387,8 @@ export const DailyInsights = () => {
       Evening: 0
     };
 
-    for (const n of needsAttention) {
-      const bucket = getTimeOfDayBucket(new Date(n.timestamp));
-      counts[bucket as keyof typeof counts] += 1;
-    }
-
-    for (const t of todaysTours) {
-      const bucket = getTimeOfDayBucket(new Date(t.scheduledAt));
+    for (const c of todayCalls) {
+      const bucket = getTimeOfDayBucket(new Date(c.timestamp));
       counts[bucket as keyof typeof counts] += 1;
     }
 
@@ -391,7 +396,7 @@ export const DailyInsights = () => {
       name,
       count: counts[name],
     }));
-  }, [needsAttention, todaysTours]);
+  }, [todayCalls]);
 
   if (loading) {
     return (
@@ -696,103 +701,75 @@ export const DailyInsights = () => {
                     </div>
                   </div>
 
-                  {/* Expanded detail */}
-                  <div className="border-t border-slate-100 px-6 py-6 bg-white space-y-8">
-                      
-                      {/* 1. Purpose of Visit - More prominent but neutral */}
-                      <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                          <Star className="w-3.5 h-3.5" /> Purpose of Visit
-                        </p>
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl px-5 py-4">
-                          <p className="text-base font-bold text-slate-900 leading-tight">
-                            {tour.reason || 'Enrollment Inquiry'}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* 2. Call Context (What Happened) */}
-                        {(tour.callSummary || tour.reason || tour.highlights) && (
-                          <div className="animate-in fade-in slide-in-from-left-2 duration-400">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                              <PhoneCall className="w-3.5 h-3.5" /> Call Context
+                    <div className="border-t border-slate-100 px-6 py-6 bg-slate-50/10 space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Purpose & Context */}
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                              <Star className="w-3.5 h-3.5 text-amber-500" /> Purpose of Visit
                             </p>
-                            <div className="border border-slate-200 rounded-xl px-5 py-4 min-h-[100px]">
-                              {splitSummaryIntoBullets(tour.callSummary || tour.highlights || tour.reason).length > 0 ? (
-                                <ul className="list-disc pl-5 space-y-1 text-sm text-slate-600 leading-relaxed">
-                                  {splitSummaryIntoBullets(tour.callSummary || tour.highlights || tour.reason).map((b, i) => (
-                                    <li key={i} className="italic">{b}</li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p className="text-sm text-slate-600 leading-relaxed italic">
-                                  {tour.callSummary || tour.highlights || tour.reason}
-                                </p>
-                              )}
-                            </div>
+                            <p className="text-sm font-bold text-slate-900 leading-tight">
+                              {tour.reason || 'Enrollment Inquiry'}
+                            </p>
                           </div>
-                        )}
+                          
+                          {(tour.callSummary || tour.highlights) && (
+                            <div>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <PhoneCall className="w-3.5 h-3.5 text-blue-500" /> Call Summary
+                              </p>
+                              <div className="border border-slate-200 rounded-lg px-4 py-3 bg-white">
+                                {splitSummaryIntoBullets(tour.callSummary || tour.highlights || '').length > 0 ? (
+                                  <ul className="list-disc pl-4 space-y-1 text-xs text-slate-600 leading-relaxed">
+                                    {splitSummaryIntoBullets(tour.callSummary || tour.highlights || '').map((b, i) => (
+                                      <li key={i}>{b}</li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-xs text-slate-600 italic">
+                                    No detailed summary available.
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
 
-                        {/* 3. Child Details */}
-                        <div className="animate-in fade-in slide-in-from-right-2 duration-400">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                            <Baby className="w-3.5 h-3.5" /> Child Details
+                        {/* Child Details */}
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                            <Baby className="w-3.5 h-3.5 text-purple-500" /> Child Details
                           </p>
-                          <div className="border border-slate-200 rounded-xl px-5 py-4 min-h-[100px] flex items-center">
-                            <div className="space-y-1">
-                              <div>
-                                <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Child Name</span>
-                                <span className="text-base font-bold text-slate-900">{tour.childName || 'N/A'}</span>
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Child Age</span>
-                                <span className="text-xl font-bold text-slate-900">{tour.childAge || 'N/A'}</span>
-                              </div>
+                          <div className="border border-slate-200 rounded-lg px-4 py-3 bg-white space-y-3">
+                            <div>
+                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Name</span>
+                              <span className="text-sm font-bold text-slate-900">{tour.childName || 'N/A'}</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Age</span>
+                              <span className="text-base font-bold text-slate-900">{tour.childAge || 'N/A'}</span>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* 4. Questions Asked */}
+                      {/* Questions Asked */}
                       {tour.questionsAsked && tour.questionsAsked.length > 0 && (
-                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                            <MessageSquare className="w-3.5 h-3.5" /> Questions They Asked
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                            <MessageSquare className="w-3.5 h-3.5 text-emerald-500" /> Parent Questions
                           </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {tour.questionsAsked.map((q, i) => (
-                              <div key={i} className="flex items-start gap-4 bg-white border border-slate-200 rounded-xl px-4 py-3.5 shadow-sm hover:border-slate-300 transition-colors">
-                                <div className="w-6 h-6 bg-slate-100 text-slate-500 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                              <div key={i} className="flex items-start gap-3 bg-white border border-slate-100 rounded-lg px-3 py-2">
+                                <div className="w-5 h-5 bg-slate-50 text-slate-400 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
                                   {i + 1}
                                 </div>
-                                <p className="text-sm text-slate-700 font-medium leading-snug">{q}</p>
+                                <p className="text-xs text-slate-700 font-medium leading-tight">{q}</p>
                               </div>
                             ))}
                           </div>
-                        </div>
-                      )}
-
-                      {/* 5. Additional Highlights & Notes */}
-                      {tour.highlights && tour.highlights !== tour.callSummary && (
-                        <div className="animate-in fade-in duration-700">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                            <Lightbulb className="w-3.5 h-3.5" /> Additional Notes
-                          </p>
-                          <div className="rounded-xl px-5 py-4 border border-dashed border-slate-300">
-                            <p className="text-sm text-slate-500 italic">
-                              {tour.highlights}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Fallback */}
-                      {!tour.callSummary && !tour.reason && tour.questionsAsked.length === 0 && (
-                        <div className="text-center py-10 border border-dashed border-slate-200 rounded-xl">
-                            <p className="text-sm text-slate-400 italic font-medium">
-                                No additional call intelligence is currently linked to this tour.
-                            </p>
                         </div>
                       )}
                     </div>
