@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, PlayCircle, Activity, PhoneCall, ChevronDown, ChevronUp, Calendar, Mic, TrendingUp, Play, Pause, Headphones, Download, ArrowRight, Lightbulb } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Loader2, PlayCircle, Activity, PhoneCall, Mic, TrendingUp, Play, Pause, Headphones, Download, ArrowRight, Lightbulb } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MetricCard } from '../../components/MetricCard';
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { Calendar as CalendarUI } from '../../components/Calendar';
 
-type Period = 'daily' | 'weekly' | 'monthly';
 
 const AudioPlayer = ({ src }: { src: string }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -140,7 +139,7 @@ export const SchoolDashboard = () => {
   const { t } = useTranslation();
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<Period>('daily');
+  const [period, setPeriod] = useState('monthly');
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   const [tourBookings, setTourBookings] = useState<Array<{
@@ -153,7 +152,7 @@ export const SchoolDashboard = () => {
   }>>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const fetchData = React.useCallback(async (p: Period) => {
+  const fetchData = React.useCallback(async (p: string) => {
     console.log(`[Dashboard] Fetching data for period: ${p}`);
     try {
       const [dashboardRes, toursRes] = await Promise.all([
@@ -202,110 +201,112 @@ export const SchoolDashboard = () => {
 
   const { metrics, chartData, recentCalls } = data;
 
-  // Get calls with transcript summaries
-  const callsWithSummaries = recentCalls.filter(call => call.summary && call.summary.trim().length > 0);
-
-  const periodLabel = period === 'daily' ? 'Last 24 Hours' : period === 'weekly' ? 'Last 7 Days' : 'Last 30 Days';
 
   return (
-    <div className="animate-soft">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div className="animate-soft max-w-[1600px] mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-semibold text-slate-900">{t('dashboard')}</h1>
-            <span className="text-[10px] font-medium text-slate-400 mt-1 uppercase tracking-wider tabular-nums">
-              • Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          <div className="flex items-center gap-3 mb-1.5">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('dashboard')}</h1>
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider tabular-nums">
+              <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+              Live • {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
-          <p className="text-sm text-slate-500">{t('dashboard_desc')} ({periodLabel})</p>
+          <p className="text-sm font-medium text-slate-500">{t('dashboard_desc')}</p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Period Filter Pills */}
-          <div className="flex items-center bg-slate-200/50 border border-slate-200 rounded-lg p-1 gap-1">
-            {(['daily', 'weekly', 'monthly'] as Period[]).map((p) => (
+
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* Period Filter Pills - Restoration */}
+          <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-1 shadow-inner">
+            {(['weekly', 'monthly'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all capitalize shadow-sm ${
+                className={`px-5 py-2 rounded-lg text-xs font-bold transition-all capitalize ${
                   period === p
-                    ? 'bg-blue-600 text-white shadow-blue-100'
-                    : 'bg-transparent text-slate-500 hover:bg-white/50 hover:text-slate-800'
+                    ? 'bg-white text-slate-900 shadow-md'
+                    : 'bg-transparent text-slate-400 hover:text-slate-600'
                 }`}
               >
-                {p === 'daily' ? 'Daily' : p === 'weekly' ? 'Weekly' : 'Monthly'}
+                {p}
               </button>
             ))}
           </div>
-          {/* Daily Insights Link */}
-          <Link
-            to="/school/daily-insights"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all"
-          >
-            <Lightbulb className="w-3.5 h-3.5" />
-            Daily Insights
-          </Link>
-          <button
-            onClick={async () => {
-              try {
-                await api.post('/school/test-call');
-                window.location.reload();
-              } catch (err) {
-                alert(t('test_call_failed'));
-              }
-            }}
-            className="ui-button-primary gap-2"
-          >
-            <PlayCircle className="w-4 h-4" />
-            {t('simulate_inquiry_call')}
-          </button>
+
+          <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+          {/* Action Links */}
+          <div className="flex items-center gap-3">
+            <Link
+              to="/school/daily-insights"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all shadow-sm"
+            >
+              <Lightbulb className="w-4 h-4" />
+              Daily Insights
+            </Link>
+            <button
+              onClick={async () => {
+                try {
+                  await api.post('/school/test-call');
+                  window.location.reload();
+                } catch (err) {
+                  alert(t('test_call_failed'));
+                }
+              }}
+              className="ui-button-primary gap-2 !rounded-xl px-4 !py-2 shadow-sm"
+            >
+              <PlayCircle className="w-4 h-4" />
+              {t('simulate_inquiry_call')}
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Row 1: Top Metrics (Full Width) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 mb-10">
+        {metrics.map((metric) => (
+          <MetricCard key={metric.label} {...metric} />
+        ))}
+      </div>
 
-
-      {/* Main Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12 items-stretch">
-        {/* Left Section: Metrics and Analytics */}
-        <div className="lg:col-span-2 flex flex-col gap-8">
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {metrics.map((metric) => (
-              <MetricCard key={metric.label} {...metric} />
-            ))}
-          </div>
-
-          {/* Analytics Chart */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col flex-1">
-            <h2 className="text-base font-semibold text-slate-900 mb-6 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-slate-400" />
-              Call Volume — {periodLabel}
+      {/* Row 2: Main Content Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12 items-start">
+        {/* Left: Analytics Chart (8 Columns) */}
+        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-8 shadow-sm h-full">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2.5">
+              <TrendingUp className="w-5 h-5 text-blue-500" />
+              Inquiry Call Volume
             </h2>
-            <div className="flex-1 w-full min-h-[340px]">
-              {chartData?.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} minTickGap={20} />
-                    <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dx={-10} />
-                    <Tooltip
-                      contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                      labelStyle={{ fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}
-                    />
-                    <Legend wrapperStyle={{ paddingTop: '20px' }} iconType="circle" />
-                    <Line type="monotone" dataKey="calls" name="Total Calls" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-                  No chart data available.
-                </div>
-              )}
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border border-slate-100 px-2 py-1 rounded">
+              Trend Analysis
             </div>
+          </div>
+          <div className="w-full h-[400px]">
+            {chartData?.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} dy={15} minTickGap={20} />
+                  <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600 }} dx={-10} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
+                    labelStyle={{ fontWeight: '700', color: '#0f172a', marginBottom: '6px' }}
+                  />
+                  <Line type="monotone" dataKey="calls" name="Calls" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6, strokeWidth: 0 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400 text-sm italic bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                No telemetry available for this window.
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right Section: School Calendar */}
-        <div className="lg:col-span-1 bg-white border border-slate-200 rounded-xl p-6 shadow-sm overflow-hidden flex flex-col">
+        {/* Right: School Calendar (4 Columns) */}
+        <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm overflow-hidden min-h-[500px]">
           <CalendarUI bookings={tourBookings} />
         </div>
       </div>
@@ -314,8 +315,8 @@ export const SchoolDashboard = () => {
 
       <div className="space-y-8">
         {/* Recent Calls - Full Width */}
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+          <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <PhoneCall className="w-4 h-4 text-primary-600" />
               {t('recent_calls')}
@@ -327,7 +328,7 @@ export const SchoolDashboard = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
+                <tr className="text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-100">
                   <th className="px-6 py-4 bg-slate-50/30 whitespace-nowrap">{t('call_time')}</th>
                   <th className="px-6 py-4 bg-slate-50/30">{t('caller')}</th>
                   <th className="px-6 py-4 bg-slate-50/30">Status</th>
@@ -339,11 +340,11 @@ export const SchoolDashboard = () => {
               <tbody className="divide-y divide-slate-100">
                 {recentCalls.map((call) => (
                   <React.Fragment key={call.id}>
-                    <tr className="hover:bg-blue-50/30 transition-colors group">
+                    <tr className="hover:bg-blue-50/30 transition-colors group cursor-pointer" onClick={() => setExpandedId(expandedId === call.id ? null : call.id)}>
                       <td className="px-6 py-4">
                         {call.timestamp ? (
                           <>
-                            <div className="text-sm font-medium text-slate-600 tabular-nums">
+                            <div className="text-sm font-semibold text-slate-600 tabular-nums">
                               {new Date(call.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
@@ -363,13 +364,13 @@ export const SchoolDashboard = () => {
                           ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                           : 'bg-amber-100 text-amber-700 border border-amber-200'
                           }`}>
-                          {call.tourBookingDetected ? 'Tour booked' : 'Need attention'}
+                          {call.tourBookingDetected ? 'Tour booked' : 'Action Needed'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         {call.tourBookingDate ? (
                           <>
-                            <div className="text-sm font-medium text-slate-600 tabular-nums">
+                            <div className="text-sm font-semibold text-slate-600 tabular-nums">
                               {new Date(call.tourBookingDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
@@ -389,32 +390,37 @@ export const SchoolDashboard = () => {
                       <td className="px-6 py-4 text-right">
                         {call.recordingUrl ? (
                           <button
-                            onClick={() => setExpandedId(expandedId === call.id ? null : call.id)}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all border border-blue-100"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedId(expandedId === call.id ? null : call.id);
+                            }}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all border border-blue-100 shadow-sm"
                           >
                             <Mic className="w-3.5 h-3.5" />
-                            {expandedId === call.id ? 'Close' : 'View Insights'}
+                            {expandedId === call.id ? 'Close' : 'Insights'}
                           </button>
                         ) : (
-                          <span className="text-xs text-slate-400 font-bold italic">No Recording</span>
+                          <span className="text-[10px] text-slate-400 font-bold italic uppercase tracking-widest bg-slate-50 px-2 py-1 rounded border border-slate-100">No Recording</span>
                         )}
                       </td>
                     </tr>
                     {expandedId === call.id && call.recordingUrl && (
-                      <tr className="bg-slate-50/30 border-l-4 border-l-blue-500">
-                        <td colSpan={6} className="px-8 py-6">
+                      <tr className="bg-slate-50/50 border-l-4 border-l-blue-500">
+                        <td colSpan={6} className="px-8 py-8">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-4">
                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Mic className="w-3 h-3" /> Audio Playback
+                                <Mic className="w-3 h-3 text-blue-500" /> Audio Playback
                               </p>
                               <AudioPlayer src={call.recordingUrl} />
                             </div>
                             {call.summary && (
-                              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                                <p className="text-[10px] font-bold text-slate-900 mb-3 uppercase tracking-widest border-b border-slate-100 pb-2">AI Generated Insights</p>
+                              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                                <p className="text-[10px] font-bold text-slate-900 mb-4 uppercase tracking-widest border-b border-slate-100 pb-2 flex items-center gap-2">
+                                  <Lightbulb className="w-3.5 h-3.5 text-amber-500" /> 
+                                  AI Generated Insights
+                                </p>
                                 <p className="text-sm text-slate-600 leading-relaxed italic font-medium">"{call.summary}"</p>
-
                               </div>
                             )}
                           </div>
@@ -425,99 +431,6 @@ export const SchoolDashboard = () => {
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Call Transcript Summaries */}
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Mic className="w-4 h-4 text-primary-600" />
-                Call Transcript Summaries
-              </h2>
-            </div>
-            <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
-              {callsWithSummaries.length === 0 ? (
-                <div className="px-6 py-12 text-center text-slate-400 text-sm font-medium italic">No transcript summaries available yet.</div>
-              ) : (
-                callsWithSummaries.map((call) => (
-                  <div key={call.id} className="px-6 py-4 hover:bg-slate-50 transition-colors">
-                    <button
-                      type="button"
-                      className="w-full text-left flex items-center justify-between gap-4"
-                      onClick={() => setExpandedId(expandedId === call.id ? null : call.id)}
-                    >
-                      <div className="flex-1">
-                        <div className="text-sm font-bold text-slate-900">{call.callerName || 'Parent'}</div>
-                        <div className="text-xs text-slate-500 font-medium">{call.callerPhone || 'Unknown'}</div>
-
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-right">
-                          <div className="text-xs font-bold text-slate-700">
-                            {new Date(call.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-bold uppercase">
-                            {new Date(call.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                          </div>
-                        </div>
-                        {expandedId === call.id ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                      </div>
-                    </button>
-                    {expandedId === call.id && (
-                      <div className="mt-4 pt-4 border-t border-slate-100 space-y-4">
-                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                          <p className="text-[9px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Detail Summary</p>
-                          <p className="text-xs text-slate-700 leading-relaxed font-medium italic">"{call.summary}"</p>
-                        </div>
-                        {call.conversationId && (
-                          <p className="text-[9px] text-slate-400 font-mono tracking-tighter">REF: {call.conversationId}</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )
-                ))}
-            </div>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary-600" />
-                Scheduled Tours
-              </h2>
-            </div>
-            <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
-              {tourBookings.length === 0 ? (
-                <div className="px-6 py-12 text-center text-slate-400 text-sm font-medium italic">No tours booked yet.</div>
-              ) : (
-                tourBookings.map((tour) => (
-                  <div key={tour.id} className="px-6 py-4 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-sm font-bold text-slate-900">{tour.parentName || 'Anonymous Parent'}</div>
-                      <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${tour.calendarProvider === 'google' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-blue-50 text-blue-600 border border-blue-100'
-                        }`}>
-                        {tour.calendarProvider || 'Internal'}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-600 mb-2">
-                      <Calendar className="w-3.5 h-3.5 text-slate-300" />
-                      <span className="text-xs font-semibold tabular-nums">
-                        {new Date(tour.scheduledAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-                      </span>
-                    </div>
-                    {(tour.phone || tour.email) && (
-                      <div className="flex flex-wrap gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                        {tour.phone && <span className="flex items-center gap-1"><PhoneCall className="w-2.5 h-2.5" /> {tour.phone}</span>}
-                        {tour.email && <span className="flex items-center gap-1 underline underline-offset-2">@{tour.email}</span>}
-                      </div>
-                    )}
-                  </div>
-                )
-                ))}
-            </div>
           </div>
         </div>
       </div>

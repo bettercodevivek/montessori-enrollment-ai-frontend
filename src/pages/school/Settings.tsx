@@ -567,18 +567,6 @@ export const SchoolSettings = () => {
                 />
                 <p className="text-xs text-slate-400 mt-1">The primary email address where summary notifications and tour alerts will be sent.</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Preferred Email Provider</label>
-                <select
-                  value={settings.preferredEmailProvider || 'google'}
-                  onChange={e => update('preferredEmailProvider', e.target.value as 'google' | 'outlook')}
-                  className="ui-input w-full"
-                >
-                  <option value="google">Google Workspace / Gmail</option>
-                  <option value="outlook">Microsoft Outlook</option>
-                </select>
-                <p className="text-xs text-slate-400 mt-1">If preferred provider is unavailable, system will automatically use the other connected one.</p>
-              </div>
             </div>
 
             <div className="border-t border-slate-100 pt-6">

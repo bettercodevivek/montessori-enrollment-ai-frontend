@@ -10,6 +10,9 @@ interface FollowupData {
   status: 'sent' | 'pending' | 'failed';
   message: string;
   recipient: string;
+  addressed: boolean;
+  addressedNote: string;
+  addressedAt: string | null;
   timestamp: string;
 }
 
@@ -17,6 +20,9 @@ export const SchoolFollowups = () => {
   const { t } = useTranslation();
   const [followups, setFollowups] = useState<FollowupData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addressingId, setAddressingId] = useState<string | null>(null);
+  const [addressNote, setAddressNote] = useState('');
+  const [addressingSaving, setAddressingSaving] = useState(false);
 
   useEffect(() => {
     const fetchFollowups = async () => {
@@ -40,6 +46,15 @@ export const SchoolFollowups = () => {
       </div>
     );
   }
+
+  const refresh = async () => {
+    try {
+      const res = await api.get('/school/followups');
+      setFollowups(res.data);
+    } catch (err) {
+      console.error('Failed to load followups:', err);
+    }
+  };
 
   return (
     <div className="animate-soft">
@@ -94,6 +109,32 @@ export const SchoolFollowups = () => {
                       }`}>
                       {followup.status}
                     </span>
+
+                    <div className="mt-2 flex flex-col gap-2">
+                      {followup.addressed ? (
+                        <div>
+                          <span className="ui-badge text-xs bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Addressed
+                          </span>
+                          {followup.addressedNote ? (
+                            <p className="text-[11px] text-emerald-900/80 mt-1 line-clamp-2">
+                              Note: {followup.addressedNote}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAddressingId(followup.id);
+                            setAddressNote('');
+                          }}
+                          className="ui-button-primary !rounded-lg !px-3 !py-2 !text-xs !shadow-none"
+                        >
+                          Mark as Addressed
+                        </button>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-3 text-right text-sm text-slate-500">
                     {new Date(followup.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -112,6 +153,82 @@ export const SchoolFollowups = () => {
           </table>
         </div>
       </div>
+
+      {/* Address modal */}
+      {addressingId && (
+        <div
+          className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setAddressingId(null);
+          }}
+        >
+          <div className="w-[90vw] max-w-lg bg-white border border-slate-200 rounded-2xl shadow-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Mark as Addressed</h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  Add a short note so the team can track resolution.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAddressingId(null)}
+                className="p-2 rounded-lg hover:bg-slate-100 text-slate-500"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Resolution Note</label>
+              <textarea
+                value={addressNote}
+                onChange={(e) => setAddressNote(e.target.value)}
+                rows={4}
+                className="ui-input w-full"
+                placeholder="e.g., Parent replied, scheduled tour, or issue resolved..."
+              />
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setAddressingId(null)}
+                className="ui-button-primary !rounded-lg !px-3 !py-2 !text-xs !shadow-none !bg-white !text-slate-700 !border !border-slate-200 hover:!bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!addressingId) return;
+                  const trimmed = addressNote.trim();
+                  if (!trimmed) {
+                    alert('Please add a note before marking as addressed.');
+                    return;
+                  }
+                  setAddressingSaving(true);
+                  try {
+                    await api.post(`/school/followups/${addressingId}/addressed`, { note: trimmed });
+                    setAddressingId(null);
+                    await refresh();
+                  } catch (err: any) {
+                    const msg = err?.response?.data?.error || 'Failed to mark addressed.';
+                    alert(msg);
+                  } finally {
+                    setAddressingSaving(false);
+                  }
+                }}
+                disabled={addressingSaving}
+                className="ui-button-primary !rounded-lg !px-4 !py-2 !text-xs !shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {addressingSaving ? 'Saving...' : 'Mark as Addressed'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
