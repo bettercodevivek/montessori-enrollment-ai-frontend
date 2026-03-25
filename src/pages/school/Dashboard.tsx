@@ -150,18 +150,15 @@ export const SchoolDashboard = () => {
     scheduledAt: string;
     calendarProvider: string | null;
   }>>([]);
+  const [toursLoading, setToursLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const fetchData = React.useCallback(async (p: string) => {
-    console.log(`[Dashboard] Fetching data for period: ${p}`);
+  const fetchDashboard = React.useCallback(async (p: string) => {
+    console.log(`[Dashboard] Fetching dashboard for period: ${p}`);
     try {
-      const [dashboardRes, toursRes] = await Promise.all([
-        api.get(`/school/dashboard?period=${p}`),
-        api.get('/school/tour-bookings').catch(() => ({ data: [] })),
-      ]);
+      const dashboardRes = await api.get(`/school/dashboard?period=${p}`);
       console.log(`[Dashboard] Received data for period: ${dashboardRes.data.period}`, dashboardRes.data.metrics);
       setData(dashboardRes.data);
-      setTourBookings(Array.isArray(toursRes.data) ? toursRes.data : []);
       setLastUpdated(new Date());
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
@@ -170,13 +167,28 @@ export const SchoolDashboard = () => {
     }
   }, []);
 
+  const fetchTourBookings = React.useCallback(async () => {
+    try {
+      const toursRes = await api.get('/school/tour-bookings').catch(() => ({ data: [] }));
+      setTourBookings(Array.isArray(toursRes.data) ? toursRes.data : []);
+    } catch {
+      setTourBookings([]);
+    } finally {
+      setToursLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     console.log(`[Dashboard] useEffect triggered by period: ${period}`);
     setLoading(true);
-    fetchData(period);
-    const intervalId = setInterval(() => fetchData(period), 30000);
+    fetchDashboard(period);
+    fetchTourBookings();
+    const intervalId = setInterval(() => {
+      fetchDashboard(period);
+      fetchTourBookings();
+    }, 30000);
     return () => clearInterval(intervalId);
-  }, [period, fetchData]);
+  }, [period, fetchDashboard, fetchTourBookings]);
 
 
 
@@ -305,7 +317,13 @@ export const SchoolDashboard = () => {
         </div>
 
         {/* Right: School Calendar (4 Columns) */}
-        <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm overflow-hidden min-h-[500px]">
+        <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm overflow-hidden min-h-[500px] relative">
+          {toursLoading && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-white/80 backdrop-blur-[1px] rounded-2xl">
+              <Loader2 className="w-7 h-7 text-primary-600 animate-spin" />
+              <span className="text-xs text-slate-500 font-medium">{t('loading')}</span>
+            </div>
+          )}
           <CalendarUI bookings={tourBookings} />
         </div>
       </div>
