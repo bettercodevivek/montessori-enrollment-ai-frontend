@@ -6,8 +6,7 @@ import {
   Phone
 } from 'lucide-react';
 import api from '../../api/axios';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import cloud from 'd3-cloud';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface NeedsAttentionCall {
@@ -130,16 +129,6 @@ const getTimeOfDayBucket = (d: Date) => {
   return 'Evening';
 };
 
-const splitSummaryIntoBullets = (text?: string) => {
-  const raw = (text || '').trim();
-  if (!raw) return [];
-  return raw
-    .split(/[.!?]+/g)
-    .map(s => s.trim())
-    .filter(Boolean)
-    .slice(0, 4);
-};
-
 const STOPWORDS = new Set([
   'the', 'and', 'or', 'but', 'if', 'then', 'than', 'that', 'this', 'these', 'those',
   'a', 'an', 'the', 'to', 'of', 'in', 'on', 'at', 'for', 'with', 'as', 'is', 'are',
@@ -170,7 +159,7 @@ const STOPWORDS = new Set([
   'hello', 'hi', 'yeah', 'no', 'yes'
 ]);
 
-const extractWordFrequencies = (inputs: string[]) => {
+const extractWordFrequencies = (inputs: string[]): Array<{ word: string; count: number }> => {
   const text = inputs
     .filter(Boolean)
     .join(' ')
@@ -206,105 +195,36 @@ const extractWordFrequencies = (inputs: string[]) => {
     .sort((a, b) => b.count - a.count);
 };
 
-// ─── Word Cloud (d3-cloud layout) ───────────────────────────────────────────
-type WordCloudWord = { word: string; count: number };
+// ─── Word Cloud (stable tag cloud) ───────────────────────────────────────────
+type WordCloudWord = { word: string; count: number; examples?: string[] };
 
-const WordCloud = ({ words, height = 250 }: { words: WordCloudWord[]; height?: number }) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [box, setBox] = useState({ width: 600, height });
-  const [layout, setLayout] = useState<
-    Array<{ word: string; count: number; x: number; y: number; rotate: number; fontSize: number; }>
-  >([]);
+const TagCloud = ({ words }: { words: WordCloudWord[] }) => {
+  if (!words || words.length === 0) return null;
 
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const ro = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      const cr = entry.contentRect;
-      setBox({ width: Math.max(320, Math.floor(cr.width)), height: Math.max(200, height) });
-    });
-
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [height]);
-
-  useEffect(() => {
-    if (!words || words.length === 0) {
-      setLayout([]);
-      return;
-    }
-
-    const maxCount = Math.max(...words.map(w => w.count), 1);
-    const minFont = 12;
-    const maxFont = 34;
-    const getFontSize = (c: number) => {
-      const t = Math.log2(c + 1) / Math.log2(maxCount + 1);
-      return minFont + t * (maxFont - minFont);
-    };
-
-    // d3-cloud uses a deterministic-ish layout per run; we keep rotations mostly 0/90
-    const layoutWords = words.slice(0, 40).map(w => ({
-      text: w.word,
-      count: w.count,
-      size: getFontSize(w.count),
-    }));
-
-    const instance = (cloud as any)()
-      .size([box.width, box.height])
-      .words(layoutWords.map(w => ({ text: w.text, count: w.count, size: w.size })))
-      .padding(3)
-      .rotate(() => (Math.random() > 0.94 ? 90 : 0))
-      .font('system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial')
-      .fontSize((d: any) => d.size)
-      .on('end', (out: any[]) => {
-        const next = out.map((d: any) => ({
-          word: d.text,
-          count: d.count,
-          x: d.x,
-          y: d.y,
-          rotate: d.rotate || 0,
-          fontSize: d.size || 16,
-        }));
-        setLayout(next);
-      });
-
-    instance.start();
-    // No cleanup needed; a new layout run will overwrite state.
-  }, [words, box.width, box.height]);
+  const maxCount = Math.max(...words.map(w => w.count), 1);
+  const fontSizeFor = (c: number) => {
+    const t = Math.log2(c + 1) / Math.log2(maxCount + 1);
+    return Math.round(12 + t * 18); // 12 -> 30px
+  };
+  const classFor = (c: number) => {
+    const t = Math.log2(c + 1) / Math.log2(maxCount + 1);
+    return t > 0.75 ? 'text-emerald-700' : t > 0.45 ? 'text-blue-700' : 'text-slate-800';
+  };
 
   return (
-    <div
-      ref={containerRef}
-      style={{ width: '100%', height: box.height, position: 'relative', overflow: 'hidden' }}
-    >
-      {layout.map((w) => {
-        const maxCount = Math.max(...words.map(x => x.count), 1);
-        const t = Math.log2(w.count + 1) / Math.log2(maxCount + 1);
-        const color = t > 0.75 ? '#047857' : t > 0.45 ? '#2563eb' : '#0f172a';
-        return (
-          <span
-            key={`${w.word}-${w.count}-${w.x}-${w.y}`}
-            style={{
-              position: 'absolute',
-              left: w.x + box.width / 2,
-              top: w.y + box.height / 2,
-              transform: `translate(-50%, -50%) rotate(${w.rotate}deg)`,
-              fontSize: w.fontSize,
-              fontWeight: 700,
-              color,
-              whiteSpace: 'nowrap',
-              textShadow: '0 1px 0 rgba(0,0,0,0.02)',
-              userSelect: 'none',
-            }}
-            title={`${w.word}: ${w.count}`}
-          >
-            {w.word.charAt(0).toUpperCase() + w.word.slice(1)}
-          </span>
-        );
-      })}
+    <div className="flex flex-wrap gap-x-4 gap-y-3 leading-none">
+      {words.slice(0, 25).map(w => (
+        <span
+          key={`${w.word}-${w.count}`}
+          className={`${classFor(w.count)} font-extrabold tracking-tight select-none`}
+          style={{ fontSize: fontSizeFor(w.count) }}
+          title={(w.examples && w.examples.length > 0)
+            ? `${w.word} (${w.count}x)\n- ${w.examples.join('\n- ')}`
+            : `${w.word} (${w.count}x)`}
+        >
+          {w.word}
+        </span>
+      ))}
     </div>
   );
 };
@@ -350,7 +270,7 @@ export const DailyInsights = () => {
   const totalToursToday = todaysTours.length;
   const actionNeededToday = needsAttention.length;
 
-  const wordCloudWords = useMemo(() => {
+  const wordCloudWords: WordCloudWord[] = useMemo(() => {
     // 1. Prefer OpenAI-powered cloud from backend if available
     if (wordCloud && wordCloud.length > 0) {
       return wordCloud;
@@ -377,7 +297,7 @@ export const DailyInsights = () => {
     const minCount = freqs.some(w => w.count >= 2) ? 2 : 1;
     const filtered = freqs.filter(w => w.count >= minCount);
     const chosen = (filtered.length >= 5 ? filtered : freqs).slice(0, 30);
-    return chosen;
+    return chosen.map(w => ({ ...w, examples: [] }));
   }, [todaysTours, needsAttention]);
 
   const callTimingData = useMemo(() => {
@@ -397,6 +317,21 @@ export const DailyInsights = () => {
       count: counts[name],
     }));
   }, [todayCalls]);
+
+  const totalCallsToday = callTimingData.reduce((acc, x) => acc + x.count, 0);
+  const donutData = totalCallsToday > 0
+    ? callTimingData
+    : [
+        { name: 'Morning', count: 0 },
+        { name: 'Afternoon', count: 0 },
+        { name: 'Evening', count: 0 },
+      ];
+
+  const DONUT_COLORS: Record<string, string> = {
+    Morning: '#34d399',   // emerald-400
+    Afternoon: '#60a5fa', // blue-400
+    Evening: '#f59e0b',   // amber-500
+  };
 
   if (loading) {
     return (
@@ -436,8 +371,8 @@ export const DailyInsights = () => {
       </div>
 
       {/* ── Section 0: Word Cloud + Call Timing ───────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col h-full">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-blue-600" />
@@ -456,29 +391,46 @@ export const DailyInsights = () => {
             </div>
           ) : (
             <div className="pt-1">
-              <WordCloud words={wordCloudWords} height={220} />
-              <div className="mt-4">
+              <div className="bg-slate-50/60 border border-slate-200 rounded-xl p-4">
+                <TagCloud words={wordCloudWords} />
+              </div>
+
+              <div className="mt-5">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  Top Questions
+                  Top Topics (with example questions)
                 </p>
-                <ul className="space-y-1">
-                  {wordCloudWords.slice(0, 10).map((w) => (
-                    <li key={`${w.word}-${w.count}`} className="text-sm text-slate-700 flex items-center justify-between gap-3">
-                      <span className="font-semibold">
-                        {w.word.charAt(0).toUpperCase() + w.word.slice(1)}
-                      </span>
-                      <span className="text-[10px] font-bold text-slate-400">
+                <div className="space-y-2 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
+                  {wordCloudWords.slice(0, 5).map((w) => (
+                    <div
+                      key={`${w.word}-${w.count}`}
+                      className="flex items-start justify-between gap-4 bg-white border border-slate-100 rounded-lg px-4 py-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-extrabold text-slate-900">
+                          {w.word}
+                        </div>
+                        {Array.isArray(w.examples) && w.examples.length > 0 && (
+                          <ul className="mt-1 space-y-1 text-xs text-slate-600">
+                            {w.examples.slice(0, 2).map((ex: string, i: number) => (
+                              <li key={i} className="leading-snug">
+                                - {ex}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <div className="shrink-0 text-[10px] font-black text-slate-400 tabular-nums">
                         {w.count}x
-                      </span>
-                    </li>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col h-full">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Clock className="w-4 h-4 text-amber-600" />
@@ -489,22 +441,57 @@ export const DailyInsights = () => {
             </span>
           </div>
 
-          <div className="w-full h-[260px]">
+          <div className="w-full h-[280px] relative">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={callTimingData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b', fontWeight: 700 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: '#64748b', fontWeight: 700 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="count" fill="#f59e0b" radius={[10, 10, 0, 0]} />
-              </BarChart>
+              <PieChart>
+                <Pie
+                  data={donutData}
+                  dataKey="count"
+                  nameKey="name"
+                  innerRadius={70}
+                  outerRadius={98}
+                  paddingAngle={2}
+                  stroke="#ffffff"
+                  strokeWidth={2}
+                >
+                  {donutData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={DONUT_COLORS[entry.name] || '#94a3b8'}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: any, name: any) => [`${value}`, `${name}`]}
+                />
+              </PieChart>
             </ResponsiveContainer>
+
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <div className="text-2xl font-black text-slate-900 tabular-nums">
+                {totalCallsToday}
+              </div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Calls Today
+              </div>
+            </div>
           </div>
 
-          <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-            <span>Morning: {callTimingData.find(x => x.name === 'Morning')?.count || 0}</span>
-            <span>Afternoon: {callTimingData.find(x => x.name === 'Afternoon')?.count || 0}</span>
-            <span>Evening: {callTimingData.find(x => x.name === 'Evening')?.count || 0}</span>
+          <div className="mt-6 flex items-center justify-between text-xs text-slate-500 bg-slate-50 rounded-lg p-3">
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-400"/> Morning: {callTimingData.find(x => x.name === 'Morning')?.count || 0}</span>
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-400"/> Afternoon: {callTimingData.find(x => x.name === 'Afternoon')?.count || 0}</span>
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500"/> Evening: {callTimingData.find(x => x.name === 'Evening')?.count || 0}</span>
+          </div>
+
+          <div className="mt-auto pt-6 border-t border-slate-100">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Peak Activity Insight</p>
+            <div className="bg-blue-50/50 border border-blue-100/50 rounded-xl p-3">
+              <p className="text-xs text-blue-800 leading-relaxed font-medium">
+                {totalCallsToday === 0 
+                  ? "No calls recorded today yet. Insights will appear as parents call."
+                  : `Most parents are calling during the ${callTimingData.reduce((prev, current) => (prev.count > current.count) ? prev : current).name.toLowerCase()}. Ensure staff is available for follow-ups then.`}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -624,155 +611,79 @@ export const DailyInsights = () => {
             <p className="text-slate-400 text-sm mt-1">Check back later or look at upcoming bookings.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
             {todaysTours.map((tour) => {
               const countdown = getCountdown(tour.scheduledAt);
               return (
                 <div
                   key={tour.id}
-                  className={`bg-white rounded-xl shadow-sm overflow-hidden border transition-all hover:shadow-md ${countdown.past ? 'border-slate-200' : 'border-emerald-100'}`}
+                  className={`bg-white rounded-2xl shadow-sm overflow-hidden border transition-all hover:shadow-md h-full ${countdown.past ? 'border-slate-200' : 'border-emerald-100'}`}
                 >
                   {/* Coloured top stripe */}
                   <div className={`h-1 w-full ${countdown.past ? 'bg-slate-200' : 'bg-gradient-to-r from-emerald-400 to-teal-500'}`} />
 
-                  <div className="px-5 py-4">
-                    {/* Tour header row */}
-                    <div className="flex items-start gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${countdown.past ? 'bg-slate-100' : 'bg-emerald-100'}`}>
-                        <User className={`w-5 h-5 ${countdown.past ? 'text-slate-400' : 'text-emerald-600'}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-base font-bold text-slate-900">{tour.parentName || 'Parent'}</span>
-                          {!countdown.past && (
-                            <span className={`text-xs ${countdown.color} bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200`}>
-                              {countdown.label}
-                            </span>
-                          )}
-                          {countdown.past && (
-                            <span className="text-xs text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-200">
-                              Completed
-                            </span>
-                          )}
-                          {tour.calendarProvider && (
-                            <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded border ${tour.calendarProvider === 'google' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
-                              {tour.calendarProvider}
-                            </span>
-                          )}
+                  <div className="p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          Tour Time
                         </div>
-                        {/* Scheduled time */}
-                        <div className="flex items-center gap-1.5 mt-1 text-slate-600">
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="text-sm font-semibold">
+                        <div className="mt-1 flex items-center gap-2 text-slate-900">
+                          <Clock className="w-4 h-4 text-slate-300" />
+                          <span className="text-sm font-bold tabular-nums">
                             {new Date(tour.scheduledAt).toLocaleString(undefined, { hour: '2-digit', minute: '2-digit', hour12: true })}
                           </span>
                         </div>
-                        {/* Visible child fields (no expand/collapse) */}
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          <span className="flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-2 py-0.5">
-                            <User className="w-3 h-3 text-slate-400" /> Child: {tour.childName || 'N/A'}
+                      </div>
+
+                      <div className="shrink-0">
+                        {!countdown.past ? (
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded-full border bg-emerald-50 border-emerald-200 ${countdown.color}`}>
+                            {countdown.label}
                           </span>
-                          {tour.childAge && (
-                            <span className="flex items-center gap-1 text-[11px] font-medium text-blue-600 bg-blue-50 border border-blue-100 rounded-md px-2 py-0.5">
-                              <Baby className="w-3 h-3" /> Child age: {tour.childAge}
-                            </span>
-                          )}
-                        </div>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-1 rounded-full border bg-slate-50 border-slate-200 text-slate-500">
+                            Completed
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    {/* Quick chips (always visible) */}
-                    <div className="flex flex-wrap gap-2 mt-3 ml-14">
-                      {tour.phone && (
-                        <span className="flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-2 py-0.5">
-                          <PhoneCall className="w-3 h-3" /> {tour.phone}
-                        </span>
-                      )}
-                      {tour.email && (
-                        <span className="flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-slate-50 border border-slate-200 rounded-md px-2 py-0.5">
-                          @ {tour.email}
-                        </span>
-                      )}
-                      {tour.reminderSent && (
-                        <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-md px-2 py-0.5">
-                          <CheckCircle2 className="w-3 h-3" /> Reminder sent
-                        </span>
-                      )}
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-start gap-2">
+                        <User className="w-4 h-4 text-slate-300 mt-0.5 shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            Child
+                          </div>
+                          <div className="text-sm font-bold text-slate-900">
+                            {tour.childName ? `Child: ${tour.childName}` : 'Child: N/A'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-2">
+                        <Baby className="w-4 h-4 text-slate-300 mt-0.5 shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            Child age
+                          </div>
+                          <div className="text-sm font-bold text-slate-900">
+                            {tour.childAge ? `Child age: ${tour.childAge}` : 'Child age: N/A'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 mt-3 border-t border-slate-100">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                          <Star className="w-3.5 h-3.5 text-amber-500" /> Purpose of visit
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-slate-800 line-clamp-3">
+                          {tour.reason || 'Enrollment inquiry'}
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                    <div className="border-t border-slate-100 px-6 py-6 bg-slate-50/10 space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Purpose & Context */}
-                        <div className="space-y-4">
-                          <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                              <Star className="w-3.5 h-3.5 text-amber-500" /> Purpose of Visit
-                            </p>
-                            <p className="text-sm font-bold text-slate-900 leading-tight">
-                              {tour.reason || 'Enrollment Inquiry'}
-                            </p>
-                          </div>
-                          
-                          {(tour.callSummary || tour.highlights) && (
-                            <div>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                <PhoneCall className="w-3.5 h-3.5 text-blue-500" /> Call Summary
-                              </p>
-                              <div className="border border-slate-200 rounded-lg px-4 py-3 bg-white">
-                                {splitSummaryIntoBullets(tour.callSummary || tour.highlights || '').length > 0 ? (
-                                  <ul className="list-disc pl-4 space-y-1 text-xs text-slate-600 leading-relaxed">
-                                    {splitSummaryIntoBullets(tour.callSummary || tour.highlights || '').map((b, i) => (
-                                      <li key={i}>{b}</li>
-                                    ))}
-                                  </ul>
-                                ) : (
-                                  <p className="text-xs text-slate-600 italic">
-                                    No detailed summary available.
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Child Details */}
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                            <Baby className="w-3.5 h-3.5 text-purple-500" /> Child Details
-                          </p>
-                          <div className="border border-slate-200 rounded-lg px-4 py-3 bg-white space-y-3">
-                            <div>
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Name</span>
-                              <span className="text-sm font-bold text-slate-900">{tour.childName || 'N/A'}</span>
-                            </div>
-                            <div>
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Age</span>
-                              <span className="text-base font-bold text-slate-900">{tour.childAge || 'N/A'}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Questions Asked */}
-                      {tour.questionsAsked && tour.questionsAsked.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                            <MessageSquare className="w-3.5 h-3.5 text-emerald-500" /> Parent Questions
-                          </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {tour.questionsAsked.map((q, i) => (
-                              <div key={i} className="flex items-start gap-3 bg-white border border-slate-100 rounded-lg px-3 py-2">
-                                <div className="w-5 h-5 bg-slate-50 text-slate-400 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
-                                  {i + 1}
-                                </div>
-                                <p className="text-xs text-slate-700 font-medium leading-tight">{q}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
                 </div>
               );
             })}
