@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StatusBadge } from '../../components/StatusBadge';
 import api from '../../api/axios';
-import { Plus, X, Loader2, Trash2, CheckCircle, Pencil, Phone } from 'lucide-react';
+import { Plus, X, Loader2, Trash2, CheckCircle, Pencil, Phone, PhoneOff } from 'lucide-react';
 
 interface SchoolData {
   id: string;
@@ -160,6 +160,24 @@ export const AdminSchools = () => {
   };
 
 
+  const handleUnassignPhone = async (school: SchoolData) => {
+    if (!confirm(`Are you sure you want to unassign the phone number from ${school.name}? This will make the number available in the pool.`)) return;
+    setSaving(true);
+    setError('');
+    try {
+      // Per requirements: hit the assignment endpoint with agentId: null to trigger unassignment
+      await api.post(`/admin/schools/${school.id}/assign-number`, { agentId: null });
+      setSuccess('Phone number unassigned successfully!');
+      await fetchSchools();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to unassign number.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+
   const openPhoneModal = (school: SchoolData) => {
     setAssignModalSchool(school);
     setSelectedPhoneId('');
@@ -247,6 +265,15 @@ export const AdminSchools = () => {
                   >
                     <Phone className="w-4 h-4" />
                   </button>
+                  {school.aiNumber && (
+                    <button
+                      onClick={() => handleUnassignPhone(school)}
+                      title="Unassign Phone Number"
+                      className="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                    >
+                      <PhoneOff className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     onClick={() => openEdit(school)}
                     title="Edit school"
