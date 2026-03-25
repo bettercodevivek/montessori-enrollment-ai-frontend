@@ -5,6 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { MetricCard } from '../../components/MetricCard';
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import api from '../../api/axios';
 import { Calendar as CalendarUI } from '../../components/Calendar';
 
@@ -153,41 +154,51 @@ export const SchoolDashboard = () => {
   const [toursLoading, setToursLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const fetchDashboard = React.useCallback(async (p: string) => {
+  const fetchDashboard = React.useCallback(async (p: string, signal?: AbortSignal) => {
     console.log(`[Dashboard] Fetching dashboard for period: ${p}`);
     try {
-      const dashboardRes = await api.get(`/school/dashboard?period=${p}`);
+      const dashboardRes = await api.get(`/school/dashboard?period=${p}`, { signal });
       console.log(`[Dashboard] Received data for period: ${dashboardRes.data.period}`, dashboardRes.data.metrics);
       setData(dashboardRes.data);
       setLastUpdated(new Date());
     } catch (err) {
+      if (axios.isAxiosError(err) && err.code === 'ERR_CANCELED') return;
       console.error('Failed to load dashboard data:', err);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   }, []);
 
-  const fetchTourBookings = React.useCallback(async () => {
+  const fetchTourBookings = React.useCallback(async (signal?: AbortSignal) => {
     try {
-      const toursRes = await api.get('/school/tour-bookings').catch(() => ({ data: [] }));
+      const toursRes = await api.get('/school/tour-bookings', { signal });
       setTourBookings(Array.isArray(toursRes.data) ? toursRes.data : []);
-    } catch {
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.code === 'ERR_CANCELED') return;
       setTourBookings([]);
     } finally {
-      setToursLoading(false);
+      if (!signal?.aborted) {
+        setToursLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     console.log(`[Dashboard] useEffect triggered by period: ${period}`);
+    const controller = new AbortController();
     setLoading(true);
-    fetchDashboard(period);
-    fetchTourBookings();
+    void fetchDashboard(period, controller.signal);
+    void fetchTourBookings(controller.signal);
     const intervalId = setInterval(() => {
       fetchDashboard(period);
       fetchTourBookings();
     }, 30000);
-    return () => clearInterval(intervalId);
+    return () => {
+      controller.abort();
+      clearInterval(intervalId);
+    };
   }, [period, fetchDashboard, fetchTourBookings]);
 
 
