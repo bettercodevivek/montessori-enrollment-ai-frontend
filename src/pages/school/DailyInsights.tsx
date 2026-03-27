@@ -129,72 +129,6 @@ const getTimeOfDayBucket = (d: Date) => {
   return 'Evening';
 };
 
-const STOPWORDS = new Set([
-  'the', 'and', 'or', 'but', 'if', 'then', 'than', 'that', 'this', 'these', 'those',
-  'a', 'an', 'the', 'to', 'of', 'in', 'on', 'at', 'for', 'with', 'as', 'is', 'are',
-  'was', 'were', 'be', 'been', 'being', 'it', 'its', 'i', 'we', 'you', 'they', 'them',
-  'your', 'our', 'ours', 'my', 'me', 'their', 'theirs', 'from', 'by', 'about', 'into',
-  // Common verbs / filler
-  'can', 'could', 'would', 'do', 'does', 'did', 'have', 'has', 'had', 'will', 'would',
-  'what', 'how', 'when', 'where', 'why', 'please', 'tell', 'me', 'myself', 'also',
-  'make', 'want', 'need', 'know', 'see', 'get', 'go', 'send', 'message',
-
-  // Common nouns that tend to dominate phone transcripts
-  'school', 'tour', 'schedule', 'scheduled', 'availability', 'room', 'rooms',
-  'program', 'programs',
-  'child', 'children', 'age', 'year', 'years',
-  'phone', 'number', 'numbers', 'email', 'mail', 'gmail', 'com',
-
-  // Names / internal tokens that frequently pollute word clouds
-  'benny', 'nora', 'agent', 'sid', 'april', 'week', 'first', 'second', 'third',
-  'contacted', 'contact', 'provided', 'initially', 'interention', 'intention',
-  'clearly', 'something', 'speak', 'date', 'call', 'calls',
-
-  // Generic connector words
-  'theirs', 'ours', 'yours', 'his', 'hers', 'them', 'they',
-
-  // Misc common transcript artifacts
-  'sync', 'invite', 'calendar',
-  'someone', 'somebody', 'anyone', 'everyone', 'n/a', 'na',
-  'hello', 'hi', 'yeah', 'no', 'yes'
-]);
-
-const extractWordFrequencies = (inputs: string[]): Array<{ word: string; count: number }> => {
-  const text = inputs
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase()
-    // Preserve a couple of common hyphenated tokens we expect in school questions
-    .replace(/after[- ]school/g, 'after-school')
-    .replace(/pre[- ]?k/g, 'pre-k')
-    .replace(/after[- ]?school/g, 'after-school');
-
-  const tokens = text
-    .replace(/https?:\/\/\S+/g, ' ')
-    .replace(/[^a-z0-9\- ]/gi, ' ')
-    .split(/\s+/)
-    .map(t => t.trim())
-    .filter(Boolean);
-
-  const freqs = new Map<string, number>();
-  for (const token of tokens) {
-    const t = token.trim();
-    if (!t) continue;
-    if (STOPWORDS.has(t)) continue;
-    // Drop any digits-containing tokens (phone numbers, ids, years, etc.)
-    if (/\d/.test(t)) continue;
-    // Guard against very long tokens that make the cloud ugly
-    if (t.length > 18) continue;
-    // Keep hyphenated tokens like "after-school"
-    if (t.length < 3 && !t.includes('-')) continue;
-    freqs.set(t, (freqs.get(t) || 0) + 1);
-  }
-
-  return Array.from(freqs.entries())
-    .map(([word, count]) => ({ word, count }))
-    .sort((a, b) => b.count - a.count);
-};
-
 // ─── Word Cloud (stable tag cloud) ───────────────────────────────────────────
 type WordCloudWord = { word: string; count: number; examples?: string[] };
 
@@ -219,8 +153,8 @@ const TagCloud = ({ words }: { words: WordCloudWord[] }) => {
           className={`${classFor(w.count)} font-extrabold tracking-tight select-none`}
           style={{ fontSize: fontSizeFor(w.count) }}
           title={(w.examples && w.examples.length > 0)
-            ? `${w.word} (${w.count}x)\n- ${w.examples.join('\n- ')}`
-            : `${w.word} (${w.count}x)`}
+            ? `${w.word}\n- ${w.examples.join('\n- ')}`
+            : `${w.word}`}
         >
           {w.word}
         </span>
@@ -237,7 +171,34 @@ export const DailyInsights = () => {
   const [todayCalls, setTodayCalls] = useState<{ id: string; timestamp: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedCall, setExpandedCall] = useState<string | null>(null);
+  const [showWordCloud, setShowWordCloud] = useState(false);
+  const [wordCloudLoading, setWordCloudLoading] = useState(false);
   const [, setNow] = useState(Date.now());
+
+  const handleShowWordCloud = async () => {
+    setWordCloudLoading(true);
+
+    // If we already have it from the daily-insights initial load, just show it
+    if (wordCloud && wordCloud.length > 0) {
+      setTimeout(() => {
+        setWordCloudLoading(false);
+        setShowWordCloud(true);
+      }, 500);
+      return;
+    }
+
+    // Otherwise, we explicitly ask the backend to generate/fetch it
+    try {
+      const res = await api.post('/school/wordcloud/generate');
+      setWordCloud(res.data.wordCloud || []);
+      setShowWordCloud(true);
+    } catch (err) {
+      console.error(err);
+      setShowWordCloud(true); // show empty state or error
+    } finally {
+      setWordCloudLoading(false);
+    }
+  };
 
   useEffect(() => {
     const tick = setInterval(() => setNow(Date.now()), 60000);
@@ -271,34 +232,8 @@ export const DailyInsights = () => {
   const actionNeededToday = needsAttention.length;
 
   const wordCloudWords: WordCloudWord[] = useMemo(() => {
-    // 1. Prefer OpenAI-powered cloud from backend if available
-    if (wordCloud && wordCloud.length > 0) {
-      return wordCloud;
-    }
-
-    // 2. Fallback: Pull from every available text source for the richest cloud
-    const allTexts: string[] = [
-      // ... (fallback logic) ...
-      // Tour questions asked during calls
-      ...todaysTours.flatMap(t => t.questionsAsked || []),
-      // Tour call summaries
-      ...todaysTours.map(t => t.callSummary || '').filter(Boolean),
-      // Tour highlights / notes
-      ...todaysTours.map(t => t.highlights || '').filter(Boolean),
-      // Needs-attention call summaries (parents who didn't book)
-      ...needsAttention.map(n => n.summary || '').filter(Boolean),
-      // Needs-attention questions if present
-      ...needsAttention.flatMap(n => n.questionsAsked || []),
-    ];
-
-    const freqs = extractWordFrequencies(allTexts);
-
-    // On sparse days (few calls) lower the threshold so we still show something
-    const minCount = freqs.some(w => w.count >= 2) ? 2 : 1;
-    const filtered = freqs.filter(w => w.count >= minCount);
-    const chosen = (filtered.length >= 5 ? filtered : freqs).slice(0, 30);
-    return chosen.map(w => ({ ...w, examples: [] }));
-  }, [todaysTours, needsAttention]);
+    return wordCloud || [];
+  }, [wordCloud]);
 
   const callTimingData = useMemo(() => {
     const counts: Record<'Morning' | 'Afternoon' | 'Evening', number> = {
@@ -322,10 +257,10 @@ export const DailyInsights = () => {
   const donutData = totalCallsToday > 0
     ? callTimingData
     : [
-        { name: 'Morning', count: 0 },
-        { name: 'Afternoon', count: 0 },
-        { name: 'Evening', count: 0 },
-      ];
+      { name: 'Morning', count: 0 },
+      { name: 'Afternoon', count: 0 },
+      { name: 'Evening', count: 0 },
+    ];
 
   const DONUT_COLORS: Record<string, string> = {
     Morning: '#34d399',   // emerald-400
@@ -378,19 +313,51 @@ export const DailyInsights = () => {
               <MessageSquare className="w-4 h-4 text-blue-600" />
               Word Cloud: Common Parent Questions
             </h2>
-            {wordCloudWords.length > 0 && (
+            {showWordCloud && wordCloudWords.length > 0 && (
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border border-slate-100 px-2 py-1 rounded">
                 Top {Math.min(30, wordCloudWords.length)}
               </span>
             )}
           </div>
 
-          {wordCloudWords.length === 0 ? (
+          {!showWordCloud ? (
+            <div className="flex flex-col items-center justify-center p-8 bg-slate-50 border border-dashed border-slate-200 rounded-xl h-full min-h-[250px]">
+              {wordCloudLoading ? (
+                <div className="flex flex-col items-center justify-center gap-4 animate-in fade-in duration-500">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-75"></div>
+                    <div className="relative bg-blue-500 text-white p-3 rounded-full flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm font-bold text-slate-700">Analyzing Transcripts...</div>
+                    <div className="text-xs text-slate-500 mt-1">Extracting themes</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
+                  <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center -mb-2">
+                    <MessageSquare className="w-8 h-8 text-blue-500" />
+                  </div>
+                  <p className="text-sm text-slate-500 text-center max-w-[250px]">
+                    See what parents are talking about most today in their inquiries.
+                  </p>
+                  <button
+                    onClick={handleShowWordCloud}
+                    className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-blue-700 hover:shadow transition-all active:scale-95"
+                  >
+                    Get Word Cloud
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : wordCloudWords.length === 0 ? (
             <div className="text-center text-slate-400 text-sm italic bg-slate-50/50 border border-dashed border-slate-200 rounded-xl px-4 py-10">
               Not enough transcript data yet to build a word cloud.
             </div>
           ) : (
-            <div className="pt-1">
+            <div className="pt-1 animate-in fade-in duration-500 slide-in-from-bottom-2">
               <div className="bg-slate-50/60 border border-slate-200 rounded-xl p-4">
                 <TagCloud words={wordCloudWords} />
               </div>
@@ -418,9 +385,6 @@ export const DailyInsights = () => {
                             ))}
                           </ul>
                         )}
-                      </div>
-                      <div className="shrink-0 text-[10px] font-black text-slate-400 tabular-nums">
-                        {w.count}x
                       </div>
                     </div>
                   ))}
@@ -478,16 +442,16 @@ export const DailyInsights = () => {
           </div>
 
           <div className="mt-6 flex items-center justify-between text-xs text-slate-500 bg-slate-50 rounded-lg p-3">
-            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-400"/> Morning: {callTimingData.find(x => x.name === 'Morning')?.count || 0}</span>
-            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-400"/> Afternoon: {callTimingData.find(x => x.name === 'Afternoon')?.count || 0}</span>
-            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500"/> Evening: {callTimingData.find(x => x.name === 'Evening')?.count || 0}</span>
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-400" /> Morning: {callTimingData.find(x => x.name === 'Morning')?.count || 0}</span>
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-400" /> Afternoon: {callTimingData.find(x => x.name === 'Afternoon')?.count || 0}</span>
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500" /> Evening: {callTimingData.find(x => x.name === 'Evening')?.count || 0}</span>
           </div>
 
           <div className="mt-auto pt-6 border-t border-slate-100">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Peak Activity Insight</p>
             <div className="bg-blue-50/50 border border-blue-100/50 rounded-xl p-3">
               <p className="text-xs text-blue-800 leading-relaxed font-medium">
-                {totalCallsToday === 0 
+                {totalCallsToday === 0
                   ? "No calls recorded today yet. Insights will appear as parents call."
                   : `Most parents are calling during the ${callTimingData.reduce((prev, current) => (prev.count > current.count) ? prev : current).name.toLowerCase()}. Ensure staff is available for follow-ups then.`}
               </p>
