@@ -231,7 +231,7 @@ export const SchoolDashboard = () => {
         <div>
           <div className="flex items-center gap-3 mb-1.5">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('dashboard')}</h1>
-            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider tabular-nums">
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider tabular-nums shrink-0">
               <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
               Live • {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
@@ -239,14 +239,14 @@ export const SchoolDashboard = () => {
           <p className="text-sm font-medium text-slate-500">{t('dashboard_desc')}</p>
         </div>
 
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-4 flex-wrap w-full md:w-auto">
           {/* Period Filter Pills - Restoration */}
-          <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-1 shadow-inner">
+          <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-1 shadow-inner w-full sm:w-auto">
             {(['weekly', 'monthly'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-5 py-2 rounded-lg text-xs font-bold transition-all capitalize ${period === p
+                className={`flex-1 sm:flex-none px-5 py-2 rounded-lg text-xs font-bold transition-all capitalize ${period === p
                     ? 'bg-white text-slate-900 shadow-md'
                     : 'bg-transparent text-slate-400 hover:text-slate-600'
                   }`}
@@ -256,13 +256,13 @@ export const SchoolDashboard = () => {
             ))}
           </div>
 
-          <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block" />
+          <div className="h-8 w-px bg-slate-200 mx-1 hidden lg:block" />
 
           {/* Action Links */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <Link
               to="/school/daily-insights"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all shadow-sm"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all shadow-sm"
             >
               <Lightbulb className="w-4 h-4" />
               Daily Insights
@@ -276,7 +276,7 @@ export const SchoolDashboard = () => {
                   alert(t('test_call_failed'));
                 }
               }}
-              className="ui-button-primary gap-2 !rounded-xl px-4 !py-2 shadow-sm"
+              className="flex-1 sm:flex-none ui-button-primary gap-2 !rounded-xl px-4 !py-2 shadow-sm"
             >
               <PlayCircle className="w-4 h-4" />
               {t('simulate_inquiry_call')}
@@ -286,7 +286,7 @@ export const SchoolDashboard = () => {
       </div>
 
       {/* Row 1: Top Metrics (Full Width) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-5 mb-10">
         {metrics.map((metric) => (
           <MetricCard key={metric.label} {...metric} />
         ))}
@@ -435,7 +435,7 @@ export const SchoolDashboard = () => {
                     {expandedId === call.id && call.recordingUrl && (
                       <tr className="bg-slate-50/50 border-l-4 border-l-blue-500">
                         <td colSpan={6} className="px-8 py-8">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                             <div className="space-y-4">
                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                 <Mic className="w-3 h-3 text-blue-500" /> Audio Playback

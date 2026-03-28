@@ -105,12 +105,12 @@ export const SchoolIntegrations = () => {
 
   return (
     <div className="w-full animate-soft">
-      <div className="mb-10 flex items-baseline justify-between border-b border-slate-200 pb-6">
+      <div className="mb-10 flex flex-col sm:flex-row sm:items-baseline justify-between border-b border-slate-200 pb-6 gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">{t('integrations_title')}</h1>
           <p className="text-xs text-slate-500 mt-1">Sychronize your institutional workspace with the AI core.</p>
         </div>
-        <div className="flex items-center gap-2 text-slate-400">
+        <div className="flex items-center gap-2 text-slate-400 shrink-0">
           <Zap className="w-3 h-3 fill-amber-400 text-amber-400" />
           <span className="text-[10px] font-bold uppercase tracking-widest">Active Sync</span>
         </div>

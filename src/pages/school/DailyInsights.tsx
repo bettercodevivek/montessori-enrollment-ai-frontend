@@ -280,7 +280,7 @@ export const DailyInsights = () => {
   return (
     <div className="animate-soft space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
@@ -288,17 +288,17 @@ export const DailyInsights = () => {
             </div>
             <h1 className="text-2xl font-semibold text-slate-900">Daily Insights</h1>
           </div>
-          <p className="text-sm text-slate-500 ml-10">{today}</p>
+          <p className="text-sm text-slate-500 md:ml-10">{today}</p>
         </div>
-        <div className="flex items-center gap-3 ml-10 md:ml-0">
+        <div className="flex items-center gap-6 md:ml-10 lg:ml-0">
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{actionNeededToday}</div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Action Needed Today</div>
+              <div className="text-2xl font-bold text-red-600 tabular-nums">{actionNeededToday}</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Action Needed</div>
             </div>
             <div className="w-px h-8 bg-slate-200" />
             <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-600">{totalToursToday}</div>
+              <div className="text-2xl font-bold text-emerald-600 tabular-nums">{totalToursToday}</div>
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Tours Today</div>
             </div>
           </div>
@@ -486,13 +486,28 @@ export const DailyInsights = () => {
                 className="bg-white border border-red-100 rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md"
               >
                 {/* Call row */}
-                <div className="px-5 py-4 flex items-center gap-4">
+                <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
                   {/* Red icon */}
-                  <div className="w-9 h-9 bg-red-100 rounded-lg flex items-center justify-center shrink-0">
-                    <PhoneCall className="w-4 h-4 text-red-600" />
+                  <div className="flex items-center gap-4">
+                    <div className="w-9 h-9 bg-red-100 rounded-lg flex items-center justify-center shrink-0">
+                      <PhoneCall className="w-4 h-4 text-red-600" />
+                    </div>
+                    {/* Info for mobile - stacked */}
+                    <div className="sm:hidden flex-1 min-w-0">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-900">{call.callerName}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-slate-500 font-medium">{call.callerPhone}</span>
+                          <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-[9px] font-bold uppercase tracking-wider border border-red-200">
+                            No Tour
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
+                  
+                  {/* Info for desktop */}
+                  <div className="hidden sm:block flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-bold text-slate-900">{call.callerName}</span>
                       <span className="text-xs text-slate-500 font-medium">{call.callerPhone}</span>
@@ -504,23 +519,32 @@ export const DailyInsights = () => {
                       <p className="text-xs text-slate-500 mt-1 line-clamp-1 italic">"{call.summary}"</p>
                     )}
                   </div>
-                  {/* Time + duration */}
-                  <div className="text-right shrink-0">
-                    <div className="text-xs font-bold text-slate-700 flex items-center gap-1 justify-end">
-                      <Clock className="w-3 h-3 text-slate-300" />
-                      {new Date(call.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                    <div className="text-[10px] text-slate-400 font-medium">
-                      {Math.floor(call.duration / 60)}m {call.duration % 60}s
-                    </div>
+
+                  {/* Mobile summary snippet */}
+                  <div className="sm:hidden">
+                    {call.summary && (
+                      <p className="text-xs text-slate-500 line-clamp-2 italic">"{call.summary}"</p>
+                    )}
                   </div>
-                  {/* Expand toggle */}
-                  <button
-                    onClick={() => setExpandedCall(expandedCall === call.id ? null : call.id)}
-                    className="ml-2 p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors shrink-0"
-                  >
-                    {expandedCall === call.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0">
+                    <div className="text-left sm:text-right shrink-0">
+                      <div className="text-xs font-bold text-slate-700 flex items-center gap-1 sm:justify-end">
+                        <Clock className="w-3 h-3 text-slate-300" />
+                        {new Date(call.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-medium">
+                        {Math.floor(call.duration / 60)}m {call.duration % 60}s
+                      </div>
+                    </div>
+                    {/* Expand toggle */}
+                    <button
+                      onClick={() => setExpandedCall(expandedCall === call.id ? null : call.id)}
+                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors shrink-0"
+                    >
+                      {expandedCall === call.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Expanded detail */}
@@ -575,7 +599,7 @@ export const DailyInsights = () => {
             <p className="text-slate-400 text-sm mt-1">Check back later or look at upcoming bookings.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
             {todaysTours.map((tour) => {
               const countdown = getCountdown(tour.scheduledAt);
               return (

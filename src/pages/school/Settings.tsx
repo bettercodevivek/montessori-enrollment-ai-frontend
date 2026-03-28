@@ -216,7 +216,7 @@ export const SchoolSettings = () => {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-6">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">{t('settings_title')}</h1>
           <p className="text-sm text-slate-500 mt-0.5">{t('settings_desc')}</p>
@@ -225,7 +225,7 @@ export const SchoolSettings = () => {
           type="button"
           onClick={saveSettings}
           disabled={saving}
-          className="ui-button-primary flex items-center gap-2"
+          className="ui-button-primary flex items-center justify-center gap-2 w-full sm:w-auto"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {saving ? t('saving') : t('save_settings')}
@@ -234,7 +234,7 @@ export const SchoolSettings = () => {
 
       {/* Toast Notification */}
       {status && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border animate-soft transform transition-all duration-300 ${status.type === 'success' ? 'bg-white border-emerald-100 text-emerald-800' : 'bg-white border-red-100 text-red-800'}`}>
+        <div className={`fixed bottom-6 left-6 right-6 md:left-auto md:w-auto z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border animate-soft transform transition-all duration-300 ${status.type === 'success' ? 'bg-white border-emerald-100 text-emerald-800' : 'bg-white border-red-100 text-red-800'}`}>
           <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${status.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
             {status.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
           </div>
@@ -608,7 +608,7 @@ export const SchoolSettings = () => {
             type="button"
             onClick={saveSettings}
             disabled={saving}
-            className="ui-button-primary flex items-center gap-2"
+            className="ui-button-primary flex items-center justify-center gap-2 w-full sm:w-auto"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {saving ? t('saving') : t('save_settings')}

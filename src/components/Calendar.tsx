@@ -43,7 +43,7 @@ export const Calendar: React.FC<CalendarProps> = ({ bookings }) => {
 
   // Padding for the first week
   for (let i = 0; i < startDay; i++) {
-    days.push(<div key={`empty-${i}`} className="h-10 w-10 md:h-12 md:w-12" />);
+    days.push(<div key={`empty-${i}`} className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12" />);
   }
 
   for (let day = 1; day <= totalDays; day++) {
@@ -58,7 +58,7 @@ export const Calendar: React.FC<CalendarProps> = ({ bookings }) => {
       <button
         key={day}
         onClick={() => handleDateClick(day)}
-        className={`h-10 w-10 md:h-12 md:w-12 flex flex-col items-center justify-center rounded-lg relative transition-all ${
+        className={`h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 flex flex-col items-center justify-center rounded-lg relative transition-all ${
           isSelected ? 'bg-blue-600 shadow-md transform scale-105' : 
           isToday ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100' : 'hover:bg-slate-50'
         }`}

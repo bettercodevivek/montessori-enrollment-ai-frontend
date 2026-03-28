@@ -1,9 +1,13 @@
 import { useAuthStore } from '../store/authStore';
-import { LogOut, Globe } from 'lucide-react';
+import { LogOut, Globe, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-export const TopNavbar = () => {
+interface TopNavbarProps {
+  onMenuClick?: () => void;
+}
+
+export const TopNavbar = ({ onMenuClick }: TopNavbarProps) => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -18,8 +22,15 @@ export const TopNavbar = () => {
   };
 
   return (
-    <div className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 fixed top-0 right-0 left-64 z-20">
-      <div className="flex-1" />
+    <div className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 shrink-0 z-10">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuClick}
+          className="md:hidden p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      </div>
       <div className="flex items-center gap-3">
         <button
           onClick={toggleLanguage}

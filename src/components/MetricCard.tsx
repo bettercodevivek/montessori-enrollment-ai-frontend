@@ -22,7 +22,7 @@ export const MetricCard = ({ label, value, change, maxValue, icon, ticker }: Met
   const Icon = icon ? Icons[icon] : null;
 
   return (
-    <div className={`bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full transition-all hover:border-slate-300 hover:shadow-md group`}>
+    <div className={`bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm flex flex-col justify-between h-full transition-all hover:border-slate-300 hover:shadow-md group`}>
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">{label}</span>
@@ -35,7 +35,7 @@ export const MetricCard = ({ label, value, change, maxValue, icon, ticker }: Met
         
         <div className="flex flex-col gap-1">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-bold text-slate-900 tracking-tight">
+            <span className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
               {typeof value === 'number' ? value.toLocaleString() : value}
             </span>
             {maxValue && (

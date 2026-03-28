@@ -168,13 +168,13 @@ export const SchoolCallLogs = () => {
 
     return (
         <div className="max-w-6xl mx-auto py-6 px-4">
-            <div className="mb-8 flex items-baseline justify-between border-b border-slate-100 pb-6">
+            <div className="mb-8 flex flex-col sm:flex-row sm:items-baseline justify-between border-b border-slate-100 pb-6 gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">{t('call_logs')}</h1>
                     <p className="text-slate-500 text-sm mt-1">{t('dashboard_desc')}</p>
                 </div>
-                <div className="text-right">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Database Sync</p>
+                <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-0">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Database Sync</p>
                     <p className="text-xs font-bold text-emerald-500">Live Active</p>
                 </div>
             </div>
@@ -182,36 +182,36 @@ export const SchoolCallLogs = () => {
             <div className="space-y-4">
                 {logs.map((log) => (
                     <div key={log.id} className={`bg-white border rounded-2xl transition-all ${expandedId === log.id ? 'border-blue-500 shadow-xl' : 'border-slate-200 shadow-sm hover:border-slate-300'}`}>
-                        <div className="px-6 py-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(log.id)}>
-                            <div className="flex items-center gap-5">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${expandedId === log.id ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-400'}`}>
+                        <div className="px-4 sm:px-6 py-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(log.id)}>
+                            <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+                                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all shrink-0 ${expandedId === log.id ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-400'}`}>
                                     <Phone className="w-5 h-5" />
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-base font-bold text-slate-900">{log.participantId.replace('sip_', '')}</span>
-                                    <div className="flex items-center gap-3 mt-0.5">
-                                        <span className="flex items-center gap-1 text-[11px] font-bold text-slate-400 uppercase">
+                                <div className="flex flex-col min-w-0">
+                                    <span className="text-sm sm:text-base font-bold text-slate-900 truncate">{log.participantId.replace('sip_', '')}</span>
+                                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-0.5">
+                                        <span className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase whitespace-nowrap">
                                             <Calendar className="w-3 h-3" />
                                             {new Date(log.createdAt).toLocaleDateString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric' })}
                                         </span>
-                                        <span className="flex items-center gap-1 text-[11px] font-bold text-slate-400 uppercase">
+                                        <span className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase whitespace-nowrap">
                                             <Clock className="w-3 h-3" />
                                             {new Date(log.createdAt).toLocaleTimeString('en-US', { timeZone: 'America/Chicago', hour: '2-digit', minute: '2-digit' })}
                                         </span>
-                                        <span className="text-[11px] font-bold text-blue-600">
+                                        <span className="text-[10px] sm:text-[11px] font-bold text-blue-600 whitespace-nowrap">
                                             {formatDuration(log.duration)}
                                         </span>
                                     </div>
                                 </div>
                             </div>
-                            <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${expandedId === log.id ? 'rotate-180 text-blue-600' : 'text-slate-300'}`} />
+                            <ChevronDown className={`w-5 h-5 transition-transform duration-300 shrink-0 ${expandedId === log.id ? 'rotate-180 text-blue-600' : 'text-slate-300'}`} />
                         </div>
 
                         {expandedId === log.id && (
-                            <div className="p-6 pt-2 bg-slate-50/30 border-t border-slate-50 animate-in fade-in duration-200">
-                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            <div className="p-4 sm:p-6 pt-2 bg-slate-50/30 border-t border-slate-50 animate-in fade-in duration-200">
+                                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                                     {/* Summary & Audio */}
-                                    <div className="lg:col-span-4 space-y-4">
+                                    <div className="xl:col-span-4 space-y-4">
                                         <AudioPlayer src={log.recordingUrl} />
                                         {log.summary && (
                                             <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
@@ -225,7 +225,7 @@ export const SchoolCallLogs = () => {
                                     </div>
 
                                     {/* Complete Transcript */}
-                                    <div className="lg:col-span-8 flex flex-col">
+                                    <div className="xl:col-span-8 flex flex-col">
                                         <div className="flex items-center justify-between mb-3 px-1">
                                             <div className="flex items-center gap-2">
                                                 <MessageSquare className="w-4 h-4 text-blue-500" />
