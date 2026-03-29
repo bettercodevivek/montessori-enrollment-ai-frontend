@@ -16,7 +16,7 @@ export const InquiryForm = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
-  const [formData, setFormData] = useState<{ parentName: string; email: string; phone: string; [key: string]: string }>({
+  const [formData, setFormData] = useState<{ parentName: string; email: string; phone: string;[key: string]: string }>({
     parentName: '',
     email: '',
     phone: '',
@@ -37,7 +37,7 @@ export const InquiryForm = () => {
       .then((data) => {
         setSchoolName(data.schoolName || 'School');
         setQuestions(data.questions || []);
-        const initial = { parentName: '', email: '', phone: '' } as { parentName: string; email: string; phone: string; [key: string]: string };
+        const initial = { parentName: '', email: '', phone: '' } as { parentName: string; email: string; phone: string;[key: string]: string };
         data.questions?.forEach((q: FormQuestion) => {
           initial[`q_${q.id}`] = '';
         });
@@ -201,7 +201,7 @@ export const InquiryForm = () => {
           </form>
         </div>
         <p className="text-center text-slate-400 text-xs mt-6">
-          Powered by Enrollment AI
+          Powered by Childcare Enrollment Ai
         </p>
       </div>
     </div>
