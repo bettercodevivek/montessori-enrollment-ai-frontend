@@ -45,6 +45,8 @@ const MiniPlayer = ({ src }: { src: string }) => {
   const [err, setErr] = useState(false);
   const [loading, setLoading] = useState(true);
   const ref = useRef<HTMLAudioElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const scrubbingRef = useRef(false);
 
   const toggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -59,6 +61,11 @@ const MiniPlayer = ({ src }: { src: string }) => {
   };
 
   const pct = dur > 0 ? (time / dur) * 100 : 0;
+  const seekToClientX = (clientX: number) => {
+    if (!ref.current || !barRef.current || err) return;
+    const r = barRef.current.getBoundingClientRect();
+    ref.current.currentTime = ((clientX - r.left) / (r.width || 1)) * dur;
+  };
 
   return (
     <div className={`flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 ${err ? 'opacity-60' : ''}`}>
@@ -83,11 +90,34 @@ const MiniPlayer = ({ src }: { src: string }) => {
         ) : (
           <>
             <div
-              className="h-1 bg-slate-200 rounded-full cursor-pointer relative"
-              onClick={(e) => {
-                if (!ref.current) return;
-                const r = e.currentTarget.getBoundingClientRect();
-                ref.current.currentTime = ((e.clientX - r.left) / r.width) * dur;
+              ref={barRef}
+              className="h-1 bg-slate-200 rounded-full cursor-pointer relative touch-none"
+              role="slider"
+              aria-label="Seek audio"
+              aria-valuemin={0}
+              aria-valuemax={Math.max(0, Math.floor(dur))}
+              aria-valuenow={Math.max(0, Math.floor(time))}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                if (err || loading) return;
+                scrubbingRef.current = true;
+                e.currentTarget.setPointerCapture(e.pointerId);
+                seekToClientX(e.clientX);
+              }}
+              onPointerMove={(e) => {
+                if (!scrubbingRef.current) return;
+                e.stopPropagation();
+                seekToClientX(e.clientX);
+              }}
+              onPointerUp={(e) => {
+                if (!scrubbingRef.current) return;
+                e.stopPropagation();
+                scrubbingRef.current = false;
+                try {
+                  e.currentTarget.releasePointerCapture(e.pointerId);
+                } catch {
+                  // ignore
+                }
               }}
             >
               <div className="absolute inset-y-0 left-0 bg-blue-500 rounded-full" style={{ width: `${pct}%` }} />

@@ -18,6 +18,7 @@ const AudioPlayer = ({ src }: { src: string }) => {
   const [loading, setLoading] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
+  const isScrubbingRef = useRef(false);
 
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -26,14 +27,38 @@ const AudioPlayer = ({ src }: { src: string }) => {
     setIsPlaying(!isPlaying);
   };
 
-  const handleSeek = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const seekToClientX = (clientX: number) => {
     if (!audioRef.current || !progressBarRef.current || error) return;
     const rect = progressBarRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const width = rect.width;
+    const x = clientX - rect.left;
+    const width = rect.width || 1;
     const percentage = Math.max(0, Math.min(1, x / width));
-    audioRef.current.currentTime = percentage * audioRef.current.duration;
+    audioRef.current.currentTime = percentage * (audioRef.current.duration || 0);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    if (error || loading) return;
+    isScrubbingRef.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    seekToClientX(e.clientX);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isScrubbingRef.current) return;
+    e.stopPropagation();
+    seekToClientX(e.clientX);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isScrubbingRef.current) return;
+    e.stopPropagation();
+    isScrubbingRef.current = false;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
   };
 
   const formatTime = (time: number) => {
@@ -87,7 +112,18 @@ const AudioPlayer = ({ src }: { src: string }) => {
             </div>
           ) : (
             <>
-              <div ref={progressBarRef} onClick={handleSeek} className="h-1.5 bg-slate-200 rounded-full cursor-pointer relative">
+              <div
+                ref={progressBarRef}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                className="h-1.5 bg-slate-200 rounded-full cursor-pointer relative touch-none"
+                role="slider"
+                aria-label="Seek audio"
+                aria-valuemin={0}
+                aria-valuemax={Math.max(0, Math.floor(duration))}
+                aria-valuenow={Math.max(0, Math.floor(currentTime))}
+              >
                 <div className="absolute inset-y-0 left-0 bg-blue-500 rounded-full" style={{ width: `${progressPercentage}%` }} />
               </div>
               <div className="flex justify-between mt-1">
