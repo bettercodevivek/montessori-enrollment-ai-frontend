@@ -402,24 +402,24 @@ export const SchoolSettings = () => {
 
               <div className="mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">school opening hours</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Booking Hours Start Time</label>
                   <input
                     type="time"
                     value={settings.businessHoursStart || '09:00'}
                     onChange={e => update('businessHoursStart', e.target.value)}
                     className="ui-input w-full"
                   />
-                  <p className="text-xs text-slate-400 mt-1">When the school opens for tours.</p>
+                  <p className="text-xs text-slate-400 mt-1">Earliest time tours can be booked.</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">school closing hours</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Booking Hours Closing Time</label>
                   <input
                     type="time"
                     value={settings.businessHoursEnd || '17:00'}
                     onChange={e => update('businessHoursEnd', e.target.value)}
                     className="ui-input w-full"
                   />
-                  <p className="text-xs text-slate-400 mt-1">When the school closes for tours.</p>
+                  <p className="text-xs text-slate-400 mt-1">Latest time tours can be booked.</p>
                 </div>
               </div>
             </div>
