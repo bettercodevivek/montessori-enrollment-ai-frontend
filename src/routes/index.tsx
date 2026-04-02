@@ -21,6 +21,7 @@ import { AdminAnalytics } from '../pages/admin/Analytics';
 import { AdminIntegrations } from '../pages/admin/Integrations';
 import { AdminReferrals } from '../pages/admin/Referrals';
 import { AdminPhoneNumbers } from '../pages/admin/AdminPhoneNumbers';
+import AiNumberRequests from '../pages/admin/AiNumberRequests';
 import { Landing } from '../pages/Landing';
 import { InquiryForm } from '../pages/InquiryForm';
 import { ReferralSignup } from '../pages/ReferralSignup';
@@ -178,6 +179,15 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         children: [{ index: true, element: <AdminPhoneNumbers /> }],
+      },
+      {
+        path: 'ai-number-requests',
+        element: (
+          <ProtectedRoute requiredRole="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        ),
+        children: [{ index: true, element: <AiNumberRequests /> }],
       },
       {
         path: 'referrals',

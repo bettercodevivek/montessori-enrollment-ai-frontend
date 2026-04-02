@@ -81,6 +81,8 @@ export const SchoolSettings = () => {
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('agent');
   const [detectingTimezone, setDetectingTimezone] = useState(false);
+  const [requestingAiNumber, setRequestingAiNumber] = useState(false);
+  const [hasRequestedAiNumber, setHasRequestedAiNumber] = useState(false);
 
   // ── Load settings on mount ──────────────────────────────────────────────
   useEffect(() => {
@@ -176,6 +178,31 @@ export const SchoolSettings = () => {
       setDetectingTimezone(false);
     }
   }, [settings?.address, update]);
+
+  // ── Request AI number from admin ─────────────────────────────────────────
+  const handleRequestAiNumber = useCallback(async () => {
+    if (!settings) return;
+    setRequestingAiNumber(true);
+    setStatus(null);
+
+    try {
+      await api.post('/school/request-ai-number', {
+        schoolName: settings.name,
+        schoolId: settings.id
+      });
+      
+      setHasRequestedAiNumber(true);
+      setStatus({ type: 'success', message: 'AI number request sent successfully! An admin will contact you soon.' });
+      setTimeout(() => setStatus(null), 5000);
+    } catch (err: any) {
+      console.error('[Settings] AI number request failed:', err);
+      const msg = err?.response?.data?.error || 'Failed to request AI number. Please try again.';
+      setStatus({ type: 'error', message: msg });
+      setTimeout(() => setStatus(null), 5000);
+    } finally {
+      setRequestingAiNumber(false);
+    }
+  }, [settings]);
 
   // ── Update a Q&A pair ────────────────────────────────────────────────────
   const updateQA = useCallback((index: number, field: 'question' | 'answer', value: string) => {
@@ -367,14 +394,47 @@ export const SchoolSettings = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t('ai_phone_number')}</label>
-                  <input
-                    type="text"
-                    value={settings.aiNumber}
-                    readOnly
-                    className="ui-input w-full bg-slate-50 cursor-not-allowed border-dashed"
-                    placeholder="Auto-assigned number"
-                  />
-                  <p className="text-xs text-slate-400 mt-1">The dedicated AI-managed number callers dial.</p>
+                  {settings.aiNumber ? (
+                    <input
+                      type="text"
+                      value={settings.aiNumber}
+                      readOnly
+                      className="ui-input w-full bg-green-50 border-green-200 cursor-not-allowed"
+                      placeholder="Assigned AI number"
+                    />
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={hasRequestedAiNumber ? "Request submitted" : "No AI number assigned"}
+                        readOnly
+                        className={`ui-input w-full cursor-not-allowed ${
+                          hasRequestedAiNumber 
+                            ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                            : 'bg-amber-50 border-amber-200 text-amber-700'
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRequestAiNumber}
+                        disabled={requestingAiNumber || hasRequestedAiNumber}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
+                          hasRequestedAiNumber
+                            ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                            : 'bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white'
+                        }`}
+                      >
+                        {requestingAiNumber ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                        {hasRequestedAiNumber ? 'Request Sent' : 'Get AI Number'}
+                      </button>
+                    </div>
+                  )}
+                  <p className="text-xs text-slate-400 mt-1">
+                    {settings.aiNumber 
+                      ? "The dedicated AI-managed number callers dial."
+                      : "Request an AI number from our admin team to get started."
+                    }
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Front Desk / Routing Number</label>
