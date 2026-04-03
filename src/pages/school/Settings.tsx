@@ -214,7 +214,26 @@ export const SchoolSettings = () => {
   }, []);
 
   const addQA = useCallback(() => {
-    setSettings(prev => prev ? { ...prev, qaPairs: [...prev.qaPairs, { question: '', answer: '' }] } : prev);
+    setSettings(prev => {
+      if (!prev) return prev;
+      const newPairs = [...prev.qaPairs, { question: '', answer: '' }];
+      
+      // Scroll to the newly added question after state update
+      setTimeout(() => {
+        const newIndex = newPairs.length - 1;
+        const element = document.getElementById(`qa-item-${newIndex}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Focus on the question input field
+          const questionInput = element.querySelector('input[type="text"]') as HTMLInputElement;
+          if (questionInput) {
+            questionInput.focus();
+          }
+        }
+      }, 100);
+      
+      return { ...prev, qaPairs: newPairs };
+    });
   }, []);
 
   const removeQA = useCallback((index: number) => {
@@ -472,7 +491,7 @@ export const SchoolSettings = () => {
                   <p className="text-xs text-slate-400 mt-1">Earliest time tours can be booked.</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Booking Hours Closing Time</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Booking Hours End Time</label>
                   <input
                     type="time"
                     value={settings.businessHoursEnd || '17:00'}
@@ -541,9 +560,18 @@ export const SchoolSettings = () => {
                 Edit these answers to match your school's specific details. These are stored per-school.
               </p>
 
+              <button
+                type="button"
+                onClick={addQA}
+                className="flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl transition-all border border-blue-100 uppercase tracking-widest shadow-sm mb-4"
+              >
+                <Plus className="w-4 h-4" />
+                Add New Question
+              </button>
+
               <div className="space-y-3 mb-4">
                 {settings.qaPairs.map((pair, index) => (
-                  <div key={index} className="flex gap-4 items-start bg-slate-50/50 p-5 rounded-xl border border-slate-100 group transition-all hover:bg-white hover:shadow-md">
+                  <div key={index} id={`qa-item-${index}`} className="flex gap-4 items-start bg-slate-50/50 p-5 rounded-xl border border-slate-100 group transition-all hover:bg-white hover:shadow-md">
                     <div className="flex-shrink-0 w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xs font-black mt-1 border border-blue-100 shadow-sm">
                       {index + 1}
                     </div>

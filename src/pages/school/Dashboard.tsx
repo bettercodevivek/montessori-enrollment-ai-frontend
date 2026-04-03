@@ -331,7 +331,7 @@ export const SchoolDashboard = () => {
       {/* Row 2: Main Content Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12 items-start">
         {/* Left: Analytics Chart (8 Columns) */}
-        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-8 shadow-sm h-full">
+        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-8 shadow-sm h-full hidden lg:block">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2.5">
               <TrendingUp className="w-5 h-5 text-blue-500" />

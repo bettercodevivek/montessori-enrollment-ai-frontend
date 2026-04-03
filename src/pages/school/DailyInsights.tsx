@@ -3,7 +3,7 @@ import {
   Loader2, AlertTriangle, Calendar, PhoneCall, Clock, User,
   MessageSquare, Star, ChevronDown, ChevronUp, Play, Pause,
   Headphones, Download, Baby, Lightbulb, CheckCircle2,
-  Phone
+  Phone, Check, X
 } from 'lucide-react';
 import api from '../../api/axios';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
@@ -204,6 +204,9 @@ export const DailyInsights = () => {
   const [showWordCloud, setShowWordCloud] = useState(false);
   const [wordCloudLoading, setWordCloudLoading] = useState(false);
   const [, setNow] = useState(Date.now());
+  const [feedbackPopup, setFeedbackPopup] = useState<{ id: string; isOpen: boolean }>({ id: '', isOpen: false });
+  const [feedbackText, setFeedbackText] = useState('');
+  const [markingAction, setMarkingAction] = useState(false);
 
   const handleShowWordCloud = async () => {
     setWordCloudLoading(true);
@@ -238,8 +241,12 @@ export const DailyInsights = () => {
   useEffect(() => {
     const load = async () => {
       try {
+        // Load all action-needed items (not just today's)
+        const actionRes = await api.get('/school/action-needed');
+        setNeedsAttention(actionRes.data.actionNeeded || []);
+        
+        // Load today's tours and other data
         const res = await api.get('/school/daily-insights');
-        setNeedsAttention(res.data.needsAttention || []);
         setTodaysTours(res.data.todaysTours || []);
         setWordCloud(res.data.wordCloud || []);
         setTodayCalls(res.data.todayCalls || []);
@@ -253,6 +260,35 @@ export const DailyInsights = () => {
     const interval = setInterval(load, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleMarkActionTaken = async (callId: string) => {
+    setMarkingAction(true);
+    try {
+      await api.post(`/school/action-needed/${callId}/mark-action-taken`, {
+        feedback: feedbackText
+      });
+      
+      // Remove the item from the list
+      setNeedsAttention(prev => prev.filter(call => call.id !== callId));
+      
+      // Close popup and reset feedback
+      setFeedbackPopup({ id: '', isOpen: false });
+      setFeedbackText('');
+      
+      // Show success message (you could add a toast notification here)
+      console.log('Action marked as taken successfully');
+    } catch (err) {
+      console.error('Failed to mark action as taken:', err);
+      // Show error message
+    } finally {
+      setMarkingAction(false);
+    }
+  };
+
+  const openFeedbackPopup = (callId: string) => {
+    setFeedbackPopup({ id: callId, isOpen: true });
+    setFeedbackText('');
+  };
 
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
@@ -505,8 +541,8 @@ export const DailyInsights = () => {
         {needsAttention.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-xl p-10 text-center shadow-sm">
             <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
-            <p className="text-slate-700 font-semibold">All clear today!</p>
-            <p className="text-slate-400 text-sm mt-1">No unbooked inquiries from today.</p>
+            <p className="text-slate-700 font-semibold">All clear!</p>
+            <p className="text-slate-400 text-sm mt-1">No action-needed inquiries from the last 30 days.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -601,6 +637,12 @@ export const DailyInsights = () => {
                       >
                         <Phone className="w-3 h-3" /> Call Back
                       </a>
+                      <button
+                        onClick={() => openFeedbackPopup(call.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors"
+                      >
+                        <Check className="w-3 h-3" /> Action Taken
+                      </button>
                     </div>
                   </div>
                 )}
@@ -699,6 +741,37 @@ export const DailyInsights = () => {
                         <div className="mt-1 text-sm font-semibold text-slate-800 line-clamp-3">
                           {tour.reason || 'Enrollment inquiry'}
                         </div>
+                        
+                        {/* Display important insights/questions asked */}
+                        {(tour.questionsAsked && tour.questionsAsked.length > 0) && (
+                          <div className="mt-3 space-y-2">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                              Important Insights ({tour.questionsAsked.length})
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {tour.questionsAsked.map((question, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-lg text-[10px] font-medium"
+                                >
+                                  {index + 1}. {question}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Display highlights if available */}
+                        {tour.highlights && tour.highlights.trim() && (
+                          <div className="mt-3">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                              Additional Notes
+                            </div>
+                            <div className="mt-1 text-xs text-slate-600 leading-relaxed bg-slate-50 rounded-lg p-2 border border-slate-100">
+                              {tour.highlights}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -708,6 +781,60 @@ export const DailyInsights = () => {
           </div>
         )}
       </div>
+
+      {/* Feedback Popup Modal */}
+      {feedbackPopup.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900">Mark Action as Taken</h3>
+              <button
+                onClick={() => setFeedbackPopup({ id: '', isOpen: false })}
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-slate-600 mb-4">
+              Please provide any feedback about the action taken (optional):
+            </p>
+            
+            <textarea
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              placeholder="E.g., Called parent, left voicemail, scheduled tour, etc."
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            
+            <div className="flex items-center gap-3 mt-6">
+              <button
+                onClick={() => setFeedbackPopup({ id: '', isOpen: false })}
+                className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleMarkActionTaken(feedbackPopup.id)}
+                disabled={markingAction}
+                className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {markingAction ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Confirm Action Taken
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
