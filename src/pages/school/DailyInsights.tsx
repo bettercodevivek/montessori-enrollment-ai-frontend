@@ -3,7 +3,7 @@ import {
   Loader2, AlertTriangle, Calendar, PhoneCall, Clock, User,
   MessageSquare, Star, ChevronDown, ChevronUp, Play, Pause,
   Headphones, Download, Baby, Lightbulb, CheckCircle2,
-  Phone, Check, X
+  Check, X
 } from 'lucide-react';
 import api from '../../api/axios';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
@@ -19,6 +19,9 @@ interface NeedsAttentionCall {
   recordingUrl: string | null;
   duration: number;
   questionsAsked?: string[];
+  actionTakenFeedback?: string;
+  actionTakenAt?: string;
+  feedbackHistory?: Array<{ feedback: string; timestamp: string }>;
 }
 
 interface TodayTour {
@@ -204,9 +207,9 @@ export const DailyInsights = () => {
   const [showWordCloud, setShowWordCloud] = useState(false);
   const [wordCloudLoading, setWordCloudLoading] = useState(false);
   const [, setNow] = useState(Date.now());
-  const [feedbackPopup, setFeedbackPopup] = useState<{ id: string; isOpen: boolean }>({ id: '', isOpen: false });
-  const [feedbackText, setFeedbackText] = useState('');
-  const [markingAction, setMarkingAction] = useState(false);
+  const [feedbackInputs, setFeedbackInputs] = useState<Record<string, string>>({});
+  const [markingAction, setMarkingAction] = useState<Record<string, boolean>>({});
+  const [closeConfirm, setCloseConfirm] = useState<string | null>(null);
 
   const handleShowWordCloud = async () => {
     setWordCloudLoading(true);
@@ -262,32 +265,59 @@ export const DailyInsights = () => {
   }, []);
 
   const handleMarkActionTaken = async (callId: string) => {
-    setMarkingAction(true);
+    setMarkingAction(prev => ({ ...prev, [callId]: true }));
     try {
+      const feedback = feedbackInputs[callId] || '';
       await api.post(`/school/action-needed/${callId}/mark-action-taken`, {
-        feedback: feedbackText
+        feedback
       });
       
-      // Remove the item from the list
-      setNeedsAttention(prev => prev.filter(call => call.id !== callId));
+      // Update the local state to append the feedback to history
+      setNeedsAttention(prev => prev.map(call => 
+        call.id === callId 
+          ? { 
+              ...call, 
+              actionTakenFeedback: feedback,
+              actionTakenAt: new Date().toISOString(),
+              feedbackHistory: [
+                ...(call.feedbackHistory || []),
+                { feedback, timestamp: new Date().toISOString() }
+              ]
+            }
+          : call
+      ));
       
-      // Close popup and reset feedback
-      setFeedbackPopup({ id: '', isOpen: false });
-      setFeedbackText('');
+      // Clear the feedback input after submission
+      setFeedbackInputs(prev => ({ ...prev, [callId]: '' }));
       
-      // Show success message (you could add a toast notification here)
       console.log('Action marked as taken successfully');
     } catch (err) {
       console.error('Failed to mark action as taken:', err);
-      // Show error message
     } finally {
-      setMarkingAction(false);
+      setMarkingAction(prev => ({ ...prev, [callId]: false }));
     }
   };
 
-  const openFeedbackPopup = (callId: string) => {
-    setFeedbackPopup({ id: callId, isOpen: true });
-    setFeedbackText('');
+  const handleCloseCard = (callId: string) => {
+    setCloseConfirm(callId);
+  };
+
+  const confirmCloseCard = async () => {
+    if (closeConfirm) {
+      try {
+        await api.delete(`/school/action-needed/${closeConfirm}`);
+      } catch (err) {
+        console.error('Failed to delete from server:', err);
+        // Silently ignore server errors
+      }
+      // Always remove from local state
+      setNeedsAttention(prev => prev.filter(call => call.id !== closeConfirm));
+      setCloseConfirm(null);
+    }
+  };
+
+  const cancelCloseCard = () => {
+    setCloseConfirm(null);
   };
 
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -630,19 +660,81 @@ export const DailyInsights = () => {
                         <p className="text-sm text-slate-700 leading-relaxed italic">"{call.summary}"</p>
                       </div>
                     )}
+                    {call.feedbackHistory && call.feedbackHistory.length > 0 && (
+                      <div className="bg-emerald-50 rounded-lg border border-emerald-100 p-4">
+                        <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                          <Check className="w-3 h-3" /> Action History ({call.feedbackHistory.length})
+                        </p>
+                        <div className="space-y-3">
+                          {call.feedbackHistory
+                            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                            .map((entry, index) => (
+                              <div key={index} className="bg-white rounded-lg border border-emerald-200 p-3">
+                                <p className="text-sm text-emerald-800 leading-relaxed">{entry.feedback}</p>
+                                <p className="text-[10px] text-emerald-600 mt-1">
+                                  {new Date(entry.timestamp).toLocaleString()}
+                                </p>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                    {closeConfirm === call.id && (
+                      <div className="bg-slate-100 rounded-lg border border-slate-200 p-4">
+                        <h4 className="text-sm font-bold text-slate-900 mb-2">Close this card?</h4>
+                        <p className="text-xs text-slate-600 mb-3">Are you sure you want to remove this card from the list?</p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={cancelCloseCard}
+                            className="flex-1 px-3 py-1.5 border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors"
+                            type="button"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={confirmCloseCard}
+                            className="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 transition-colors cursor-pointer"
+                            type="button"
+                          >
+                            Yes, Close
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
-                      <a
-                        href={`tel:${call.callerPhone}`}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors"
-                      >
-                        <Phone className="w-3 h-3" /> Call Back
-                      </a>
                       <button
-                        onClick={() => openFeedbackPopup(call.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors"
+                        onClick={() => handleCloseCard(call.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-600 text-white rounded-lg text-xs font-semibold hover:bg-slate-700 transition-colors"
                       >
-                        <Check className="w-3 h-3" /> Action Taken
+                        <X className="w-3 h-3" /> Close
                       </button>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-red-100">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Add New Feedback</p>
+                      <div className="flex gap-2">
+                        <textarea
+                          value={feedbackInputs[call.id] || ''}
+                          onChange={(e) => setFeedbackInputs(prev => ({ ...prev, [call.id]: e.target.value }))}
+                          placeholder="Write feedback about action taken..."
+                          className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs resize-none h-20 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        />
+                        <button
+                          onClick={() => handleMarkActionTaken(call.id)}
+                          disabled={markingAction[call.id]}
+                          className="px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                        >
+                          {markingAction[call.id] ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-3 h-3" />
+                              Submit
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -782,59 +874,6 @@ export const DailyInsights = () => {
         )}
       </div>
 
-      {/* Feedback Popup Modal */}
-      {feedbackPopup.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-slate-900">Mark Action as Taken</h3>
-              <button
-                onClick={() => setFeedbackPopup({ id: '', isOpen: false })}
-                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-slate-400" />
-              </button>
-            </div>
-            
-            <p className="text-sm text-slate-600 mb-4">
-              Please provide any feedback about the action taken (optional):
-            </p>
-            
-            <textarea
-              value={feedbackText}
-              onChange={(e) => setFeedbackText(e.target.value)}
-              placeholder="E.g., Called parent, left voicemail, scheduled tour, etc."
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            
-            <div className="flex items-center gap-3 mt-6">
-              <button
-                onClick={() => setFeedbackPopup({ id: '', isOpen: false })}
-                className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleMarkActionTaken(feedbackPopup.id)}
-                disabled={markingAction}
-                className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {markingAction ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Confirm Action Taken
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
