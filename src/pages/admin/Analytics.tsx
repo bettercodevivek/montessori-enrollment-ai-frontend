@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/axios';
-import { Loader2, BarChart3, Phone, Users } from 'lucide-react';
+import { Loader2, Phone, Users, TrendingUp } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface AnalyticsData {
   callsByMonth: Array<{ month: string; total: number; inquiries: number; general: number; routed: number }>;
@@ -31,7 +32,6 @@ export const AdminAnalytics = () => {
   );
 
   const maxCalls = Math.max(...data.callsBySchool.map(s => s.calls), 1);
-  const maxMonthlyCalls = Math.max(...data.callsByMonth.map(m => m.total), 1);
 
   return (
     <div>
@@ -44,38 +44,62 @@ export const AdminAnalytics = () => {
         {/* Calls by Month */}
         <div className="bg-white border border-slate-200 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-6">
-            <BarChart3 className="w-4 h-4 text-slate-400" />
+            <TrendingUp className="w-4 h-4 text-slate-400" />
             <h2 className="text-sm font-semibold text-slate-900">Calls by Month</h2>
           </div>
-          <div className="space-y-5">
-            {data.callsByMonth.map((m) => (
-              <div key={m.month}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-medium text-slate-700">{m.month}</span>
-                  <span className="text-xs text-slate-400">{m.total} calls</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div className="flex h-full">
-                    <div className="bg-blue-600" style={{ width: `${(m.inquiries / maxMonthlyCalls) * 100}%` }} />
-                    <div className="bg-slate-300" style={{ width: `${(m.general / maxMonthlyCalls) * 100}%` }} />
-                  </div>
-                </div>
-                <div className="flex gap-4 mt-1.5">
-                  <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
-                    <span className="text-xs text-slate-400">Inquiry: {m.inquiries}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 bg-slate-300 rounded-full" />
-                    <span className="text-xs text-slate-400">General: {m.general}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {data.callsByMonth.length === 0 && (
-              <p className="text-slate-400 text-sm text-center py-8">No monthly data yet.</p>
-            )}
-          </div>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={data.callsByMonth.map(m => ({
+              month: m.month,
+              total: m.total,
+              inquiries: m.inquiries,
+              general: m.general
+            }))}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis 
+                dataKey="month" 
+                tick={{ fontSize: 12 }}
+                stroke="#64748b"
+              />
+              <YAxis 
+                tick={{ fontSize: 12 }}
+                stroke="#64748b"
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px'
+                }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="total" 
+                stroke="#3b82f6" 
+                strokeWidth={2}
+                dot={{ fill: '#3b82f6', r: 4 }}
+                activeDot={{ r: 6 }}
+                name="Total Calls"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="inquiries" 
+                stroke="#10b981" 
+                strokeWidth={2}
+                dot={{ fill: '#10b981', r: 4 }}
+                activeDot={{ r: 6 }}
+                name="Inquiries"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="general" 
+                stroke="#6b7280" 
+                strokeWidth={2}
+                dot={{ fill: '#6b7280', r: 4 }}
+                activeDot={{ r: 6 }}
+                name="General Calls"
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
 
         {/* Calls per School */}

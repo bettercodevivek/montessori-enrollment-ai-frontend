@@ -17,7 +17,6 @@ import { SchoolReferrals } from '../pages/school/Referrals';
 import { SchoolTestIntegration } from '../pages/school/TestIntegration';
 import { AdminDashboard } from '../pages/admin/Dashboard';
 import { AdminSchools } from '../pages/admin/Schools';
-import { AdminAnalytics } from '../pages/admin/Analytics';
 import { AdminIntegrations } from '../pages/admin/Integrations';
 import { AdminReferrals } from '../pages/admin/Referrals';
 import { AdminPhoneNumbers } from '../pages/admin/AdminPhoneNumbers';
@@ -153,16 +152,7 @@ export const router = createBrowserRouter([
         ),
         children: [{ index: true, element: <AdminSchools /> }],
       },
-      {
-        path: 'analytics',
-        element: (
-          <ProtectedRoute requiredRole="admin">
-            <AdminLayout />
-          </ProtectedRoute>
-        ),
-        children: [{ index: true, element: <AdminAnalytics /> }],
-      },
-      {
+            {
         path: 'integrations',
         element: (
           <ProtectedRoute requiredRole="admin">

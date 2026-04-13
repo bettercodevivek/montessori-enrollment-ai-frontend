@@ -26,6 +26,10 @@ interface DashboardData {
     status: string;
     timestamp: string;
   }>;
+  // Analytics data
+  callsByMonth: Array<{ month: string; total: number; inquiries: number; tourBookings: number }>;
+  callsBySchool: Array<{ name: string; calls: number; tourBookings: number }>;
+  topSchools: Array<{ name: string; status: string; total_calls: number; tour_bookings: number; followups_sent: number }>;
 }
 
 export const AdminDashboard = () => {
@@ -34,8 +38,16 @@ export const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/admin/dashboard')
-      .then(res => setData(res.data))
+    Promise.all([
+      api.get('/admin/dashboard'),
+      api.get('/admin/analytics')
+    ])
+      .then(([dashboardRes, analyticsRes]) => {
+        setData({
+          ...dashboardRes.data,
+          ...analyticsRes.data
+        });
+      })
       .catch(err => console.error('Failed to load dashboard:', err))
       .finally(() => setLoading(false));
   }, []);
@@ -63,7 +75,7 @@ export const AdminDashboard = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Call Minutes Line Chart */}
         <div className="bg-white border border-slate-200 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
@@ -139,6 +151,132 @@ export const AdminDashboard = () => {
               <div className="text-center py-8 text-slate-400 text-sm">
                 No call data available yet
               </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Analytics Sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Calls by Month */}
+        <div className="bg-white border border-slate-200 rounded-xl p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp className="w-4 h-4 text-slate-400" />
+            <h2 className="text-sm font-semibold text-slate-900">Calls by Month</h2>
+          </div>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={data.callsByMonth?.map(m => ({
+              month: m.month,
+              total: m.total,
+              inquiries: m.inquiries,
+              tourBookings: m.tourBookings
+            })) || []}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis 
+                dataKey="month" 
+                tick={{ fontSize: 12 }}
+                stroke="#64748b"
+              />
+              <YAxis 
+                tick={{ fontSize: 12 }}
+                stroke="#64748b"
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px'
+                }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="total" 
+                stroke="#3b82f6" 
+                strokeWidth={2}
+                dot={{ fill: '#3b82f6', r: 4 }}
+                activeDot={{ r: 6 }}
+                name="Total Calls"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="inquiries" 
+                stroke="#10b981" 
+                strokeWidth={2}
+                dot={{ fill: '#10b981', r: 4 }}
+                activeDot={{ r: 6 }}
+                name="Inquiries"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="tourBookings" 
+                stroke="#f59e0b" 
+                strokeWidth={2}
+                dot={{ fill: '#f59e0b', r: 4 }}
+                activeDot={{ r: 6 }}
+                name="Tour Bookings"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Calls per School */}
+        <div className="bg-white border border-slate-200 rounded-xl p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <School className="w-4 h-4 text-slate-400" />
+            <h2 className="text-sm font-semibold text-slate-900">Calls by School</h2>
+          </div>
+          <div className="space-y-5 max-h-[300px] overflow-y-auto">
+            {data.callsBySchool?.map((s) => (
+              <div key={s.name}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-medium text-slate-900 truncate max-w-[180px]">{s.name}</span>
+                  <span className="text-xs text-slate-400">{s.calls} calls</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2">
+                  <div className="bg-slate-700 h-full rounded-full transition-all" style={{ width: `${(s.calls / Math.max(...data.callsBySchool.map(sc => sc.calls), 1)) * 100}%` }} />
+                </div>
+                <div className="flex gap-4 mt-1.5">
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
+                    <span className="text-xs text-slate-400">Inquiries: {s.tourBookings}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {data.callsBySchool?.length === 0 && (
+              <p className="text-slate-400 text-sm text-center py-8">No school data yet.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Top Schools Section */}
+      <div className="grid grid-cols-1 gap-6">
+        <div className="bg-white border border-slate-200 rounded-xl p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <School className="w-4 h-4 text-slate-400" />
+            <h2 className="text-sm font-semibold text-slate-900">Top Performing Schools</h2>
+          </div>
+          <div className="space-y-3 max-h-[300px] overflow-y-auto">
+            {data.topSchools?.map((school, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <span className="text-xs font-bold text-blue-600">#{i + 1}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">{school.name}</p>
+                    <p className="text-xs text-slate-400">{school.total_calls} calls · {school.tour_bookings} tours</p>
+                  </div>
+                </div>
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${school.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                  {school.status}
+                </span>
+              </div>
+            ))}
+            {data.topSchools?.length === 0 && (
+              <p className="text-slate-400 text-sm text-center py-8">No school data yet.</p>
             )}
           </div>
         </div>
