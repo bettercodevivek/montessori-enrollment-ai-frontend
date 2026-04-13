@@ -14,6 +14,8 @@ const resources = {
             referrals: 'Referrals',
             daily_insights: 'Daily Insights',
             call_logs: 'Call Logs',
+            billing: 'Billing',
+            financials: 'Financials',
             schools: 'Schools',
             analytics: 'Analytics',
             logout: 'Logout',

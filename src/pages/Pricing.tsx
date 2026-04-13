@@ -40,7 +40,7 @@ const Pricing = () => {
     },
     {
       tier: 'Growth',
-      tagline: 'Capture and schedule',
+      tagline: 'GROWTH: Capture and schedule',
       price: 245,
       originalSetup: 399,
       bestFor: 'Best for schools ready to convert more inquiries into confirmed tours without adding staff hours or manual back-and-forth.',
@@ -98,7 +98,7 @@ const Pricing = () => {
     },
     {
       q: 'How many calls can Nora handle is there a limit?',
-      a: 'Each plan includes a monthly minute allowance 250 minutes on Starter, 500 on Growth, and 750 on Pro. Minutes are billed by actual usage, so a 3-minute call uses 3 minutes and a 6-minute call uses 6. If your school goes over the included minutes, additional usage is billed at $1.50 per 5-minute block. Unlike a staff member, Nora can handle multiple simultaneous calls with no hold times and no voicemail.'
+      a: 'Each plan includes a monthly minute allowance 250 minutes on Starter, 500 on Growth, and 750 on Pro. Minutes are billed by actual usage, so a 3-minute call uses 3 minutes and a 6-minute call uses 6. Unused included minutes roll over to the next month. If your school goes over your balance before the next renewal, you can purchase a top-up or additional usage is billed at $1.50 per 5-minute block. Unlike a staff member, Nora can handle multiple simultaneous calls with no hold times and no voicemail.'
     },
     {
       q: 'Do you offer pricing for multiple locations?',
@@ -366,7 +366,7 @@ const Pricing = () => {
                   </div>
                   
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
-                    Additional minutes billed at $1.50 per 5-minute block. Minutes never expire within the month.
+                    Additional minutes billed at $1.50 per 5-minute block. Included minutes roll over month to month.
                   </div>
                 </div>
 
@@ -391,7 +391,7 @@ const Pricing = () => {
         <div className="max-w-6xl mx-auto px-6 py-16">
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8">
             <h2 className="text-2xl font-serif text-slate-900 mb-2">What's included at a glance</h2>
-            <p className="text-slate-600 mb-8">Minutes are billed by the minute a 3-minute call uses 3 minutes, a 6-minute call uses 6. Unused minutes do not roll over.</p>
+            <p className="text-slate-600 mb-8">Minutes are billed by the minute: a 3-minute call uses 3 minutes, a 6-minute call uses 6. Unused minutes roll over to the next billing cycle.</p>
             
             <div className="overflow-x-auto">
               <table className="w-full">

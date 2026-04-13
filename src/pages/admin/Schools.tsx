@@ -14,6 +14,9 @@ interface SchoolData {
   status: 'active' | 'inactive';
   calls: number;
   tours: number;
+  foundingPartner?: boolean;
+  subscriptionStatus?: string;
+  minuteBalance?: number | null;
 }
 
 const emptyCreateForm = { name: '', email: '', password: '', address: '', referrerSchoolId: '', elevenlabsAgentId: '', aiNumber: '' };
@@ -30,7 +33,15 @@ export const AdminSchools = () => {
 
   // Edit modal
   const [editSchool, setEditSchool] = useState<SchoolData | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', address: '', elevenlabsAgentId: '', status: 'active' as 'active' | 'inactive', aiNumber: '' });
+  const [editForm, setEditForm] = useState({
+    name: '',
+    address: '',
+    elevenlabsAgentId: '',
+    status: 'active' as 'active' | 'inactive',
+    aiNumber: '',
+    foundingPartner: false,
+    minuteBalance: '' as string,
+  });
   const [saving, setSaving] = useState(false);
 
   // Phone Assignment Modal (Pooled)
@@ -112,6 +123,8 @@ export const AdminSchools = () => {
       elevenlabsAgentId: school.elevenlabsAgentId || '', 
       status: school.status, 
       aiNumber: school.aiNumber || '',
+      foundingPartner: Boolean(school.foundingPartner),
+      minuteBalance: school.minuteBalance != null ? String(school.minuteBalance) : '',
     });
     setError('');
   };
@@ -128,6 +141,8 @@ export const AdminSchools = () => {
         elevenlabsAgentId: editForm.elevenlabsAgentId,
         status: editForm.status,
         aiNumber: editForm.aiNumber,
+        foundingPartner: editForm.foundingPartner,
+        minuteBalance: editForm.minuteBalance === '' ? undefined : Number(editForm.minuteBalance),
       });
       setSuccess('School updated successfully!');
       setEditSchool(null);
@@ -467,6 +482,30 @@ export const AdminSchools = () => {
                   >
                     ✕ Inactive
                   </button>
+                </div>
+              </div>
+
+              <div className="border border-slate-200 rounded-lg p-4 space-y-3">
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Billing</div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editForm.foundingPartner}
+                    onChange={(e) => setEditForm({ ...editForm, foundingPartner: e.target.checked })}
+                    className="rounded border-slate-300"
+                  />
+                  <span className="text-sm text-slate-700">Founding partner (onboarding fee waived in PayPal)</span>
+                </label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Minute balance override</label>
+                  <input
+                    type="number"
+                    value={editForm.minuteBalance}
+                    onChange={(e) => setEditForm({ ...editForm, minuteBalance: e.target.value })}
+                    className="ui-input"
+                    placeholder="Leave empty to leave unchanged"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Set when manually adjusting credits for a metered school.</p>
                 </div>
               </div>
 
