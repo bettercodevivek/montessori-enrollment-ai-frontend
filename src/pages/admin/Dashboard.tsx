@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MetricCard } from '../../components/MetricCard';
 import api from '../../api/axios';
-import { Loader2, TrendingUp, School } from 'lucide-react';
+import { Loader2, TrendingUp, School, Filter } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface DashboardData {
@@ -36,21 +36,42 @@ export const AdminDashboard = () => {
   const { t } = useTranslation();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dateFilter, setDateFilter] = useState<'all' | 'monthly' | 'custom'>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      const params: any = {};
+      
+      if (dateFilter === 'monthly' && selectedMonth) {
+        params.month = selectedMonth;
+      } else if (dateFilter === 'custom' && startDate && endDate) {
+        params.startDate = startDate;
+        params.endDate = endDate;
+      }
+      
+      const [dashboardRes, analyticsRes] = await Promise.all([
+        api.get('/admin/dashboard', { params }),
+        api.get('/admin/analytics', { params })
+      ]);
+      
+      setData({
+        ...dashboardRes.data,
+        ...analyticsRes.data
+      });
+    } catch (err) {
+      console.error('Failed to load dashboard:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    Promise.all([
-      api.get('/admin/dashboard'),
-      api.get('/admin/analytics')
-    ])
-      .then(([dashboardRes, analyticsRes]) => {
-        setData({
-          ...dashboardRes.data,
-          ...analyticsRes.data
-        });
-      })
-      .catch(err => console.error('Failed to load dashboard:', err))
-      .finally(() => setLoading(false));
-  }, []);
+    fetchDashboardData();
+  }, [dateFilter, selectedMonth, startDate, endDate]);
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -67,6 +88,67 @@ export const AdminDashboard = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-slate-900">{t('admin_dashboard')}</h1>
         <p className="text-sm text-slate-500 mt-0.5">{t('admin_dashboard_desc')}</p>
+        
+        {/* Date Filters */}
+        <div className="mt-4 flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <span className="text-sm font-medium text-slate-700">Filter:</span>
+          </div>
+          
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value as any)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Time</option>
+            <option value="monthly">Monthly</option>
+            <option value="custom">Custom Range</option>
+          </select>
+          
+          {dateFilter === 'monthly' && (
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          )}
+          
+          {dateFilter === 'custom' && (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Start date"
+              />
+              <span className="text-slate-400">to</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="End date"
+              />
+            </div>
+          )}
+          
+          {(dateFilter !== 'all') && (
+            <button
+              onClick={() => {
+                setDateFilter('all');
+                setSelectedMonth('');
+                setStartDate('');
+                setEndDate('');
+              }}
+              className="px-3 py-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Clear Filter
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
