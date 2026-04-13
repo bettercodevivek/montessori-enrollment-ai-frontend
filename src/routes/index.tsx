@@ -28,6 +28,7 @@ import { BookTour } from '../pages/BookTour';
 import { GoogleAuthCallback } from '../pages/GoogleAuthCallback';
 import { MasterLogin } from '../pages/MasterLogin';
 import { DailyInsights } from '../pages/school/DailyInsights';
+import Pricing from '../pages/Pricing';
 
 const RootRedirect = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -76,6 +77,10 @@ export const router = createBrowserRouter([
   {
     path: '/book-tour/:schoolId',
     element: <BookTour />,
+  },
+  {
+    path: '/pricing',
+    element: <Pricing />,
   },
   {
     path: '/dashboard',

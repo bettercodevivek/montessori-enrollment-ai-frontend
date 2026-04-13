@@ -59,6 +59,7 @@ export const Landing = () => {
                         <a href="#approach" className="hover:text-blue-600 transition-colors">Our Approach</a>
                         <a href="#capabilities" className="hover:text-blue-600 transition-colors">Capabilities</a>
                         <a href="#roadmap" className="hover:text-blue-600 transition-colors">Roadmap</a>
+                        <button onClick={() => navigate('/pricing')} className="hover:text-blue-600 transition-colors">Pricing</button>
                     </nav>
                     <div className="flex items-center gap-4">
                         <button
