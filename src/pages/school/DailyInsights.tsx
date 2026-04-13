@@ -661,19 +661,16 @@ export const DailyInsights = () => {
                       </div>
                     )}
                     {call.feedbackHistory && call.feedbackHistory.length > 0 && (
-                      <div className="bg-emerald-50 rounded-lg border border-emerald-100 p-4">
-                        <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                          <Check className="w-3 h-3" /> Action History ({call.feedbackHistory.length})
-                        </p>
-                        <div className="space-y-3">
+                      <div className="border border-slate-200 p-4">
+                        <div className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-3">
+                          Action History ({call.feedbackHistory.length})
+                        </div>
+                        <div className="bg-slate-50 border border-slate-200 p-3 max-h-40 overflow-y-auto">
                           {call.feedbackHistory
                             .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
                             .map((entry, index) => (
-                              <div key={index} className="bg-white rounded-lg border border-emerald-200 p-3">
-                                <p className="text-sm text-emerald-800 leading-relaxed">{entry.feedback}</p>
-                                <p className="text-[10px] text-emerald-600 mt-1">
-                                  {new Date(entry.timestamp).toLocaleString()}
-                                </p>
+                              <div key={index} className="text-xs text-slate-700 leading-relaxed border-b border-slate-200 pb-2 mb-2 last:border-b-0 last:pb-0 last:mb-0 font-mono">
+                                [{new Date(entry.timestamp).toLocaleString()}] {entry.feedback}
                               </div>
                             ))}
                         </div>
@@ -710,30 +707,30 @@ export const DailyInsights = () => {
                           placeholder="Write feedback about action taken..."
                           className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs resize-none h-20 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         />
-                        <button
-                          onClick={() => handleMarkActionTaken(call.id)}
-                          disabled={markingAction[call.id]}
-                          className="px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                        >
-                          {markingAction[call.id] ? (
-                            <>
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            </>
-                          ) : (
-                            <>
-                              <Check className="w-3 h-3" />
-                              Submit
-                            </>
-                          )}
-                        </button>
-                      </div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <button
-                          onClick={() => handleCloseCard(call.id)}
-                          className="flex items-center gap-1.5 px-3 py-2 bg-slate-600 text-white rounded-lg text-xs font-semibold hover:bg-slate-700 transition-colors"
-                        >
-                          <X className="w-3 h-3" /> Close
-                        </button>
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={() => handleMarkActionTaken(call.id)}
+                            disabled={markingAction[call.id]}
+                            className="px-3 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                          >
+                            {markingAction[call.id] ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              </>
+                            ) : (
+                              <>
+                                <Check className="w-3 h-3" />
+                                Submit
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleCloseCard(call.id)}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-slate-600 text-white rounded-lg text-xs font-semibold hover:bg-slate-700 transition-colors"
+                          >
+                            <X className="w-3 h-3" /> Close
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
