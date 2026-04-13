@@ -308,12 +308,6 @@ export const SchoolBilling = () => {
             </div>
           ))}
         </div>
-        <p className="text-xs text-slate-500 mt-3">
-          In PayPal, create three monthly subscription products matching $195 / $245 / $290, then paste each Plan ID into{' '}
-          <code className="bg-slate-100 px-1 rounded">PAYPAL_PLAN_STARTER</code>, <code className="bg-slate-100 px-1 rounded">PAYPAL_PLAN_GROWTH</code>, and{' '}
-          <code className="bg-slate-100 px-1 rounded">PAYPAL_PLAN_FULL_ENROLLMENT</code>. Optional founding-partner plans:{' '}
-          <code className="bg-slate-100 px-1 rounded">PAYPAL_PLAN_*_FOUNDING</code>.
-        </p>
       </div>
     </div>
   );
