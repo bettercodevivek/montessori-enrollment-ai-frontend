@@ -4,8 +4,9 @@ import {
     Globe, ArrowRight, Zap, PhoneCall, FileText,
     Clock, CheckCircle2, Languages, Calendar, Users,
     Heart, MessageSquare, LineChart, AlertCircle, BarChart3,
-    Smartphone, Mail, Play, LayoutGrid
+    Smartphone, Mail, Play, LayoutGrid, Menu, X
 } from 'lucide-react';
+import { useState } from 'react';
 
 const FeatureCard = ({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) => (
     <div className="flex flex-col p-8 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -40,6 +41,7 @@ const RoadmapItem = ({ icon: Icon, title, status }: { icon: any; title: string; 
 export const Landing = () => {
     const { i18n } = useTranslation();
     const navigate = useNavigate();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-blue-600 selection:text-white">
@@ -64,19 +66,52 @@ export const Landing = () => {
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'es' : 'en')}
-                            className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors px-3 py-2 rounded-lg hover:bg-slate-100"
+                            className="hidden md:flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors px-3 py-2 rounded-lg hover:bg-slate-100"
                         >
                             <Globe className="w-4 h-4" />
                             {i18n.language === 'en' ? 'ESP' : 'ENG'}
                         </button>
                         <button
                             onClick={() => navigate('/login')}
-                            className="px-5 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-all"
+                            className="hidden md:block px-5 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-all"
                         >
                             Sign In
                         </button>
+                        <button
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="md:hidden p-2 rounded-lg hover:bg-slate-100"
+                        >
+                            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                        </button>
                     </div>
                 </div>
+                {/* Mobile Menu */}
+                {mobileMenuOpen && (
+                    <div className="md:hidden border-t border-slate-200 bg-white">
+                        <div className="px-6 py-4 space-y-4">
+                            <a href="#problem" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">The Problem</a>
+                            <a href="#approach" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Our Approach</a>
+                            <a href="#capabilities" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Capabilities</a>
+                            <a href="#roadmap" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Roadmap</a>
+                            <button onClick={() => { navigate('/pricing'); setMobileMenuOpen(false); }} className="block text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Pricing</button>
+                            <div className="pt-4 border-t border-slate-200 flex items-center gap-4">
+                                <button
+                                    onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'es' : 'en')}
+                                    className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors px-3 py-2 rounded-lg hover:bg-slate-100"
+                                >
+                                    <Globe className="w-4 h-4" />
+                                    {i18n.language === 'en' ? 'ESP' : 'ENG'}
+                                </button>
+                                <button
+                                    onClick={() => navigate('/login')}
+                                    className="px-5 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-all"
+                                >
+                                    Sign In
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </header>
 
             {/* Hero */}
