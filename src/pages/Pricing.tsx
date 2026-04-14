@@ -258,10 +258,10 @@ const Pricing = () => {
               <h2 className="text-4xl md:text-5xl font-serif mb-4">One enrolled child pays for<br />this system for the entire year.</h2>
               <p className="text-slate-400 mb-8 max-w-2xl">Every missed call is a family that enrolled somewhere else. BrightBridge makes sure that family gets a real answer and you get the tour.</p>
 
-              <div className="grid grid-cols-4 gap-1 mb-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-1 mb-8">
                 <div className="bg-white/5 rounded-lg p-4">
                   <div className="text-xs text-slate-400 uppercase tracking-wider mb-2">Avg annual tuition</div>
-                  <div className="text-2xl font-serif text-white mb-1">$11,000</div>
+                  <div className="text-xl md:text-2xl font-serif text-white mb-1">$11,000</div>
                   <div className="text-xs text-slate-600">per enrolled child</div>
                 </div>
                 <div className="bg-white/5 p-4 flex items-center justify-center">
@@ -282,7 +282,7 @@ const Pricing = () => {
                 </div>
                 <div className="bg-green-600/20 border border-green-600/40 rounded-lg p-4">
                   <div className="text-xs text-green-300 uppercase tracking-wider mb-2">You keep</div>
-                  <div className="text-2xl font-serif text-green-400 mb-1">$11,000</div>
+                  <div className="text-xl md:text-2xl font-serif text-green-400 mb-1">$11,000</div>
                   <div className="text-xs text-green-400">vs $245/mo plan cost</div>
                 </div>
               </div>
