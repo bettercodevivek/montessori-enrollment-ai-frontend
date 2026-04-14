@@ -40,6 +40,14 @@ const PLANS = [
   { key: 'starter', name: 'Starter', tagline: 'Stop missing calls', price: 195, minutes: 250 },
   { key: 'growth', name: 'Growth', tagline: 'GROWTH: Capture and schedule', price: 245, minutes: 500 },
   { key: 'full_enrollment', name: 'Full enrollment', tagline: 'Full enrollment system', price: 290, minutes: 750 },
+  {
+    key: 'demo',
+    name: 'Demo',
+    tagline: '$2/mo sandbox plan for testing (2 min voice / month)',
+    price: 2,
+    minutes: 2,
+    isDemo: true,
+  },
 ];
 
 export const SchoolBilling = () => {
@@ -188,6 +196,7 @@ export const SchoolBilling = () => {
     starter: 'PAYPAL_PLAN_STARTER',
     growth: 'PAYPAL_PLAN_GROWTH',
     full_enrollment: 'PAYPAL_PLAN_FULL_ENROLLMENT',
+    demo: 'PAYPAL_PLAN_DEMO',
   };
   const anyPlanMissing = cfg
     ? PLANS.some((p) => cfg[p.key] === false)
@@ -223,7 +232,8 @@ export const SchoolBilling = () => {
             <p className="mt-1 text-amber-800/90">
               Add each Billing Plan ID from the PayPal dashboard to <code className="bg-amber-100/80 px-1 rounded text-xs">montessori-enrollment-ai-backend/.env</code>:
               {' '}<code className="text-xs">PAYPAL_PLAN_STARTER</code>, <code className="text-xs">PAYPAL_PLAN_GROWTH</code>,{' '}
-              <code className="text-xs">PAYPAL_PLAN_FULL_ENROLLMENT</code> (values look like <code className="text-xs">P-1AB23456CD789012N</code>). Restart the API after saving.
+              <code className="text-xs">PAYPAL_PLAN_FULL_ENROLLMENT</code>, <code className="text-xs">PAYPAL_PLAN_DEMO</code>{' '}
+              (values look like <code className="text-xs">P-1AB23456CD789012N</code>). Restart the API after saving.
             </p>
           </div>
         </div>
@@ -272,10 +282,22 @@ export const SchoolBilling = () => {
 
       <div>
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Plans (autopay monthly)</h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {PLANS.map((p) => (
-            <div key={p.key} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
-              <div className="text-xs font-bold uppercase tracking-wide text-blue-600">{p.name}</div>
+            <div
+              key={p.key}
+              className={`bg-white border rounded-xl p-5 shadow-sm flex flex-col ${
+                'isDemo' in p && p.isDemo ? 'border-amber-200 ring-1 ring-amber-100' : 'border-slate-200'
+              }`}
+            >
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="text-xs font-bold uppercase tracking-wide text-blue-600">{p.name}</div>
+                {'isDemo' in p && p.isDemo ? (
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
+                    Sandbox
+                  </span>
+                ) : null}
+              </div>
               <div className="text-sm text-slate-600 mt-1 min-h-[2.5rem]">{p.tagline}</div>
               <div className="mt-3 text-2xl font-bold text-slate-900">${p.price}/mo</div>
               <div className="text-xs text-slate-500">{p.minutes} min / month included</div>
@@ -294,7 +316,7 @@ export const SchoolBilling = () => {
                     Set <code className="bg-amber-50 px-0.5 rounded">{planEnvLabel[p.key]}</code> in server .env
                   </p>
                 )}
-                {!status?.foundingPartner && !status?.onboardingFeePaid && (
+                {!status?.foundingPartner && !status?.onboardingFeePaid && p.key !== 'demo' && (
                   <button
                     type="button"
                     disabled={busy}
