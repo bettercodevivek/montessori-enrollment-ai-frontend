@@ -191,8 +191,7 @@ export const AdminDashboard = () => {
         flags,
         action: 'View'
       };
-    })
-    .filter((school: any) => school.calls > 0) || [];
+    }) || [];
 
   const conversionReasons = data?.conversionReasons || [];
 

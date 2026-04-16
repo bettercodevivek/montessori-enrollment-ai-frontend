@@ -169,12 +169,12 @@ export const DailyInsights = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        // Load all action-needed items (not just today's)
-        const actionRes = await api.get('/school/action-needed');
+        // Load both endpoints in parallel to reduce total load time
+        const [actionRes, res] = await Promise.all([
+          api.get('/school/action-needed'),
+          api.get('/school/daily-insights')
+        ]);
         setNeedsAttention(actionRes.data.actionNeeded || []);
-        
-        // Load today's tours and other data
-        const res = await api.get('/school/daily-insights');
         setTodaysTours(res.data.todaysTours || []);
         setTodayCalls(res.data.todayCalls || []);
       } catch (err) {
