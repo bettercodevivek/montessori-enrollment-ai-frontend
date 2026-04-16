@@ -60,6 +60,10 @@ interface DashboardData {
     totalReferrals: number;
     totalToursBooked: number;
     totalCallMinutes: number;
+    schoolsAddedThisMonth: number;
+    callsDifference: number;
+    callsChangePercent: number;
+    conversionRate: number;
   };
 }
 
@@ -113,21 +117,21 @@ export const AdminDashboard = () => {
     {
       title: 'ACTIVE SCHOOLS',
       value: data.overview.activeSchools.toString(),
-      subtitle: '1 added this month',
+      subtitle: `${data.overview.schoolsAddedThisMonth} added this month`,
       icon: null,
       trend: null
     },
     {
       title: 'TOTAL CALLS',
       value: data.overview.totalCalls.toString(),
-      subtitle: '+12 vs last month',
+      subtitle: `${data.overview.callsDifference > 0 ? '+' : ''}${data.overview.callsDifference} vs last month`,
       icon: Phone,
       trend: null
     },
     {
       title: 'TOURS BOOKED',
       value: data.overview.totalToursBooked.toString(),
-      subtitle: '54% conversion',
+      subtitle: `${data.overview.conversionRate || 0}% conversion`,
       icon: Calendar,
       trend: null
     },
