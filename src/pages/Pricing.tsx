@@ -319,9 +319,9 @@ const Pricing = () => {
             <p className="text-slate-600">No hidden fees. No long-term contracts. Minutes included per plan overage billed at $1.50 per additional 5-minute block.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
             {plans.map((plan, index) => (
-              <div key={index} className={`bg-white border rounded-2xl overflow-hidden ${plan.featured ? 'border-2 border-blue-400 relative' : 'border-slate-200'}`}>
+              <div key={index} className={`bg-white border rounded-2xl overflow-hidden flex flex-col ${plan.featured ? 'border-2 border-blue-400 relative' : 'border-slate-200'}`}>
                 {plan.featured && (
                   <div className="bg-blue-600 text-white text-center text-xs font-bold py-2">
                     Most popular · Recommended
@@ -347,15 +347,23 @@ const Pricing = () => {
                   </div>
                 </div>
 
-                <div className="p-8 flex-1">
+                <div className="p-8 flex-1 flex flex-col">
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">What Nora handles</div>
-                  <ul className="space-y-3 mb-6">
+                  <ul className="space-y-3 mb-6 flex-1">
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex gap-3 text-sm text-slate-700 leading-relaxed">
                         <div className="w-4 h-4 bg-green-50 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                           <Check className="w-2.5 h-2.5 text-green-600" />
                         </div>
                         <span dangerouslySetInnerHTML={{ __html: feature.replace(/strong>/g, 'strong className="font-semibold text-slate-900">') }} />
+                      </li>
+                    ))}
+                    {Array(Math.max(...plans.map(p => p.features.length)) - plan.features.length).fill(null).map((_, i) => (
+                      <li key={`empty-${i}`} className="flex gap-3 text-sm text-slate-700 leading-relaxed opacity-0">
+                        <div className="w-4 h-4 bg-green-50 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="w-2.5 h-2.5 text-green-600" />
+                        </div>
+                        <span>&nbsp;</span>
                       </li>
                     ))}
                   </ul>
@@ -444,7 +452,7 @@ const Pricing = () => {
         </div>
 
         {/* FAQ */}
-        <div className="max-w-3xl mx-auto px-6 py-16">
+        <div className="max-w-6xl mx-auto px-6 py-16">
           <div className="text-center mb-12">
             <h2 className="text-2xl font-serif text-slate-900 mb-4">Common questions</h2>
             <p className="text-slate-600">Everything you need to know before getting started.</p>
@@ -475,12 +483,12 @@ const Pricing = () => {
         </div>
 
         {/* Bottom CTA */}
-        <div className="max-w-4xl mx-auto px-6 py-16">
+        <div className="max-w-6xl mx-auto px-6 py-16">
           <div className="bg-slate-900 rounded-2xl p-12 text-center">
             <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">See it live</div>
             <h2 className="text-3xl md:text-4xl font-serif text-white mb-4">Hear Nora handle a real parent call</h2>
             <p className="text-slate-400 mb-8 max-w-md mx-auto">
-              We'll walk you through a 15-minute demo and show you exactly what a parent experiences from the first ring to the tour confirmation.
+              We'll walk you through a 15-minute demo and show you exactly what a parent experiences from first ring to tour confirmation.
             </p>
             <a
               href="mailto:info@brightbridge.ai"
@@ -488,7 +496,7 @@ const Pricing = () => {
             >
               Book a 15-minute demo
             </a>
-            <p className="text-slate-600 text-sm mt-4">No commitment. Setup fee waived for the first 10 founding partner schools.</p>
+            <p className="text-slate-600 text-sm mt-4">No commitment. Setup fee waived for first 10 founding partner schools.</p>
           </div>
         </div>
       </main>
