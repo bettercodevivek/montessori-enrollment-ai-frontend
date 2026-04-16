@@ -23,6 +23,15 @@ interface DashboardData {
     totalMinutes: number;
     totalCalls: number;
   }>;
+  recentCalls: Array<{
+    id: string;
+    school_name: string;
+    caller_name: string;
+    caller_phone: string;
+    call_type: string;
+    duration: number;
+    timestamp: string;
+  }>;
   recentFollowups: Array<{
     id: string;
     school_name: string;
@@ -195,12 +204,22 @@ export const AdminDashboard = () => {
 
   const conversionReasons = data?.conversionReasons || [];
 
-  const activityFeed: ActivityItem[] = data?.recentFollowups?.map((followup: any) => ({
-    type: 'tour_booked' as const,
-    school: followup.school_name,
-    details: `${followup.lead_name} · ${followup.type}`,
-    time: new Date(followup.timestamp).toLocaleString()
-  })) || [];
+  const activityFeed: ActivityItem[] = [
+    // Recent calls
+    ...(data?.recentCalls || []).map((call: any): ActivityItem => ({
+      type: call.call_type === 'Tour Booking' ? 'tour_booked' : 'call_dropped',
+      school: call.school_name,
+      details: `${call.caller_name} · ${call.call_type} · ${Math.round(call.duration)}s`,
+      time: new Date(call.timestamp).toLocaleTimeString()
+    })),
+    // Recent followups
+    ...(data?.recentFollowups || []).map((followup: any): ActivityItem => ({
+      type: 'tour_booked',
+      school: followup.school_name,
+      details: `${followup.lead_name} · ${followup.type}`,
+      time: new Date(followup.timestamp).toLocaleTimeString()
+    }))
+  ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 10);
 
   const getActivityIcon = (type: ActivityItem['type']) => {
     switch (type) {
@@ -483,17 +502,23 @@ export const AdminDashboard = () => {
             ))}
           </div>
 
-          <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="text-sm font-semibold text-amber-800 mb-1">Nora needs tuning at Franz Road</div>
-                <div className="text-xs text-amber-700">
-                  4 calls ended because Nora couldn't answer a parent question — likely about pricing, specific programs, or pickup routes. Update her knowledge base for that school.
+          {data?.schoolsNeedingTuning && data.schoolsNeedingTuning.length > 0 && (
+            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  {data.schoolsNeedingTuning.map((school: any, index: number) => (
+                    <div key={index} className="mb-2">
+                      <div className="text-sm font-semibold text-amber-800 mb-1">Nora needs tuning at {school.schoolName}</div>
+                      <div className="text-xs text-amber-700">
+                        {school.count} calls ended because Nora couldn't answer a parent question - likely about pricing, specific programs, or pickup routes. Update her knowledge base for that school.
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Live Activity Feed */}
