@@ -138,30 +138,6 @@ export const SchoolBilling = () => {
     }
   };
 
-  const startOnboarding = async (planKey: string) => {
-    setBusy(true);
-    setError('');
-    try {
-      const res = await api.post('/billing/onboarding-order', {
-        planKey,
-        returnUrl,
-        cancelUrl,
-      });
-      if (res.data.skipped) {
-        setMessage(res.data.message || 'Onboarding skipped.');
-        return;
-      }
-      if (res.data.approvalUrl) {
-        window.location.href = res.data.approvalUrl;
-        return;
-      }
-      setError('Could not start onboarding payment.');
-    } catch (e: unknown) {
-      setError(getApiError(e, 'Onboarding order failed.'));
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const startTopup = async () => {
     setBusy(true);
@@ -203,7 +179,7 @@ export const SchoolBilling = () => {
     : false;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-7xl mx-auto px-6 space-y-8">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Billing & usage</h1>
         <p className="text-sm text-slate-500 mt-1">
@@ -282,53 +258,53 @@ export const SchoolBilling = () => {
 
       <div>
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Plans (autopay monthly)</h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {PLANS.map((p) => (
-            <div
-              key={p.key}
-              className={`bg-white border rounded-xl p-5 shadow-sm flex flex-col ${
-                'isDemo' in p && p.isDemo ? 'border-amber-200 ring-1 ring-amber-100' : 'border-slate-200'
-              }`}
-            >
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="text-xs font-bold uppercase tracking-wide text-blue-600">{p.name}</div>
-                {'isDemo' in p && p.isDemo ? (
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
+        <div className="grid gap-6 lg:grid-cols-4 md:grid-cols-2 sm:grid-cols-1">
+          {PLANS.map((p) => {
+            const isSubscribed = status?.subscriptionPlanKey === p.key && status?.subscriptionStatus === 'active';
+            const isMostPopular = p.key === 'growth';
+            const isDemo = 'isDemo' in p && p.isDemo;
+            return (
+              <div key={p.key} className={`bg-white border rounded-2xl p-8 shadow-sm flex flex-col relative overflow-hidden ${isMostPopular ? 'border-2 border-blue-500' : isDemo ? 'border-amber-200 ring-1 ring-amber-100' : 'border-slate-200'}`}>
+                {isMostPopular && (
+                  <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                    Most popular
+                  </div>
+                )}
+                {isDemo && (
+                  <span className="absolute top-0 left-0 text-[10px] font-semibold uppercase tracking-wide text-amber-800 bg-amber-100 px-2 py-1 rounded-br-lg">
                     Sandbox
                   </span>
-                ) : null}
-              </div>
-              <div className="text-sm text-slate-600 mt-1 min-h-[2.5rem]">{p.tagline}</div>
-              <div className="mt-3 text-2xl font-bold text-slate-900">${p.price}/mo</div>
-              <div className="text-xs text-slate-500">{p.minutes} min / month included</div>
-              <div className="flex-1" />
-              <div className="mt-4 space-y-2">
-                <button
-                  type="button"
-                  disabled={busy || (cfg && cfg[p.key] === false)}
-                  onClick={() => subscribe(p.key)}
-                  className="w-full py-2.5 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 disabled:opacity-50"
-                >
-                  Subscribe with PayPal
-                </button>
-                {cfg && cfg[p.key] === false && (
-                  <p className="text-[11px] text-amber-700 text-center">
-                    Set <code className="bg-amber-50 px-0.5 rounded">{planEnvLabel[p.key]}</code> in server .env
-                  </p>
                 )}
-                {!status?.foundingPartner && !status?.onboardingFeePaid && p.key !== 'demo' && (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => startOnboarding(p.key)}
-                    className="w-full py-2 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50"
-                  >
-                    Pay onboarding fee only ({p.key === 'starter' ? '$299' : p.key === 'growth' ? '$399' : '$599'})
-                  </button>
-                )}
+                <div className="text-sm font-bold uppercase tracking-wide text-blue-600">{p.name}</div>
+                <div className="text-base text-slate-600 mt-2 min-h-[3rem]">{p.tagline}</div>
+                <div className="mt-4 text-4xl font-bold text-slate-900">${p.price}<span className="text-xl font-normal text-slate-500">/mo</span></div>
+                <div className="text-sm text-slate-500 mt-2">{p.minutes} min / month included</div>
+                <div className="flex-1" />
+                <div className="mt-4 space-y-2">
+                  {isSubscribed ? (
+                    <div className="w-full py-3 rounded-lg bg-green-100 text-green-700 text-base font-semibold text-center flex items-center justify-center gap-2">
+                      <CheckCircle className="w-5 h-5" />
+                      Subscribed
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busy || (cfg && cfg[p.key] === false)}
+                      onClick={() => subscribe(p.key)}
+                      className={`w-full py-3 rounded-lg text-base font-semibold hover:opacity-90 disabled:opacity-50 ${isMostPopular ? 'bg-blue-500 text-white' : 'bg-slate-900 text-white'}`}
+                    >
+                      Subscribe with PayPal
+                    </button>
+                  )}
+                  {cfg && cfg[p.key] === false && (
+                    <p className="text-[11px] text-amber-700 text-center">
+                      Set <code className="bg-amber-50 px-0.5 rounded">{planEnvLabel[p.key]}</code> in server .env
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
