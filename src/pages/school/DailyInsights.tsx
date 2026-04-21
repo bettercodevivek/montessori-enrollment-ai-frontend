@@ -44,6 +44,7 @@ interface TodayTour {
   reminderSent: boolean;
   tags?: string[];
   language?: string;
+  tourScript?: string[];
 }
 
 // ─── Mini Audio Player ────────────────────────────────────────────────────────
@@ -162,9 +163,42 @@ export const DailyInsights = () => {
   const [markingAction, setMarkingAction] = useState<Record<string, boolean>>({});
   const [closeConfirm, setCloseConfirm] = useState<string | null>(null);
 
+  const createKidsRKidsTodayTour = (): TodayTour => {
+    const scheduledAt = new Date();
+    scheduledAt.setHours(11, 30, 0, 0);
+
+    return {
+      id: 'manual-kids-r-kids-tour',
+      parentName: 'Kids R Kids',
+      phone: '(555) 240-1188',
+      email: 'frontdesk@kidsrkids.example',
+      childName: 'School Tour Group',
+      childAge: 'Infant - Pre-K',
+      reason: 'Today walk-through and enrollment overview',
+      scheduledAt: scheduledAt.toISOString(),
+      calendarProvider: null,
+      questionsAsked: [
+        'What is your teacher to child ratio in each classroom?',
+        'How do daily updates and communication with families work?',
+        'What is included in tuition and enrollment fees?'
+      ],
+      highlights: 'Focus on curriculum flow, classroom safety, and teacher consistency.',
+      callSummary: 'Team requested a guided school tour for today with clear next steps for enrollment.',
+      reminderSent: true,
+      tags: ['Today', 'Priority Tour', 'Enrollment Interest'],
+      language: 'English',
+      tourScript: [
+        'Welcome to Kids R Kids. We are excited to show you how our program supports each child from infant through Pre-K.',
+        'As we walk through each classroom, I will highlight our teacher ratios, daily routines, and curriculum milestones.',
+        'You will also see our safety systems, check-in process, and communication tools that keep families updated throughout the day.',
+        'Before we wrap up, we can review tuition, enrollment paperwork, and available start dates to help you pick the best next step.'
+      ]
+    };
+  };
+
   const handlePrintTourCard = (tour: TodayTour) => {
     const askedAbout = (tour.questionsAsked || []).filter(Boolean);
-    const talkingPoints = [tour.highlights, tour.callSummary]
+    const talkingPoints = [tour.highlights, ...(tour.tourScript || []), tour.callSummary]
       .filter(Boolean)
       .join('\n')
       .split(/\n+/)
@@ -178,30 +212,49 @@ export const DailyInsights = () => {
         <title>Tour Card</title>
         <style>
           * { box-sizing: border-box; }
-          body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif; padding: 18px; color: #1f2937; background: #f8fafc; }
-          .intent { display: inline-block; margin: 0 0 12px 0; padding: 8px 14px; border-radius: 10px; background: #eef2f7; color: #6b7280; font-size: 14px; font-weight: 600; }
-          .card { border: 1px solid #d7d7cf; border-radius: 14px; overflow: hidden; max-width: 760px; background: #fff; }
-          .header { display: flex; justify-content: space-between; align-items: center; background: #efefe8; color: #62625c; padding: 12px 16px; font-size: 13px; letter-spacing: .8px; font-weight: 700; text-transform: uppercase; }
+          body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif; padding: 14px; color: #1f2937; background: #f8fafc; margin: 0; }
+          .intent { margin: 0 0 10px 2px; color: #4b5563; font-size: 14px; font-weight: 600; }
+          .card { border: 1px solid #d9ddd7; border-radius: 14px; overflow: hidden; max-width: 900px; width: 100%; background: #fff; }
+          .header { display: flex; justify-content: space-between; align-items: center; background: #f3f4ef; color: #666b63; padding: 11px 16px; font-size: 13px; letter-spacing: .6px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; }
           .print { color: #3b6ea8; font-weight: 700; }
-          .top { display: flex; align-items: center; gap: 14px; padding: 16px; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; }
-          .avatar { width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: #d8e6fb; color: #4a6b9b; font-weight: 700; font-size: 22px; }
-          .name { font-size: 42px; line-height: 1.05; font-weight: 700; margin: 0; color: #1f2937; }
-          .tour { font-size: 19px; color: #374151; font-weight: 600; margin-top: 3px; }
-          .body { display: grid; grid-template-columns: 1fr 1fr; }
-          .col { padding: 16px; min-height: 420px; }
+          .top { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid #e5e7eb; }
+          .avatar { width: 42px; height: 42px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: #dbeafe; color: #4a6b9b; font-weight: 700; font-size: 16px; }
+          .name { font-size: 46px; line-height: 1.05; font-weight: 700; margin: 0; color: #1f2937; }
+          .tour { font-size: 20px; color: #374151; font-weight: 600; margin-top: 2px; }
+          .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+          .col { padding: 16px; min-height: 420px; min-width: 0; }
           .col + .col { border-left: 1px solid #e5e7eb; }
-          .row { margin: 0 0 14px 0; }
-          .k { font-size: 15px; color: #6b7280; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; margin-bottom: 4px; }
-          .v { font-size: 40px; line-height: 1.15; font-weight: 600; color: #111827; }
-          .left-chip { display: inline-block; margin-top: 4px; padding: 6px 11px; border-radius: 9px; background: #dbeafe; color: #4a6b9b; font-size: 32px; font-weight: 600; }
-          .q-list { margin: 0; padding-left: 22px; }
-          .q-list li { margin: 10px 0; font-size: 41px; font-weight: 600; border-bottom: 1px solid #e5e7eb; padding-bottom: 9px; }
+          .row { margin: 0 0 16px 0; }
+          .k { font-size: 15px; color: #6b7280; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; margin-bottom: 3px; }
+          .v { font-size: 24px; line-height: 1.22; font-weight: 600; color: #111827; overflow-wrap: anywhere; word-break: break-word; }
+          .left-chip { display: inline-block; margin-top: 2px; padding: 4px 10px; border-radius: 9px; background: #dbeafe; color: #4a6b9b; font-size: 19px; font-weight: 600; max-width: 100%; overflow-wrap: anywhere; }
+          .q-list { margin: 0; padding-left: 24px; }
+          .q-list li { margin: 9px 0; font-size: 24px; line-height: 1.2; font-weight: 600; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; overflow-wrap: anywhere; word-break: break-word; }
           .q-list li:last-child { border-bottom: none; }
-          .talking { margin-top: 14px; }
-          .talking .item { margin: 10px 0; background: #f4f3ed; border-radius: 9px; padding: 10px 12px; font-size: 37px; line-height: 1.22; font-weight: 600; color: #374151; }
+          .talking { margin-top: 12px; }
+          .talking .item { margin: 9px 0; background: #f4f3ed; border-radius: 9px; padding: 9px 11px; font-size: 22px; line-height: 1.24; font-weight: 600; color: #374151; overflow-wrap: anywhere; word-break: break-word; }
           .tag-wrap { margin-top: 6px; }
-          .tag { display: inline-block; margin: 0 6px 6px 0; padding: 5px 10px; border-radius: 999px; background: #e0efff; color: #2f5f9a; border: 1px solid #c7def6; font-size: 13px; font-weight: 600; }
-          @media print { body { background: #fff; padding: 0; } .intent { margin-left: 4px; } }
+          .tag { display: inline-block; margin: 0 6px 6px 0; padding: 4px 9px; border-radius: 999px; background: #e0efff; color: #2f5f9a; border: 1px solid #c7def6; font-size: 12px; font-weight: 600; }
+          @media print {
+            @page { size: A4 portrait; margin: 8mm; }
+            body { background: #fff; padding: 0; margin: 0; }
+            .intent { margin: 0 0 8px 0; font-size: 12px; }
+            .card { max-width: 100%; border-radius: 10px; }
+            .header { font-size: 9px; padding: 7px 9px; }
+            .top { padding: 10px; gap: 10px; }
+            .avatar { width: 34px; height: 34px; font-size: 16px; }
+            .name { font-size: 28px; }
+            .tour { font-size: 14px; }
+            .col { padding: 10px; min-height: auto; }
+            .k { font-size: 10px; }
+            .v { font-size: 15px; line-height: 1.25; }
+            .left-chip { font-size: 14px; padding: 4px 8px; }
+            .q-list { padding-left: 18px; }
+            .q-list li { font-size: 13px; margin: 6px 0; padding-bottom: 6px; }
+            .talking { margin-top: 10px; }
+            .talking .item { font-size: 12px; margin: 6px 0; padding: 7px 9px; }
+            .tag { font-size: 9px; padding: 3px 7px; margin: 0 4px 4px 0; }
+          }
         </style>
       </head>
       <body>
@@ -265,7 +318,9 @@ export const DailyInsights = () => {
           api.get('/school/daily-insights')
         ]);
         setNeedsAttention(actionRes.data.actionNeeded || []);
-        setTodaysTours(res.data.todaysTours || []);
+        const apiTours: TodayTour[] = res.data.todaysTours || [];
+        const hasKidsRKidsTour = apiTours.some(tour => tour.parentName?.toLowerCase() === 'kids r kids');
+        setTodaysTours(hasKidsRKidsTour ? apiTours : [createKidsRKidsTodayTour(), ...apiTours]);
         setTodayCalls(res.data.todayCalls || []);
       } catch (err) {
         console.error('Failed to load daily insights:', err);
