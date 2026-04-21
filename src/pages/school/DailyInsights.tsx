@@ -297,10 +297,38 @@ export const DailyInsights = () => {
       </html>
     `;
     const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    if (!printWindow) {
+      // Fallback for environments where popups are blocked.
+      const currentTabMarkup = html.replace('<script>window.print();</script>', '');
+      document.open();
+      document.write(currentTabMarkup);
+      document.close();
+      window.print();
+      return;
+    }
+
+    const markup = html.replace('<script>window.print();</script>', '');
     printWindow.document.open();
-    printWindow.document.write(html);
+    printWindow.document.write(markup);
     printWindow.document.close();
+    printWindow.focus();
+
+    // Trigger print after render; avoids CSP blocking inline scripts in production.
+    const triggerPrint = () => {
+      try {
+        printWindow.focus();
+        printWindow.print();
+      } catch (err) {
+        console.error('Failed to trigger print:', err);
+      }
+    };
+
+    if (printWindow.document.readyState === 'complete') {
+      triggerPrint();
+    } else {
+      printWindow.addEventListener('load', triggerPrint, { once: true });
+      setTimeout(triggerPrint, 500);
+    }
   };
 
 
