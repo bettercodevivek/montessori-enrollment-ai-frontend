@@ -42,6 +42,8 @@ interface TodayTour {
   highlights: string;
   callSummary: string;
   reminderSent: boolean;
+  tags?: string[];
+  language?: string;
 }
 
 // ─── Mini Audio Player ────────────────────────────────────────────────────────
@@ -159,6 +161,94 @@ export const DailyInsights = () => {
   const [feedbackInputs, setFeedbackInputs] = useState<Record<string, string>>({});
   const [markingAction, setMarkingAction] = useState<Record<string, boolean>>({});
   const [closeConfirm, setCloseConfirm] = useState<string | null>(null);
+
+  const handlePrintTourCard = (tour: TodayTour) => {
+    const askedAbout = (tour.questionsAsked || []).filter(Boolean);
+    const talkingPoints = [tour.highlights, tour.callSummary]
+      .filter(Boolean)
+      .join('\n')
+      .split(/\n+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+    const html = `
+      <!doctype html>
+      <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Tour Card</title>
+        <style>
+          * { box-sizing: border-box; }
+          body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif; padding: 18px; color: #1f2937; background: #f8fafc; }
+          .intent { display: inline-block; margin: 0 0 12px 0; padding: 8px 14px; border-radius: 10px; background: #eef2f7; color: #6b7280; font-size: 14px; font-weight: 600; }
+          .card { border: 1px solid #d7d7cf; border-radius: 14px; overflow: hidden; max-width: 760px; background: #fff; }
+          .header { display: flex; justify-content: space-between; align-items: center; background: #efefe8; color: #62625c; padding: 12px 16px; font-size: 13px; letter-spacing: .8px; font-weight: 700; text-transform: uppercase; }
+          .print { color: #3b6ea8; font-weight: 700; }
+          .top { display: flex; align-items: center; gap: 14px; padding: 16px; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; }
+          .avatar { width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: #d8e6fb; color: #4a6b9b; font-weight: 700; font-size: 22px; }
+          .name { font-size: 42px; line-height: 1.05; font-weight: 700; margin: 0; color: #1f2937; }
+          .tour { font-size: 19px; color: #374151; font-weight: 600; margin-top: 3px; }
+          .body { display: grid; grid-template-columns: 1fr 1fr; }
+          .col { padding: 16px; min-height: 420px; }
+          .col + .col { border-left: 1px solid #e5e7eb; }
+          .row { margin: 0 0 14px 0; }
+          .k { font-size: 15px; color: #6b7280; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; margin-bottom: 4px; }
+          .v { font-size: 40px; line-height: 1.15; font-weight: 600; color: #111827; }
+          .left-chip { display: inline-block; margin-top: 4px; padding: 6px 11px; border-radius: 9px; background: #dbeafe; color: #4a6b9b; font-size: 32px; font-weight: 600; }
+          .q-list { margin: 0; padding-left: 22px; }
+          .q-list li { margin: 10px 0; font-size: 41px; font-weight: 600; border-bottom: 1px solid #e5e7eb; padding-bottom: 9px; }
+          .q-list li:last-child { border-bottom: none; }
+          .talking { margin-top: 14px; }
+          .talking .item { margin: 10px 0; background: #f4f3ed; border-radius: 9px; padding: 10px 12px; font-size: 37px; line-height: 1.22; font-weight: 600; color: #374151; }
+          .tag-wrap { margin-top: 6px; }
+          .tag { display: inline-block; margin: 0 6px 6px 0; padding: 5px 10px; border-radius: 999px; background: #e0efff; color: #2f5f9a; border: 1px solid #c7def6; font-size: 13px; font-weight: 600; }
+          @media print { body { background: #fff; padding: 0; } .intent { margin-left: 4px; } }
+        </style>
+      </head>
+      <body>
+        <div class="intent">Looking to enroll in ${tour.reason?.includes('June') ? 'June' : 'upcoming month'}</div>
+        <div class="card">
+          <div class="header">
+            <span>ONE-PAGER - PRINTABLE TOUR CARD</span>
+            <span class="print">PRINT</span>
+          </div>
+          <div class="top">
+            <div class="avatar">${(tour.parentName || 'P').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}</div>
+            <div>
+              <h1 class="name">${tour.parentName || 'Parent'}</h1>
+              <div class="tour">Tour: ${new Date(tour.scheduledAt).toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</div>
+            </div>
+          </div>
+          <div class="body">
+            <div class="col">
+              <div class="row"><div class="k">Phone</div><div class="v">${tour.phone || '-'}</div></div>
+              <div class="row"><div class="k">Email</div><div class="v">${tour.email || '-'}</div></div>
+              <div class="row"><div class="k">Child(ren)</div><div class="left-chip">${tour.childName || 'Child'}${tour.childAge ? ` • ${tour.childAge}` : ''}</div></div>
+              <div class="row"><div class="k">Enrollment Target</div><div class="v">${tour.reason || 'Planned'}</div></div>
+              <div class="row"><div class="k">Language</div><div class="v">${tour.language || 'English'}</div></div>
+              ${(tour.tags && tour.tags.length) ? `<div class="row"><div class="k">Tags</div><div class="tag-wrap">${tour.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div></div>` : ''}
+            </div>
+            <div class="col">
+              <div class="row">
+                <div class="k">What They Asked About</div>
+                <ul class="q-list">${(askedAbout.length ? askedAbout : ['No questions captured']).map(q => `<li>${q}</li>`).join('')}</ul>
+              </div>
+              <div class="row talking">
+                <div class="k">Tour Talking Points For Staff</div>
+                ${(talkingPoints.length ? talkingPoints : ['Share tour highlights and next enrollment steps']).map(p => `<div class="item">${p}</div>`).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+        <script>window.print();</script>
+      </body>
+      </html>
+    `;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
 
 
   useEffect(() => {
@@ -584,6 +674,22 @@ export const DailyInsights = () => {
                       <div className="mt-1">{tour.childName} • {tour.childAge}</div>
                       <div className="mt-1 text-slate-500">{tour.reason || 'Enrollment inquiry'}</div>
                     </div>
+                    {!!tour.tags?.length && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {tour.tags.slice(0, 4).map((tag, idx) => (
+                          <span key={idx} className="px-2 py-0.5 rounded-full text-[9px] font-medium border bg-blue-100 text-blue-700 border-blue-200">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handlePrintTourCard(tour)}
+                      className="mt-3 w-full px-2 py-1.5 text-[11px] font-semibold rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      Print Tour Card
+                    </button>
                   </div>
                 ))}
               </div>
