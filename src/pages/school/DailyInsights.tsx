@@ -163,39 +163,6 @@ export const DailyInsights = () => {
   const [markingAction, setMarkingAction] = useState<Record<string, boolean>>({});
   const [closeConfirm, setCloseConfirm] = useState<string | null>(null);
 
-  const createKidsRKidsTodayTour = (): TodayTour => {
-    const scheduledAt = new Date();
-    scheduledAt.setHours(11, 30, 0, 0);
-
-    return {
-      id: 'manual-kids-r-kids-tour',
-      parentName: 'Kids R Kids',
-      phone: '(555) 240-1188',
-      email: 'frontdesk@kidsrkids.example',
-      childName: 'School Tour Group',
-      childAge: 'Infant - Pre-K',
-      reason: 'Today walk-through and enrollment overview',
-      scheduledAt: scheduledAt.toISOString(),
-      calendarProvider: null,
-      questionsAsked: [
-        'What is your teacher to child ratio in each classroom?',
-        'How do daily updates and communication with families work?',
-        'What is included in tuition and enrollment fees?'
-      ],
-      highlights: 'Focus on curriculum flow, classroom safety, and teacher consistency.',
-      callSummary: 'Team requested a guided school tour for today with clear next steps for enrollment.',
-      reminderSent: true,
-      tags: ['Today', 'Priority Tour', 'Enrollment Interest'],
-      language: 'English',
-      tourScript: [
-        'Welcome to Kids R Kids. We are excited to show you how our program supports each child from infant through Pre-K.',
-        'As we walk through each classroom, I will highlight our teacher ratios, daily routines, and curriculum milestones.',
-        'You will also see our safety systems, check-in process, and communication tools that keep families updated throughout the day.',
-        'Before we wrap up, we can review tuition, enrollment paperwork, and available start dates to help you pick the best next step.'
-      ]
-    };
-  };
-
   const handlePrintTourCard = (tour: TodayTour) => {
     const askedAbout = (tour.questionsAsked || []).filter(Boolean);
     const talkingPoints = [tour.highlights, ...(tour.tourScript || []), tour.callSummary]
@@ -347,8 +314,7 @@ export const DailyInsights = () => {
         ]);
         setNeedsAttention(actionRes.data.actionNeeded || []);
         const apiTours: TodayTour[] = res.data.todaysTours || [];
-        const hasKidsRKidsTour = apiTours.some(tour => tour.parentName?.toLowerCase() === 'kids r kids');
-        setTodaysTours(hasKidsRKidsTour ? apiTours : [createKidsRKidsTodayTour(), ...apiTours]);
+        setTodaysTours(apiTours);
         setTodayCalls(res.data.todayCalls || []);
       } catch (err) {
         console.error('Failed to load daily insights:', err);
