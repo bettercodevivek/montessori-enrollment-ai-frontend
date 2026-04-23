@@ -102,7 +102,7 @@ const PLANS = [
       'Collects preferred tour date and time',
       'Call summary emailed to director after every call',
       'English language support',
-      '250 minutes included per month enough for ~50 calls at average length',
+      '250 included minutes per month (~50 average calls)',
     ],
     tourBooking: 'Parent requests a preferred time your staff confirms and books manually.',
   },
@@ -120,7 +120,7 @@ const PLANS = [
       'Full parent profile: name, phone, email, child name and age',
       'Bilingual support English and Spanish',
       'Higher-conversion conversation flow tuned for childcare',
-      '500 minutes included per month enough for ~100 calls at average length',
+      '500 included minutes per month (~100 average calls)',
     ],
     tourBooking:
       'Nora books directly on your calendar during the call. Parent receives instant confirmation before they hang up.',
@@ -142,7 +142,7 @@ const PLANS = [
       'Automated email reminders sent to parent before each tour',
       'Ongoing AI tuning as your programs, staff, or availability changes',
       'Multi-location support available',
-      '750 minutes included per month enough for ~150 calls at average length',
+      '750 included minutes per month (~150 average calls)',
     ],
     tourBooking:
       'Nora books directly, sends confirmation, and triggers automated reminders before the tour date. Zero no-shows go unaddressed.',
@@ -501,13 +501,13 @@ export const SchoolBilling = () => {
 
       <div>
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Plans (autopay monthly)</h2>
-        <div className="grid gap-6 lg:grid-cols-4 md:grid-cols-2 sm:grid-cols-1 items-stretch">
+        <div className="grid gap-6 2xl:grid-cols-4 xl:grid-cols-3 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1 items-stretch">
           {PLANS.map((p) => {
             const isSubscribed = status?.subscriptionPlanKey === p.key && status?.subscriptionStatus === 'active';
             const isMostPopular = p.key === 'growth';
             const isDemo = 'isDemo' in p && p.isDemo;
             return (
-              <div key={p.key} className={`h-full bg-white border rounded-2xl shadow-sm flex flex-col relative overflow-hidden ${isMostPopular ? 'border-2 border-blue-500' : isDemo ? 'border-amber-200 ring-1 ring-amber-100' : 'border-slate-200'}`}>
+              <div key={p.key} className={`h-full min-h-[1280px] bg-white border rounded-2xl shadow-sm flex flex-col relative ${isMostPopular ? 'border-2 border-blue-500' : isDemo ? 'border-amber-200 ring-1 ring-amber-100' : 'border-slate-200'}`}>
                 {isMostPopular && (
                   <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
                     Most popular
@@ -518,12 +518,12 @@ export const SchoolBilling = () => {
                     Sandbox
                   </span>
                 )}
-                <div className="p-6 border-b border-slate-100 min-h-[250px]">
+                <div className="p-6 border-b border-slate-100 min-h-[290px]">
                   <div className="text-sm font-bold uppercase tracking-wide text-blue-600">{p.name}</div>
                   <div className="text-base text-slate-600 mt-2 min-h-[3rem]">{p.tagline}</div>
                   <div className="mt-4 text-4xl font-bold text-slate-900">${p.price}<span className="text-xl font-normal text-slate-500">/mo</span></div>
                   <div className="text-sm text-slate-500 mt-2">{p.minutes} min / month included</div>
-                  <div className="mt-4 bg-slate-50 rounded-lg p-3 text-sm text-slate-600 leading-relaxed min-h-[98px]">
+                  <div className="mt-4 bg-slate-50 rounded-lg p-3 text-sm text-slate-600 leading-relaxed min-h-[108px] break-words">
                     {p.bestFor}
                   </div>
                 </div>
@@ -532,38 +532,31 @@ export const SchoolBilling = () => {
                   <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
                     What Nora handles
                   </div>
-                  <ul className="space-y-2.5 mb-5 min-h-[312px]">
+                  <ul className="space-y-3 mb-5 2xl:min-h-[760px] xl:min-h-[700px] lg:min-h-[620px] md:min-h-[560px] min-h-0">
                     {p.features.map((feature) => (
-                      <li key={`${p.key}-${feature}`} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
+                      <li key={`${p.key}-${feature}`} className="flex items-start gap-2.5 text-sm text-slate-700 leading-6">
                         <span className="mt-0.5 w-4 h-4 bg-emerald-50 rounded-full flex items-center justify-center shrink-0">
                           <Check className="w-2.5 h-2.5 text-emerald-600" />
                         </span>
-                        <span>{feature}</span>
+                        <span className="break-words">{feature}</span>
                       </li>
                     ))}
                     {Array.from({ length: Math.max(0, maxFeatureCount - p.features.length) }).map((_, idx) => (
-                      <li
-                        key={`${p.key}-pad-${idx}`}
-                        className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed opacity-0 select-none"
-                        aria-hidden="true"
-                      >
-                        <span className="mt-0.5 w-4 h-4 bg-emerald-50 rounded-full flex items-center justify-center shrink-0">
-                          <Check className="w-2.5 h-2.5 text-emerald-600" />
-                        </span>
-                        <span>Placeholder</span>
+                      <li key={`${p.key}-pad-${idx}`} className="h-6 opacity-0 select-none" aria-hidden="true">
+                        Placeholder
                       </li>
                     ))}
                   </ul>
 
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4 min-h-[110px]">
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4 min-h-[120px]">
                     <div className="text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-1.5">Tour booking</div>
-                    <p className="text-sm text-blue-900 leading-relaxed">{p.tourBooking}</p>
+                    <p className="text-sm text-blue-900 leading-relaxed break-words">{p.tourBooking}</p>
                   </div>
 
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-800 mb-5 min-h-[64px]">
                     Additional minutes billed at $1.50 per 5-minute block. Included minutes roll over month to month.
                   </div>
-                  <div className="flex-1" />
+                  <div className="mt-auto" />
 
                   <div className="space-y-2">
                   {isSubscribed ? (
