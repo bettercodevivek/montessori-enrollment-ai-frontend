@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Loader2, CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, CreditCard, AlertCircle, CheckCircle, Check } from 'lucide-react';
 import api from '../../api/axios';
 
 interface BillingStatus {
@@ -37,9 +37,66 @@ function getApiError(e: unknown, fallback: string): string {
 }
 
 const PLANS = [
-  { key: 'starter', name: 'Starter', tagline: 'Stop missing calls', price: 195, minutes: 250 },
-  { key: 'growth', name: 'Growth', tagline: 'GROWTH: Capture and schedule', price: 245, minutes: 500 },
-  { key: 'full_enrollment', name: 'Full enrollment', tagline: 'Full enrollment system', price: 290, minutes: 750 },
+  {
+    key: 'starter',
+    name: 'Starter',
+    tagline: 'Stop missing calls',
+    price: 195,
+    minutes: 250,
+    bestFor:
+      'Best for schools losing inquiries to voicemail and wanting an immediate safety net with no extra staff burden.',
+    features: [
+      'Answers every new parent call during class, lunch rush, and after hours',
+      'Shares school info: hours, programs, age groups',
+      'Captures parent name and phone number',
+      'Collects preferred tour date and time',
+      'Call summary emailed to director after every call',
+      'English language support',
+      '250 minutes included per month enough for ~50 calls at average length',
+    ],
+    tourBooking: 'Parent requests a preferred time your staff confirms and books manually.',
+  },
+  {
+    key: 'growth',
+    name: 'Growth',
+    tagline: 'GROWTH: Capture and schedule',
+    price: 245,
+    minutes: 500,
+    bestFor:
+      'Best for schools ready to convert more inquiries into confirmed tours without adding staff hours or manual back-and-forth.',
+    features: [
+      'Real-time calendar integration (Google or Outlook)',
+      'Nora books tours live during the call with instant confirmation to parent',
+      'Full parent profile: name, phone, email, child name and age',
+      'Bilingual support English and Spanish',
+      'Higher-conversion conversation flow tuned for childcare',
+      '500 minutes included per month enough for ~100 calls at average length',
+    ],
+    tourBooking:
+      'Nora books directly on your calendar during the call. Parent receives instant confirmation before they hang up.',
+  },
+  {
+    key: 'full_enrollment',
+    name: 'Full enrollment',
+    tagline: 'Full enrollment system',
+    price: 290,
+    minutes: 750,
+    bestFor:
+      'Best for schools that want a managed, consistent enrollment process with visibility into performance and zero dropped leads.',
+    features: [
+      'After-hours and weekend call coverage, every day',
+      'Priority alerts for high-intent families director notified immediately',
+      'Advanced call summaries with key parent insights and questions asked',
+      'Printable tour day one-pager for staff personalized per family',
+      'Director dashboard calls received, tours booked, follow-ups needed',
+      'Automated email reminders sent to parent before each tour',
+      'Ongoing AI tuning as your programs, staff, or availability changes',
+      'Multi-location support available',
+      '750 minutes included per month enough for ~150 calls at average length',
+    ],
+    tourBooking:
+      'Nora books directly, sends confirmation, and triggers automated reminders before the tour date. Zero no-shows go unaddressed.',
+  },
   {
     key: 'demo',
     name: 'Demo',
@@ -47,6 +104,13 @@ const PLANS = [
     price: 2,
     minutes: 2,
     isDemo: true,
+    bestFor: 'Best for testing payment flow and API behavior in a low-cost sandbox.',
+    features: [
+      'Sandbox usage for QA and staging checks',
+      '2 included minutes per month',
+      'Safe way to validate subscription and usage flow',
+    ],
+    tourBooking: 'For testing only. Not intended for live parent enrollment operations.',
   },
 ];
 
@@ -177,6 +241,7 @@ export const SchoolBilling = () => {
   const anyPlanMissing = cfg
     ? PLANS.some((p) => cfg[p.key] === false)
     : false;
+  const maxFeatureCount = Math.max(...PLANS.map((p) => p.features.length));
 
   return (
     <div className="max-w-7xl mx-auto px-6 space-y-8">
@@ -258,13 +323,13 @@ export const SchoolBilling = () => {
 
       <div>
         <h2 className="text-lg font-semibold text-slate-900 mb-4">Plans (autopay monthly)</h2>
-        <div className="grid gap-6 lg:grid-cols-4 md:grid-cols-2 sm:grid-cols-1">
+        <div className="grid gap-6 lg:grid-cols-4 md:grid-cols-2 sm:grid-cols-1 items-stretch">
           {PLANS.map((p) => {
             const isSubscribed = status?.subscriptionPlanKey === p.key && status?.subscriptionStatus === 'active';
             const isMostPopular = p.key === 'growth';
             const isDemo = 'isDemo' in p && p.isDemo;
             return (
-              <div key={p.key} className={`bg-white border rounded-2xl p-8 shadow-sm flex flex-col relative overflow-hidden ${isMostPopular ? 'border-2 border-blue-500' : isDemo ? 'border-amber-200 ring-1 ring-amber-100' : 'border-slate-200'}`}>
+              <div key={p.key} className={`h-full bg-white border rounded-2xl shadow-sm flex flex-col relative overflow-hidden ${isMostPopular ? 'border-2 border-blue-500' : isDemo ? 'border-amber-200 ring-1 ring-amber-100' : 'border-slate-200'}`}>
                 {isMostPopular && (
                   <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
                     Most popular
@@ -275,12 +340,54 @@ export const SchoolBilling = () => {
                     Sandbox
                   </span>
                 )}
-                <div className="text-sm font-bold uppercase tracking-wide text-blue-600">{p.name}</div>
-                <div className="text-base text-slate-600 mt-2 min-h-[3rem]">{p.tagline}</div>
-                <div className="mt-4 text-4xl font-bold text-slate-900">${p.price}<span className="text-xl font-normal text-slate-500">/mo</span></div>
-                <div className="text-sm text-slate-500 mt-2">{p.minutes} min / month included</div>
-                <div className="flex-1" />
-                <div className="mt-4 space-y-2">
+                <div className="p-6 border-b border-slate-100 min-h-[250px]">
+                  <div className="text-sm font-bold uppercase tracking-wide text-blue-600">{p.name}</div>
+                  <div className="text-base text-slate-600 mt-2 min-h-[3rem]">{p.tagline}</div>
+                  <div className="mt-4 text-4xl font-bold text-slate-900">${p.price}<span className="text-xl font-normal text-slate-500">/mo</span></div>
+                  <div className="text-sm text-slate-500 mt-2">{p.minutes} min / month included</div>
+                  <div className="mt-4 bg-slate-50 rounded-lg p-3 text-sm text-slate-600 leading-relaxed min-h-[98px]">
+                    {p.bestFor}
+                  </div>
+                </div>
+
+                <div className="p-6 flex-1 flex flex-col">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
+                    What Nora handles
+                  </div>
+                  <ul className="space-y-2.5 mb-5 min-h-[312px]">
+                    {p.features.map((feature) => (
+                      <li key={`${p.key}-${feature}`} className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed">
+                        <span className="mt-0.5 w-4 h-4 bg-emerald-50 rounded-full flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5 text-emerald-600" />
+                        </span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                    {Array.from({ length: Math.max(0, maxFeatureCount - p.features.length) }).map((_, idx) => (
+                      <li
+                        key={`${p.key}-pad-${idx}`}
+                        className="flex items-start gap-2.5 text-sm text-slate-700 leading-relaxed opacity-0 select-none"
+                        aria-hidden="true"
+                      >
+                        <span className="mt-0.5 w-4 h-4 bg-emerald-50 rounded-full flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5 text-emerald-600" />
+                        </span>
+                        <span>Placeholder</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4 min-h-[110px]">
+                    <div className="text-[11px] font-bold text-blue-700 uppercase tracking-wider mb-1.5">Tour booking</div>
+                    <p className="text-sm text-blue-900 leading-relaxed">{p.tourBooking}</p>
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-800 mb-5 min-h-[64px]">
+                    Additional minutes billed at $1.50 per 5-minute block. Included minutes roll over month to month.
+                  </div>
+                  <div className="flex-1" />
+
+                  <div className="space-y-2">
                   {isSubscribed ? (
                     <div className="w-full py-3 rounded-lg bg-green-100 text-green-700 text-base font-semibold text-center flex items-center justify-center gap-2">
                       <CheckCircle className="w-5 h-5" />
@@ -301,6 +408,7 @@ export const SchoolBilling = () => {
                       Set <code className="bg-amber-50 px-0.5 rounded">{planEnvLabel[p.key]}</code> in server .env
                     </p>
                   )}
+                  </div>
                 </div>
               </div>
             );
