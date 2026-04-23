@@ -3,6 +3,12 @@ import { useSearchParams } from 'react-router-dom';
 import { Loader2, CreditCard, AlertCircle, CheckCircle, Check } from 'lucide-react';
 import api from '../../api/axios';
 
+interface TopupSegment {
+  maxMinutes: number | null;
+  centsPerMinute: number;
+  description: string;
+}
+
 interface BillingStatus {
   billingMode: string;
   subscriptionPlanKey: string;
@@ -15,9 +21,53 @@ interface BillingStatus {
     onboardingUsd: number;
     includedMinutesPerMonth: number;
   } | null;
-  topup: { usd: number; minutes: number };
+  topupPricing?: {
+    minMinutes: number;
+    maxMinutes: number;
+    segments: TopupSegment[];
+  };
   /** From server: which PayPal Billing Plan IDs are set in .env */
   paypalPlansConfigured?: Record<string, boolean>;
+}
+
+/** Matches server `topupPricing` segment rules (first N minutes per segment at centsPerMinute). */
+function computeTopupTotalCents(minutes: number, segments: TopupSegment[]): number {
+  let rem = Math.floor(minutes);
+  if (rem < 1) return 0;
+  let totalCents = 0;
+  for (const seg of segments) {
+    const cap = seg.maxMinutes == null ? rem : Math.min(rem, seg.maxMinutes);
+    totalCents += cap * seg.centsPerMinute;
+    rem -= cap;
+    if (rem <= 0) break;
+  }
+  return totalCents;
+}
+
+function computeTopupUsd(minutes: number, segments: TopupSegment[]): number {
+  return Math.round(computeTopupTotalCents(minutes, segments)) / 100;
+}
+
+function topupBreakdown(
+  minutes: number,
+  segments: TopupSegment[],
+): { description: string; minutes: number; subtotalUsd: number }[] {
+  let rem = Math.floor(minutes);
+  if (rem < 1) return [];
+  const rows: { description: string; minutes: number; subtotalUsd: number }[] = [];
+  for (const seg of segments) {
+    if (rem <= 0) break;
+    const cap = seg.maxMinutes == null ? rem : Math.min(rem, seg.maxMinutes);
+    if (cap <= 0) continue;
+    const subCents = cap * seg.centsPerMinute;
+    rows.push({
+      description: seg.description,
+      minutes: cap,
+      subtotalUsd: Math.round(subCents) / 100,
+    });
+    rem -= cap;
+  }
+  return rows;
 }
 
 function getApiError(e: unknown, fallback: string): string {
@@ -114,6 +164,8 @@ const PLANS = [
   },
 ];
 
+const TOPUP_PRESETS = [25, 50, 100, 150, 250, 500, 750, 1000, 1500, 2000];
+
 export const SchoolBilling = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [status, setStatus] = useState<BillingStatus | null>(null);
@@ -121,6 +173,8 @@ export const SchoolBilling = () => {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [topupMinutes, setTopupMinutes] = useState(50);
+  const [topupPreset, setTopupPreset] = useState<string>('50');
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const returnUrl = `${baseUrl}/school/billing?sub=return`;
@@ -142,6 +196,18 @@ export const SchoolBilling = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    const tp = status?.topupPricing;
+    if (!tp) return;
+    setTopupMinutes((prev) => {
+      const clamped = Math.min(tp.maxMinutes, Math.max(tp.minMinutes, prev));
+      const matchPreset =
+        TOPUP_PRESETS.includes(clamped) && clamped >= tp.minMinutes && clamped <= tp.maxMinutes;
+      setTopupPreset(matchPreset ? String(clamped) : 'custom');
+      return clamped;
+    });
+  }, [status?.topupPricing]);
 
   useEffect(() => {
     const sub = searchParams.get('sub');
@@ -204,10 +270,17 @@ export const SchoolBilling = () => {
 
 
   const startTopup = async () => {
+    const tp = status?.topupPricing;
+    if (!tp) return;
+    const clamped = Math.min(tp.maxMinutes, Math.max(tp.minMinutes, Math.floor(topupMinutes)));
     setBusy(true);
     setError('');
     try {
-      const res = await api.post('/billing/topup-order', { returnUrl, cancelUrl });
+      const res = await api.post('/billing/topup-order', {
+        returnUrl,
+        cancelUrl,
+        minutes: clamped,
+      });
       if (res.data.approvalUrl) {
         window.location.href = res.data.approvalUrl;
         return;
@@ -231,6 +304,19 @@ export const SchoolBilling = () => {
   const balance = status?.minuteBalance;
   const low = typeof balance === 'number' && balance <= 0;
   const active = status?.subscriptionStatus === 'active';
+  const topupPricing = status?.topupPricing;
+  const topupUsd =
+    topupPricing && topupMinutes >= topupPricing.minMinutes
+      ? computeTopupUsd(topupMinutes, topupPricing.segments)
+      : 0;
+  const breakdown =
+    topupPricing && topupMinutes >= topupPricing.minMinutes
+      ? topupBreakdown(topupMinutes, topupPricing.segments)
+      : [];
+  const presetOptions =
+    topupPricing != null
+      ? TOPUP_PRESETS.filter((m) => m >= topupPricing.minMinutes && m <= topupPricing.maxMinutes)
+      : [];
   const cfg = status?.paypalPlansConfigured;
   const planEnvLabel: Record<string, string> = {
     starter: 'PAYPAL_PLAN_STARTER',
@@ -311,12 +397,104 @@ export const SchoolBilling = () => {
           </div>
         )}
 
-        {active && status?.topup && (
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button type="button" onClick={() => startTopup()} disabled={busy} className="ui-button-primary">
-              Top up +{status.topup.minutes} min (${status.topup.usd.toFixed(2)})
-            </button>
-            <span className="text-xs text-slate-500">PayPal · one-time purchase</span>
+        {active && topupPricing && (
+          <div className="mt-6 pt-6 border-t border-slate-100 space-y-4">
+            <h3 className="text-sm font-semibold text-slate-900">Buy more minutes</h3>
+            <p className="text-xs text-slate-500">
+              Choose how many minutes to add. Price uses stepped rates (see tier summary below). Pay with PayPal; minutes are added after payment completes.
+            </p>
+
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <label htmlFor="topup-preset" className="block text-xs font-medium text-slate-600 mb-1">
+                  Quick amount
+                </label>
+                <select
+                  id="topup-preset"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                  value={topupPreset}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setTopupPreset(v);
+                    if (v !== 'custom') {
+                      const n = parseInt(v, 10);
+                      if (!Number.isNaN(n)) setTopupMinutes(n);
+                    }
+                  }}
+                >
+                  <option value="custom">Custom (use slider)</option>
+                  {presetOptions.map((m) => (
+                    <option key={m} value={String(m)}>
+                      {m} minutes
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <details className="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 shadow-sm group">
+                <summary className="cursor-pointer font-medium text-slate-800 list-none flex items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+                  <span>Per-minute rate tiers</span>
+                </summary>
+                <ul className="mt-2 space-y-1.5 text-xs text-slate-600 border-t border-slate-200/80 pt-2">
+                  {topupPricing.segments.map((s) => (
+                    <li key={s.description} className="flex justify-between gap-2">
+                      <span>{s.description}</span>
+                      <span className="tabular-nums shrink-0 font-medium text-slate-800">
+                        ${(s.centsPerMinute / 100).toFixed(2)}/min
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs text-slate-600 mb-1">
+                <span>Minutes to purchase</span>
+                <span className="font-semibold tabular-nums text-slate-900">{topupMinutes} min</span>
+              </div>
+              <input
+                type="range"
+                min={topupPricing.minMinutes}
+                max={topupPricing.maxMinutes}
+                value={Math.min(topupPricing.maxMinutes, Math.max(topupPricing.minMinutes, topupMinutes))}
+                onChange={(e) => {
+                  const n = parseInt(e.target.value, 10);
+                  setTopupMinutes(n);
+                  setTopupPreset(presetOptions.includes(n) ? String(n) : 'custom');
+                }}
+                className="w-full h-2 accent-blue-600 rounded-lg appearance-none bg-slate-200 cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] text-slate-400 mt-0.5 tabular-nums">
+                <span>{topupPricing.minMinutes}</span>
+                <span>{topupPricing.maxMinutes}</span>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-slate-50 border border-slate-100 px-4 py-3 space-y-2">
+              <div className="flex justify-between items-baseline">
+                <span className="text-sm text-slate-600">Total due</span>
+                <span className="text-xl font-bold tabular-nums text-slate-900">${topupUsd.toFixed(2)}</span>
+              </div>
+              {breakdown.length > 1 && (
+                <ul className="text-xs text-slate-500 space-y-0.5 border-t border-slate-200/80 pt-2 mt-1">
+                  {breakdown.map((row) => (
+                    <li key={row.description} className="flex justify-between gap-2">
+                      <span>
+                        {row.description} × {row.minutes} min
+                      </span>
+                      <span className="tabular-nums shrink-0">${row.subtotalUsd.toFixed(2)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="button" onClick={() => startTopup()} disabled={busy || topupUsd < 0.01} className="ui-button-primary">
+                Pay ${topupUsd.toFixed(2)} with PayPal
+              </button>
+              <span className="text-xs text-slate-500">One-time charge · minutes roll over</span>
+            </div>
           </div>
         )}
       </div>
