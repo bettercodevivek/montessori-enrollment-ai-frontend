@@ -31,6 +31,9 @@ interface SettingsData {
   outlookConnected: boolean;
   adminEmail: string;
   timezone: string;
+  enableHumanTransfer: boolean;
+  humanTransferCondition: string;
+  humanTransferPhoneNumber: string;
   tourConfirmationEmailTemplate: string;
   tourReminderSmsTemplate: string;
 }
@@ -102,7 +105,13 @@ export const SchoolSettings = () => {
           }
         }
 
-        setSettings({ ...data, qaPairs });
+        setSettings({
+          ...data,
+          qaPairs,
+          enableHumanTransfer: Boolean(data.enableHumanTransfer),
+          humanTransferCondition: data.humanTransferCondition || '',
+          humanTransferPhoneNumber: data.humanTransferPhoneNumber || '',
+        });
       })
       .catch(err => {
         console.error('[Settings] Failed to load settings:', err);
@@ -113,6 +122,17 @@ export const SchoolSettings = () => {
   // ── Save all settings to DB ──────────────────────────────────────────────
   const saveSettings = useCallback(async () => {
     if (!settings) return;
+    if (
+      settings.enableHumanTransfer
+      && (!settings.humanTransferCondition.trim() || !settings.humanTransferPhoneNumber.trim())
+    ) {
+      setStatus({
+        type: 'error',
+        message: 'Condition and transfer phone number are required when Human Transfer is enabled.',
+      });
+      return;
+    }
+
     setSaving(true);
     setStatus(null);
 
@@ -136,6 +156,9 @@ export const SchoolSettings = () => {
       preferredEmailProvider: settings.preferredEmailProvider,
       timezone: settings.timezone,
       adminEmail: settings.adminEmail,
+      enableHumanTransfer: settings.enableHumanTransfer,
+      humanTransferCondition: settings.humanTransferCondition,
+      humanTransferPhoneNumber: settings.humanTransferPhoneNumber,
       tourConfirmationEmailTemplate: settings.tourConfirmationEmailTemplate,
       tourReminderSmsTemplate: settings.tourReminderSmsTemplate,
     };
@@ -542,6 +565,60 @@ export const SchoolSettings = () => {
                   className="ui-input w-full text-sm font-mono leading-relaxed bg-slate-50/30"
                   placeholder="You are a professional assistant..."
                 />
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-slate-100">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700">Human Transfer</label>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Transfer calls to a human when your condition is met.
+                    </p>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className={`text-xs font-bold ${settings.enableHumanTransfer ? 'text-emerald-600' : 'text-slate-500'}`}>
+                      {settings.enableHumanTransfer ? 'ON' : 'OFF'}
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={settings.enableHumanTransfer}
+                      onChange={e => update('enableHumanTransfer', e.target.checked)}
+                      className="w-4 h-4 rounded text-blue-600"
+                    />
+                  </label>
+                </div>
+
+                {settings.enableHumanTransfer && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Transfer Condition
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={settings.humanTransferCondition || ''}
+                        onChange={e => update('humanTransferCondition', e.target.value)}
+                        className="ui-input w-full text-sm"
+                        placeholder="User requests a human, supervisor, or escalation."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Transfer Phone Number
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.humanTransferPhoneNumber || ''}
+                        onChange={e => update('humanTransferPhoneNumber', e.target.value)}
+                        className="ui-input w-full"
+                        placeholder="+18005550199"
+                      />
+                      <p className="text-xs text-slate-400 mt-1">
+                        Calls are transferred using <span className="font-semibold">sip_refer</span>.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
