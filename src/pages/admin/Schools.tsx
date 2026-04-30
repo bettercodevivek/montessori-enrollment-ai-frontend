@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StatusBadge } from '../../components/StatusBadge';
 import api from '../../api/axios';
-import { Plus, X, Loader2, Trash2, CheckCircle, Pencil, Phone, PhoneOff } from 'lucide-react';
+import { Plus, X, Loader2, Trash2, CheckCircle, Pencil, Phone, PhoneOff, MessageSquare } from 'lucide-react';
 
 interface SchoolData {
   id: string;
@@ -10,6 +10,9 @@ interface SchoolData {
   address: string;
   aiNumber: string;
   routingNumber: string;
+  escalationNumber?: string;
+  script?: string;
+  systemPrompt?: string;
   elevenlabsAgentId: string;
   status: 'active' | 'inactive';
   calls: number;
@@ -36,6 +39,7 @@ export const AdminSchools = () => {
   const [editForm, setEditForm] = useState({
     name: '',
     address: '',
+    escalationNumber: '',
     elevenlabsAgentId: '',
     status: 'active' as 'active' | 'inactive',
     aiNumber: '',
@@ -48,6 +52,9 @@ export const AdminSchools = () => {
   const [assignModalSchool, setAssignModalSchool] = useState<SchoolData | null>(null);
   const [availableNumbers, setAvailableNumbers] = useState<any[]>([]);
   const [selectedPhoneId, setSelectedPhoneId] = useState('');
+  const [agentPromptModalSchool, setAgentPromptModalSchool] = useState<SchoolData | null>(null);
+  const [agentPromptForm, setAgentPromptForm] = useState({ script: '', systemPrompt: '' });
+  const [savingAgentPrompt, setSavingAgentPrompt] = useState(false);
 
 
   const [error, setError] = useState('');
@@ -120,6 +127,7 @@ export const AdminSchools = () => {
     setEditForm({ 
       name: school.name || '', 
       address: (school as any).address || '', 
+      escalationNumber: (school as any).escalationNumber || '',
       elevenlabsAgentId: school.elevenlabsAgentId || '', 
       status: school.status, 
       aiNumber: school.aiNumber || '',
@@ -138,6 +146,7 @@ export const AdminSchools = () => {
       await api.put(`/admin/schools/${editSchool.id}`, {
         name: editForm.name,
         address: editForm.address,
+        escalationNumber: editForm.escalationNumber,
         elevenlabsAgentId: editForm.elevenlabsAgentId,
         status: editForm.status,
         aiNumber: editForm.aiNumber,
@@ -197,6 +206,36 @@ export const AdminSchools = () => {
     setAssignModalSchool(school);
     setSelectedPhoneId('');
     setError('');
+  };
+
+  const openAgentPromptModal = (school: SchoolData) => {
+    setAgentPromptModalSchool(school);
+    setAgentPromptForm({
+      script: school.script || '',
+      systemPrompt: school.systemPrompt || '',
+    });
+    setError('');
+  };
+
+  const handleAgentPromptSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!agentPromptModalSchool) return;
+    setSavingAgentPrompt(true);
+    setError('');
+    try {
+      await api.post(`/admin/schools/${agentPromptModalSchool.id}/agent-prompt`, {
+        script: agentPromptForm.script,
+        systemPrompt: agentPromptForm.systemPrompt,
+      });
+      setSuccess('Agent prompt updated and synced to ElevenLabs successfully!');
+      setAgentPromptModalSchool(null);
+      await fetchSchools();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update agent prompt.');
+    } finally {
+      setSavingAgentPrompt(false);
+    }
   };
 
   if (loading) return (
@@ -279,6 +318,13 @@ export const AdminSchools = () => {
                     className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                   >
                     <Phone className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => openAgentPromptModal(school)}
+                    title="Edit First Message / System Prompt"
+                    className="p-1.5 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                  >
+                    <MessageSquare className="w-4 h-4" />
                   </button>
                   {school.aiNumber && (
                     <button
@@ -428,6 +474,16 @@ export const AdminSchools = () => {
                   placeholder="School Address"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Escalation Number</label>
+                <input
+                  type="text"
+                  value={editForm.escalationNumber}
+                  onChange={e => setEditForm({ ...editForm, escalationNumber: e.target.value })}
+                  className="ui-input"
+                  placeholder="+1 (555) 123-4569"
+                />
+              </div>
               {/* Agent ID & AI Number */}
               <div className="grid grid-cols-1 gap-4">
                 <div>
@@ -573,6 +629,60 @@ export const AdminSchools = () => {
                 <button type="submit" disabled={saving || !selectedPhoneId} className="ui-button-primary flex-1 h-11 flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {saving ? 'Assigning…' : 'Assign Number'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Agent Prompt Modal ── */}
+      {agentPromptModalSchool && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">Edit Agent Prompt</h2>
+                <p className="text-sm text-slate-500 font-medium">{agentPromptModalSchool.name}</p>
+              </div>
+              <button onClick={() => setAgentPromptModalSchool(null)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {error && (
+              <div className="mb-4 px-4 py-3 bg-red-50 border border-red-100 text-red-700 text-sm rounded-xl font-medium">{error}</div>
+            )}
+
+            <form onSubmit={handleAgentPromptSave} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">First Message (Greeting)</label>
+                <textarea
+                  rows={3}
+                  value={agentPromptForm.script}
+                  onChange={(e) => setAgentPromptForm({ ...agentPromptForm, script: e.target.value })}
+                  className="ui-input w-full text-sm"
+                  placeholder="Welcome to {school_name}! How can I help you today?"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">System Prompt</label>
+                <textarea
+                  rows={8}
+                  value={agentPromptForm.systemPrompt}
+                  onChange={(e) => setAgentPromptForm({ ...agentPromptForm, systemPrompt: e.target.value })}
+                  className="ui-input w-full text-sm font-mono"
+                  placeholder="You are a warm and friendly scheduling assistant..."
+                />
+                <p className="mt-2 text-xs text-slate-500">
+                  Saving will PATCH ElevenLabs at <span className="font-mono">/api/v1/agents/:agentId/prompt</span> and then update the school record.
+                </p>
+              </div>
+              <div className="flex gap-3 pt-4 border-t border-slate-100">
+                <button type="button" onClick={() => setAgentPromptModalSchool(null)} className="ui-button-secondary flex-1 h-11">Cancel</button>
+                <button type="submit" disabled={savingAgentPrompt} className="ui-button-primary flex-1 h-11 flex items-center justify-center gap-2">
+                  {savingAgentPrompt && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {savingAgentPrompt ? 'Saving…' : 'Save & Patch Agent'}
                 </button>
               </div>
             </form>

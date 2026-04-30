@@ -14,10 +14,7 @@ interface SettingsData {
   address: string;
   aiNumber: string;
   routingNumber: string;
-  escalationNumber: string;
   language: string;
-  script: string;
-  systemPrompt: string;
   businessHoursStart: string;
   businessHoursEnd: string;
   smsAutoFollowup: boolean;
@@ -141,10 +138,7 @@ export const SchoolSettings = () => {
       address: settings.address,
       aiNumber: settings.aiNumber,
       routingNumber: settings.routingNumber,
-      escalationNumber: settings.escalationNumber,
       language: settings.language,
-      script: settings.script,
-      systemPrompt: settings.systemPrompt,
       businessHoursStart: settings.businessHoursStart,
       businessHoursEnd: settings.businessHoursEnd,
       smsAutoFollowup: settings.smsAutoFollowup,
@@ -433,7 +427,7 @@ export const SchoolSettings = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t('ai_phone_number')}</label>
                   {settings.aiNumber ? (
@@ -489,17 +483,6 @@ export const SchoolSettings = () => {
                   />
                   <p className="text-xs text-slate-400 mt-1">Non-inquiry calls forward here.</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">{t('escalation_number')}</label>
-                  <input
-                    type="text"
-                    value={settings.escalationNumber}
-                    onChange={e => update('escalationNumber', e.target.value)}
-                    className="ui-input w-full"
-                    placeholder="+1 (555) 123-4569"
-                  />
-                  <p className="text-xs text-slate-400 mt-1">Fallback if AI cannot handle the call.</p>
-                </div>
               </div>
 
               <div className="mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -533,41 +516,7 @@ export const SchoolSettings = () => {
                 Agent Voice & Behavior
               </h2>
 
-              {/* First Message */}
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-slate-700 mb-2">
-                  First Message (Greeting)
-                </label>
-                <p className="text-xs text-slate-500 mb-2 font-medium">
-                  The first sentence the AI says. Use {'{parent_name}'}, {'{school_name}'} as variables.
-                </p>
-                <textarea
-                  rows={3}
-                  value={settings.script}
-                  onChange={e => update('script', e.target.value)}
-                  className="ui-input w-full text-sm leading-relaxed bg-slate-50/30 font-medium"
-                  placeholder="Welcome to {school_name}! How can I help you today?"
-                />
-              </div>
-
-              {/* System Prompt */}
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">
-                  System Instruction (Prompt)
-                </label>
-                <p className="text-xs text-slate-500 mb-2 font-medium">
-                  Core behavior instructions. Guides the AI on how to handle inquiries and schedule tours.
-                </p>
-                <textarea
-                  rows={6}
-                  value={settings.systemPrompt || ''}
-                  onChange={e => update('systemPrompt', e.target.value)}
-                  className="ui-input w-full text-sm font-mono leading-relaxed bg-slate-50/30"
-                  placeholder="You are a professional assistant..."
-                />
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-slate-100">
+              <div className="pt-1">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <label className="block text-sm font-bold text-slate-700">Human Transfer</label>
