@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Save, Loader2, Phone, MessageSquare, CheckCircle, AlertCircle, Plus, Trash2, Activity, MapPin } from 'lucide-react';
+import { Save, Loader2, Phone, MessageSquare, CheckCircle, AlertCircle, Plus, Trash2, Activity, MapPin, Upload } from 'lucide-react';
 import api from '../../api/axios';
+import * as XLSX from 'xlsx';
 
 interface QAPair {
   question: string;
@@ -83,6 +84,7 @@ export const SchoolSettings = () => {
   const [detectingTimezone, setDetectingTimezone] = useState(false);
   const [requestingAiNumber, setRequestingAiNumber] = useState(false);
   const [hasRequestedAiNumber, setHasRequestedAiNumber] = useState(false);
+  const qaUploadInputRef = useRef<HTMLInputElement | null>(null);
 
   // ── Load settings on mount ──────────────────────────────────────────────
   useEffect(() => {
@@ -258,6 +260,83 @@ export const SchoolSettings = () => {
       if (!prev) return prev;
       return { ...prev, qaPairs: prev.qaPairs.filter((_, i) => i !== index) };
     });
+  }, []);
+
+  const openQAUploadPicker = useCallback(() => {
+    qaUploadInputRef.current?.click();
+  }, []);
+
+  const handleQAUpload = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      if (!firstSheetName) {
+        setStatus({ type: 'error', message: 'The uploaded file has no sheets.' });
+        return;
+      }
+
+      const sheet = workbook.Sheets[firstSheetName];
+      const rows = XLSX.utils.sheet_to_json<(string | number)[]>(sheet, {
+        header: 1,
+        raw: false,
+        blankrows: false,
+        defval: '',
+      });
+
+      if (!rows.length) {
+        setStatus({ type: 'error', message: 'The uploaded file is empty.' });
+        return;
+      }
+
+      const headerRow = (rows[0] || []).map((cell) =>
+        String(cell || '').trim().toLowerCase().replace(/\s+/g, '')
+      );
+      const questionIndex = headerRow.findIndex((h) => h === 'question');
+      const answerIndex = headerRow.findIndex((h) => h === 'answer');
+
+      if (questionIndex === -1 || answerIndex === -1) {
+        setStatus({
+          type: 'error',
+          message: 'Invalid format. Add header columns exactly as: question, answer',
+        });
+        return;
+      }
+
+      const importedPairs: QAPair[] = rows
+        .slice(1)
+        .map((row) => ({
+          question: String(row?.[questionIndex] || '').trim(),
+          answer: String(row?.[answerIndex] || '').trim(),
+        }))
+        .filter((pair) => pair.question && pair.answer);
+
+      if (!importedPairs.length) {
+        setStatus({
+          type: 'error',
+          message: 'No valid rows found. Each row must include both question and answer.',
+        });
+        return;
+      }
+
+      setSettings((prev) => (prev ? { ...prev, qaPairs: [...prev.qaPairs, ...importedPairs] } : prev));
+      setStatus({
+        type: 'success',
+        message: `Imported ${importedPairs.length} Q&A records. Click Save Settings to persist.`,
+      });
+    } catch (err) {
+      console.error('[Settings] Q&A upload failed:', err);
+      setStatus({
+        type: 'error',
+        message: 'Failed to parse file. Please upload a valid CSV, XLS, or XLSX file.',
+      });
+    } finally {
+      event.target.value = '';
+      setTimeout(() => setStatus(null), 5000);
+    }
   }, []);
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -586,14 +665,47 @@ export const SchoolSettings = () => {
                 Edit these answers to match your school's specific details. These are stored per-school.
               </p>
 
-              <button
-                type="button"
-                onClick={addQA}
-                className="flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl transition-all border border-blue-100 uppercase tracking-widest shadow-sm mb-4"
-              >
-                <Plus className="w-4 h-4" />
-                Add New Question
-              </button>
+              <div className="mb-4 p-3 rounded-lg border border-slate-200 bg-slate-50">
+                <p className="text-xs text-slate-700 font-semibold">Bulk upload format (CSV/XLS/XLSX)</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Add header columns exactly as: <span className="font-mono">question,answer</span>. One Q&A per row.
+                </p>
+                <div className="mt-2 rounded-md border border-slate-200 bg-white p-2">
+                  <p className="text-[11px] font-semibold text-slate-600 mb-1">Example CSV</p>
+                  <pre className="text-[11px] leading-relaxed text-slate-700 whitespace-pre-wrap font-mono">
+{`question,answer
+"What ages do you accept?","We accept children from 6 weeks to 12 years."
+"Do you provide meals?","Yes, we provide nutritious meals and snacks daily."`}
+                  </pre>
+                </div>
+              </div>
+
+              <input
+                ref={qaUploadInputRef}
+                type="file"
+                accept=".csv,.xls,.xlsx"
+                onChange={handleQAUpload}
+                className="hidden"
+              />
+
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <button
+                  type="button"
+                  onClick={addQA}
+                  className="flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl transition-all border border-blue-100 uppercase tracking-widest shadow-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add New Question
+                </button>
+                <button
+                  type="button"
+                  onClick={openQAUploadPicker}
+                  className="flex items-center gap-2 text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-5 py-2.5 rounded-xl transition-all border border-emerald-100 uppercase tracking-widest shadow-sm"
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload CSV / XLS
+                </button>
+              </div>
 
               <div className="space-y-3 mb-4">
                 {settings.qaPairs.map((pair, index) => (
