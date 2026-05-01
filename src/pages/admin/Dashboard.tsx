@@ -200,6 +200,7 @@ export const AdminDashboard = () => {
         toursBooked,
         conversion: filterType === 'all' && totalCalls > 0 ? `${conversion}%` : '—',
         minutesUsed: `${minutesUsed} / ${planMinutes}`,
+        minutesUsedValue: minutesUsed,
         minutesTotal: planMinutes,
         flags,
         action: 'View'
@@ -441,7 +442,7 @@ export const AdminDashboard = () => {
                     <div className="w-24 bg-slate-100 rounded-full h-1.5 mt-1">
                       <div 
                         className="h-full rounded-full bg-blue-600"
-                        style={{ width: `${(parseInt(school.minutesUsed.split(' / ')[0]) / school.minutesTotal) * 100}%` }}
+                        style={{ width: `${Math.max(0, Math.min(100, school.minutesTotal > 0 ? (school.minutesUsedValue / school.minutesTotal) * 100 : 0))}%` }}
                       />
                     </div>
                   </td>

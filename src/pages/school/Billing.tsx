@@ -48,6 +48,23 @@ function computeTopupUsd(minutes: number, segments: TopupSegment[]): number {
   return Math.round(computeTopupTotalCents(minutes, segments)) / 100;
 }
 
+function computeAverageRateCents(minutes: number, segments: TopupSegment[]): number {
+  const wholeMinutes = Math.floor(minutes);
+  if (wholeMinutes < 1) return 0;
+  return computeTopupTotalCents(wholeMinutes, segments) / wholeMinutes;
+}
+
+function buildTierRangeLabels(segments: TopupSegment[]): string[] {
+  let start = 1;
+  return segments.map((seg) => {
+    if (seg.maxMinutes == null) return `${start}+`;
+    const end = start + seg.maxMinutes - 1;
+    const label = `${start}-${end}`;
+    start = end + 1;
+    return label;
+  });
+}
+
 function topupBreakdown(
   minutes: number,
   segments: TopupSegment[],
@@ -146,21 +163,6 @@ const PLANS = [
     ],
     tourBooking:
       'Nora books directly, sends confirmation, and triggers automated reminders before the tour date. Zero no-shows go unaddressed.',
-  },
-  {
-    key: 'demo',
-    name: 'Demo',
-    tagline: '$2/mo sandbox plan for testing (2 min voice / month)',
-    price: 2,
-    minutes: 2,
-    isDemo: true,
-    bestFor: 'Best for testing payment flow and API behavior in a low-cost sandbox.',
-    features: [
-      'Sandbox usage for QA and staging checks',
-      '2 included minutes per month',
-      'Safe way to validate subscription and usage flow',
-    ],
-    tourBooking: 'For testing only. Not intended for live parent enrollment operations.',
   },
 ];
 
@@ -317,12 +319,12 @@ export const SchoolBilling = () => {
     topupPricing != null
       ? TOPUP_PRESETS.filter((m) => m >= topupPricing.minMinutes && m <= topupPricing.maxMinutes)
       : [];
+  const tierRangeLabels = topupPricing ? buildTierRangeLabels(topupPricing.segments) : [];
   const cfg = status?.paypalPlansConfigured;
   const planEnvLabel: Record<string, string> = {
     starter: 'PAYPAL_PLAN_STARTER',
     growth: 'PAYPAL_PLAN_GROWTH',
     full_enrollment: 'PAYPAL_PLAN_FULL_ENROLLMENT',
-    demo: 'PAYPAL_PLAN_DEMO',
   };
   const anyPlanMissing = cfg
     ? PLANS.some((p) => cfg[p.key] === false)
@@ -359,7 +361,7 @@ export const SchoolBilling = () => {
             <p className="mt-1 text-amber-800/90">
               Add each Billing Plan ID from the PayPal dashboard to <code className="bg-amber-100/80 px-1 rounded text-xs">montessori-enrollment-ai-backend/.env</code>:
               {' '}<code className="text-xs">PAYPAL_PLAN_STARTER</code>, <code className="text-xs">PAYPAL_PLAN_GROWTH</code>,{' '}
-              <code className="text-xs">PAYPAL_PLAN_FULL_ENROLLMENT</code>, <code className="text-xs">PAYPAL_PLAN_DEMO</code>{' '}
+              <code className="text-xs">PAYPAL_PLAN_FULL_ENROLLMENT</code>{' '}
               (values look like <code className="text-xs">P-1AB23456CD789012N</code>). Restart the API after saving.
             </p>
           </div>
@@ -425,25 +427,34 @@ export const SchoolBilling = () => {
                   <option value="custom">Custom (use slider)</option>
                   {presetOptions.map((m) => (
                     <option key={m} value={String(m)}>
-                      {m} minutes
+                      {topupPricing
+                        ? `${m} minutes — $${computeTopupUsd(m, topupPricing.segments).toFixed(2)} total (${(
+                            computeAverageRateCents(m, topupPricing.segments) / 100
+                          ).toFixed(2)}/min avg)`
+                        : `${m} minutes`}
                     </option>
                   ))}
                 </select>
               </div>
               <details className="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 shadow-sm group">
                 <summary className="cursor-pointer font-medium text-slate-800 list-none flex items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
-                  <span>Per-minute rate tiers</span>
+                  <span>Per-minute rate tiers (for each top-up)</span>
                 </summary>
                 <ul className="mt-2 space-y-1.5 text-xs text-slate-600 border-t border-slate-200/80 pt-2">
-                  {topupPricing.segments.map((s) => (
+                  {topupPricing.segments.map((s, i) => (
                     <li key={s.description} className="flex justify-between gap-2">
-                      <span>{s.description}</span>
+                      <span>
+                        Minutes {tierRangeLabels[i] || s.description}
+                      </span>
                       <span className="tabular-nums shrink-0 font-medium text-slate-800">
                         ${(s.centsPerMinute / 100).toFixed(2)}/min
                       </span>
                     </li>
                   ))}
                 </ul>
+                <p className="mt-2 text-[11px] text-slate-500 border-t border-slate-200/80 pt-2">
+                  Example: a 250-minute top-up is charged as first 100 at the first tier, then next 150 at the second tier.
+                </p>
               </details>
             </div>
 
@@ -505,18 +516,12 @@ export const SchoolBilling = () => {
           {PLANS.map((p) => {
             const isSubscribed = status?.subscriptionPlanKey === p.key && status?.subscriptionStatus === 'active';
             const isMostPopular = p.key === 'growth';
-            const isDemo = 'isDemo' in p && p.isDemo;
             return (
-              <div key={p.key} className={`h-full min-h-[1280px] bg-white border rounded-2xl shadow-sm flex flex-col relative ${isMostPopular ? 'border-2 border-blue-500' : isDemo ? 'border-amber-200 ring-1 ring-amber-100' : 'border-slate-200'}`}>
+              <div key={p.key} className={`h-full min-h-[1280px] bg-white border rounded-2xl shadow-sm flex flex-col relative ${isMostPopular ? 'border-2 border-blue-500' : 'border-slate-200'}`}>
                 {isMostPopular && (
                   <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
                     Most popular
                   </div>
-                )}
-                {isDemo && (
-                  <span className="absolute top-0 left-0 text-[10px] font-semibold uppercase tracking-wide text-amber-800 bg-amber-100 px-2 py-1 rounded-br-lg">
-                    Sandbox
-                  </span>
                 )}
                 <div className="p-6 border-b border-slate-100 min-h-[290px]">
                   <div className="text-sm font-bold uppercase tracking-wide text-blue-600">{p.name}</div>
