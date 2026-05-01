@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
     Globe, ArrowRight, Zap, PhoneCall, FileText,
@@ -431,11 +431,21 @@ export const Landing = () => {
                         </div>
 
                     </div>
-                    <div className="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center">
+                    <div className="mt-20 pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                         <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">&copy; 2026 BrightBridge. All Rights Reserved.</p>
-                        <div className="flex gap-4">
-                            <div className="w-8 h-8 rounded-full bg-slate-100" />
-                            <div className="w-8 h-8 rounded-full bg-slate-100" />
+                        <div className="flex flex-wrap items-center gap-6">
+                            <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-slate-600">
+                                <Link to="/privacy" className="hover:text-blue-600 transition-colors">
+                                    Privacy Policy
+                                </Link>
+                                <Link to="/terms" className="hover:text-blue-600 transition-colors">
+                                    Terms of Service
+                                </Link>
+                            </nav>
+                            <div className="flex gap-4">
+                                <div className="w-8 h-8 rounded-full bg-slate-100" />
+                                <div className="w-8 h-8 rounded-full bg-slate-100" />
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Check, ArrowRight, AlertCircle } from 'lucide-react';
 
 const Pricing = () => {
@@ -502,8 +502,19 @@ const Pricing = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 py-12 text-center text-sm text-slate-400">
-        © 2026 BrightBridge. All rights reserved. · Built for childcare operators.
+      <footer className="border-t border-slate-200 py-12 text-center text-sm text-slate-400 space-y-3">
+        <p>© 2026 BrightBridge. All rights reserved. · Built for childcare operators.</p>
+        <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-slate-500">
+          <Link to="/privacy" className="hover:text-blue-600 font-medium transition-colors">
+            Privacy Policy
+          </Link>
+          <span className="text-slate-300" aria-hidden>
+            ·
+          </span>
+          <Link to="/terms" className="hover:text-blue-600 font-medium transition-colors">
+            Terms of Service
+          </Link>
+        </nav>
       </footer>
     </div>
   );

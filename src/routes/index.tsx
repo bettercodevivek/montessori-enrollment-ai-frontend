@@ -29,6 +29,8 @@ import { GoogleAuthCallback } from '../pages/GoogleAuthCallback';
 import { MasterLogin } from '../pages/MasterLogin';
 import { DailyInsights } from '../pages/school/DailyInsights';
 import Pricing from '../pages/Pricing';
+import { PrivacyPolicy } from '../pages/PrivacyPolicy';
+import { TermsOfService } from '../pages/TermsOfService';
 import { SchoolBilling } from '../pages/school/Billing';
 import { AdminFinancials } from '../pages/admin/Financials';
 
@@ -83,6 +85,14 @@ export const router = createBrowserRouter([
   {
     path: '/pricing',
     element: <Pricing />,
+  },
+  {
+    path: '/privacy',
+    element: <PrivacyPolicy />,
+  },
+  {
+    path: '/terms',
+    element: <TermsOfService />,
   },
   {
     path: '/dashboard',
