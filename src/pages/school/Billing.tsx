@@ -54,17 +54,6 @@ function computeAverageRateCents(minutes: number, segments: TopupSegment[]): num
   return computeTopupTotalCents(wholeMinutes, segments) / wholeMinutes;
 }
 
-function buildTierRangeLabels(segments: TopupSegment[]): string[] {
-  let start = 1;
-  return segments.map((seg) => {
-    if (seg.maxMinutes == null) return `${start}+`;
-    const end = start + seg.maxMinutes - 1;
-    const label = `${start}-${end}`;
-    start = end + 1;
-    return label;
-  });
-}
-
 function topupBreakdown(
   minutes: number,
   segments: TopupSegment[],
@@ -319,7 +308,6 @@ export const SchoolBilling = () => {
     topupPricing != null
       ? TOPUP_PRESETS.filter((m) => m >= topupPricing.minMinutes && m <= topupPricing.maxMinutes)
       : [];
-  const tierRangeLabels = topupPricing ? buildTierRangeLabels(topupPricing.segments) : [];
   const cfg = status?.paypalPlansConfigured;
   const planEnvLabel: Record<string, string> = {
     starter: 'PAYPAL_PLAN_STARTER',
@@ -403,59 +391,37 @@ export const SchoolBilling = () => {
           <div className="mt-6 pt-6 border-t border-slate-100 space-y-4">
             <h3 className="text-sm font-semibold text-slate-900">Buy more minutes</h3>
             <p className="text-xs text-slate-500">
-              Choose how many minutes to add. Price uses stepped rates (see tier summary below). Pay with PayPal; minutes are added after payment completes.
+              Choose how many minutes to add. Price uses stepped per-minute rates; the total below reflects your selection. Pay with PayPal; minutes are added after payment completes.
             </p>
 
-            <div className="flex flex-col sm:flex-row sm:items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <label htmlFor="topup-preset" className="block text-xs font-medium text-slate-600 mb-1">
-                  Quick amount
-                </label>
-                <select
-                  id="topup-preset"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-                  value={topupPreset}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setTopupPreset(v);
-                    if (v !== 'custom') {
-                      const n = parseInt(v, 10);
-                      if (!Number.isNaN(n)) setTopupMinutes(n);
-                    }
-                  }}
-                >
-                  <option value="custom">Custom (use slider)</option>
-                  {presetOptions.map((m) => (
-                    <option key={m} value={String(m)}>
-                      {topupPricing
-                        ? `${m} minutes — $${computeTopupUsd(m, topupPricing.segments).toFixed(2)} total (${(
-                            computeAverageRateCents(m, topupPricing.segments) / 100
-                          ).toFixed(2)}/min avg)`
-                        : `${m} minutes`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <details className="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 shadow-sm group">
-                <summary className="cursor-pointer font-medium text-slate-800 list-none flex items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
-                  <span>Per-minute rate tiers (for each top-up)</span>
-                </summary>
-                <ul className="mt-2 space-y-1.5 text-xs text-slate-600 border-t border-slate-200/80 pt-2">
-                  {topupPricing.segments.map((s, i) => (
-                    <li key={s.description} className="flex justify-between gap-2">
-                      <span>
-                        Minutes {tierRangeLabels[i] || s.description}
-                      </span>
-                      <span className="tabular-nums shrink-0 font-medium text-slate-800">
-                        ${(s.centsPerMinute / 100).toFixed(2)}/min
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-2 text-[11px] text-slate-500 border-t border-slate-200/80 pt-2">
-                  Example: a 250-minute top-up is charged as first 100 at the first tier, then next 150 at the second tier.
-                </p>
-              </details>
+            <div>
+              <label htmlFor="topup-preset" className="block text-xs font-medium text-slate-600 mb-1">
+                Quick amount
+              </label>
+              <select
+                id="topup-preset"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                value={topupPreset}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setTopupPreset(v);
+                  if (v !== 'custom') {
+                    const n = parseInt(v, 10);
+                    if (!Number.isNaN(n)) setTopupMinutes(n);
+                  }
+                }}
+              >
+                <option value="custom">Custom (use slider)</option>
+                {presetOptions.map((m) => (
+                  <option key={m} value={String(m)}>
+                    {topupPricing
+                      ? `${m} minutes — $${computeTopupUsd(m, topupPricing.segments).toFixed(2)} total (${(
+                          computeAverageRateCents(m, topupPricing.segments) / 100
+                        ).toFixed(2)}/min avg)`
+                      : `${m} minutes`}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
