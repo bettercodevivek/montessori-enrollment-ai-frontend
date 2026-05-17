@@ -223,11 +223,15 @@ export const AdminSchools = () => {
     setSavingAgentPrompt(true);
     setError('');
     try {
-      await api.post(`/admin/schools/${agentPromptModalSchool.id}/agent-prompt`, {
+      const { data } = await api.post(`/admin/schools/${agentPromptModalSchool.id}/agent-prompt`, {
         script: agentPromptForm.script,
         systemPrompt: agentPromptForm.systemPrompt,
       });
-      setSuccess('Agent prompt updated and synced to ElevenLabs successfully!');
+      const agentLabel = data.agentId ? ` (agent ${data.agentId})` : '';
+      const verifyNote = data.verifyMatchesExpected === false
+        ? ' Warning: ElevenLabs did not show your new greeting after patch — confirm Agent ID in this modal matches the agent open in elevenlabs.io.'
+        : '';
+      setSuccess(`Agent prompt updated and synced to ElevenLabs${agentLabel}.${verifyNote}`);
       setAgentPromptModalSchool(null);
       await fetchSchools();
       setTimeout(() => setSuccess(''), 3000);
@@ -644,6 +648,13 @@ export const AdminSchools = () => {
               <div>
                 <h2 className="text-xl font-bold text-slate-900 tracking-tight">Edit Agent Prompt</h2>
                 <p className="text-sm text-slate-500 font-medium">{agentPromptModalSchool.name}</p>
+                {agentPromptModalSchool.elevenlabsAgentId ? (
+                  <p className="text-xs text-slate-400 font-mono mt-1">
+                    Agent ID: {agentPromptModalSchool.elevenlabsAgentId}
+                  </p>
+                ) : (
+                  <p className="text-xs text-red-500 mt-1">No ElevenLabs Agent ID on this school.</p>
+                )}
               </div>
               <button onClick={() => setAgentPromptModalSchool(null)} className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
                 <X className="w-5 h-5" />
@@ -675,7 +686,7 @@ export const AdminSchools = () => {
                   placeholder="You are a warm and friendly scheduling assistant..."
                 />
                 <p className="mt-2 text-xs text-slate-500">
-                  Saving will PATCH ElevenLabs at <span className="font-mono">/api/v1/agents/:agentId/prompt</span> and then update the school record.
+                  Saving will PATCH ElevenLabs at <span className="font-mono">/api/v1/agents/:agentId</span> (same as school settings). Check backend terminal for full logs.
                 </p>
               </div>
               <div className="flex gap-3 pt-4 border-t border-slate-100">
