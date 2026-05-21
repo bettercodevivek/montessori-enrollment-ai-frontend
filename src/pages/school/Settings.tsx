@@ -121,13 +121,10 @@ export const SchoolSettings = () => {
   // ── Save all settings to DB ──────────────────────────────────────────────
   const saveSettings = useCallback(async () => {
     if (!settings) return;
-    if (
-      settings.enableHumanTransfer
-      && (!settings.humanTransferCondition.trim() || !settings.humanTransferPhoneNumber.trim())
-    ) {
+    if (settings.enableHumanTransfer && !settings.humanTransferPhoneNumber.trim()) {
       setStatus({
         type: 'error',
-        message: 'Condition and transfer phone number are required when Human Transfer is enabled.',
+        message: 'Transfer phone number is required when Human Transfer is enabled.',
       });
       return;
     }
@@ -627,7 +624,7 @@ export const SchoolSettings = () => {
                         value={settings.humanTransferCondition || ''}
                         onChange={e => update('humanTransferCondition', e.target.value)}
                         className="ui-input w-full text-sm"
-                        placeholder="User requests a human, supervisor, or escalation."
+                        placeholder="Optional school notes. Mandatory transfer rules are applied automatically on sync."
                       />
                     </div>
                     <div>
